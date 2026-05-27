@@ -919,7 +919,6 @@ h1 {
     }
 
     window.loginWithGoogle = async function () {
-      localStorage.removeItem("previewMode");
       try {
         await signInWithPopup(auth, provider);
       } catch (error) {
@@ -931,9 +930,6 @@ h1 {
     window.logoutGoogle = async function () {
       try {
         await signOut(auth);
-        localStorage.removeItem("previewMode");
-        const entry = document.getElementById("googleEntryOverlay");
-        if (entry) entry.classList.remove("hide");
         const gate = document.getElementById("nicknameGate");
         if (gate) {
           gate.classList.add("hidden-gate");
@@ -996,9 +992,7 @@ h1 {
       使用 Google 登入
     </button>
 <button class="google-entry-btn" onclick="
-        localStorage.setItem('previewMode','true');
         document.getElementById('googleEntryOverlay').classList.add('hide');
-        if (typeof applyPreviewOverlayLock === 'function') applyPreviewOverlayLock();
       " style="margin-top:10px;background:rgba(255,255,255,.14);color:#fff;" type="button">
       直接進入
     </button>
@@ -1338,7 +1332,6 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loginLogoutGoogleFromStatus() {
   localStorage.removeItem("previewMode");
   localStorage.removeItem("previewMode");
-  localStorage.removeItem("previewMode");
   try {
     const authObj = window.firebaseAuth || window.auth;
     const user = authObj && authObj.currentUser;
@@ -1407,67 +1400,93 @@ document.addEventListener("DOMContentLoaded", () => {
     applyPreviewOverlayLock();
   };
 
+  window.disablePreviewMode = function () {
+    localStorage.removeItem("previewMode");
+    const overlay = document.getElementById("previewClickLockOverlay");
+    const banner = document.getElementById("previewModeBanner");
+    if (overlay) overlay.remove();
+    if (banner) banner.remove();
+    document.body.classList.remove("preview-mode-active");
+  };
+
   window.applyPreviewOverlayLock = function () {
     if (localStorage.getItem("previewMode") !== "true") return;
 
     document.body.classList.add("preview-mode-active");
 
-    let banner = document.getElementById("previewModeBanner");
-    if (!banner) {
-      banner = document.createElement("div");
+    if (!document.getElementById("previewModeBanner")) {
+      const banner = document.createElement("div");
       banner.id = "previewModeBanner";
       banner.textContent = "👀 預覽模式中｜請先登入才能使用功能";
-      banner.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483647;background:rgba(35,35,35,.78);color:#fff;padding:9px 16px;border-radius:999px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.22);pointer-events:none;";
+      banner.style.cssText = [
+        "position:fixed",
+        "top:12px",
+        "left:50%",
+        "transform:translateX(-50%)",
+        "z-index:2147483646",
+        "background:rgba(35,35,35,.78)",
+        "color:#fff",
+        "padding:9px 16px",
+        "border-radius:999px",
+        "backdrop-filter:blur(10px)",
+        "-webkit-backdrop-filter:blur(10px)",
+        "font-size:12px",
+        "box-shadow:0 6px 20px rgba(0,0,0,.22)",
+        "pointer-events:none"
+      ].join(";");
       document.body.appendChild(banner);
     }
 
-    let overlay = document.getElementById("previewClickLockOverlay");
-    if (!overlay) {
-      overlay = document.createElement("div");
+    if (!document.getElementById("previewClickLockOverlay")) {
+      const overlay = document.createElement("div");
       overlay.id = "previewClickLockOverlay";
-      overlay.style.cssText = "position:fixed;inset:0;z-index:2147483646;background:rgba(255,255,255,0);cursor:not-allowed;";
-      overlay.onclick = function (e) {
+      overlay.style.cssText = [
+        "position:fixed",
+        "inset:0",
+        "z-index:2147483645",
+        "background:rgba(255,255,255,0)",
+        "cursor:not-allowed"
+      ].join(";");
+
+      overlay.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
         alert("請先登入 Google 帳號，登入後才能使用功能。");
-        return false;
-      };
-      overlay.ontouchstart = function (e) {
+      }, true);
+
+      overlay.addEventListener("touchstart", function (e) {
         e.preventDefault();
         e.stopPropagation();
         alert("請先登入 Google 帳號，登入後才能使用功能。");
-        return false;
-      };
+      }, true);
+
       document.body.appendChild(overlay);
     }
 
-    // 只讓目前暱稱下面那顆登入鈕浮在遮罩上方
-    const loginBtn = document.getElementById("googleLoginLogoutBtn");
+    const loginBtn =
+      document.getElementById("googleLoginLogoutBtn") ||
+      document.querySelector(".google-login-btn") ||
+      document.querySelector(".google-entry-btn") ||
+      document.querySelector("[onclick*='loginWithGoogle']") ||
+      document.querySelector("[onclick*='loginLogoutGoogleFromStatus']");
+
     if (loginBtn) {
       loginBtn.style.position = "relative";
       loginBtn.style.zIndex = "2147483647";
       loginBtn.style.pointerEvents = "auto";
       loginBtn.removeAttribute("disabled");
+
+      loginBtn.addEventListener("click", function () {
+        localStorage.removeItem("previewMode");
+      }, { once: true, capture: true });
     }
   };
 
-  document.addEventListener("click", function (e) {
-    if (localStorage.getItem("previewMode") !== "true") return;
-    const loginBtn = e.target.closest && e.target.closest("#googleLoginLogoutBtn");
-    if (loginBtn) {
-      localStorage.removeItem("previewMode");
-      return;
-    }
-  }, true);
-
   document.addEventListener("DOMContentLoaded", function () {
-    if (localStorage.getItem("previewMode") === "true") {
-      const entry = document.getElementById("googleEntryOverlay");
-      if (entry) entry.classList.add("hide");
-      applyPreviewOverlayLock();
-      setTimeout(applyPreviewOverlayLock, 300);
-      setTimeout(applyPreviewOverlayLock, 1000);
-    }
+    applyPreviewOverlayLock();
+    setTimeout(applyPreviewOverlayLock, 300);
+    setTimeout(applyPreviewOverlayLock, 1000);
+    setTimeout(applyPreviewOverlayLock, 2500);
   });
 })();
 </script>
