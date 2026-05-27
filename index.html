@@ -516,7 +516,7 @@ h1 {
 
 <div class="login-status-bar">
 已登入：<span id="loginAccountText">Google帳號</span>
-<button class="nickname-edit-link" type="button" id="googleLoginLogoutBtn" onclick="handleGoogleAuthButton()">【登入】</button>
+<button class="nickname-edit-link" type="button" id="googleLoginLogoutBtn" onclick="loginLogoutGoogleFromStatus()">【登入】</button>
 </div>
 <nav class="main-nav">
 <button class="nav-btn active" onclick="showSection('wish', this)">🌱 許願池</button>
@@ -1328,92 +1328,52 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-
 <script>
-async function quickGoogleLogout() {
+async function loginLogoutGoogleFromStatus() {
   try {
-    if (window.auth && typeof window.auth.signOut === "function") {
-      await window.auth.signOut();
-    }
+    const authObj = window.firebaseAuth || window.auth;
+    const user = authObj && authObj.currentUser;
 
-    if (window.firebaseAuth && typeof window.firebaseAuth.signOut === "function") {
-      await window.firebaseAuth.signOut();
-    }
-
-    alert("已登出 Google 帳號");
-    location.reload();
-  } catch (error) {
-    console.error(error);
-    alert("登出失敗，請稍後再試");
-  }
-}
-</script>
-
-
-
-
-
-<script>
-async function handleGoogleAuthButton() {
-  try {
-    const authObj = window.auth || window.firebaseAuth;
-    const user = authObj?.currentUser;
-
-    // 已登入 → 登出
     if (user) {
-      await authObj.signOut();
-      alert("已登出 Google 帳號");
-      location.reload();
+      if (typeof window.logoutGoogle === "function") {
+        await window.logoutGoogle();
+      } else if (authObj && typeof authObj.signOut === "function") {
+        await authObj.signOut();
+      }
+      updateStatusGoogleButton();
       return;
     }
 
-    // 未登入 → 找原本 Google 登入按鈕
-    const googleBtn = Array.from(document.querySelectorAll("button"))
-      .find(btn =>
-        btn.textContent.includes("Google") ||
-        btn.textContent.includes("登入")
-      );
-
-    // 避免點到自己
-    if (googleBtn && googleBtn.id !== "googleLoginLogoutBtn") {
-      googleBtn.click();
+    if (typeof window.loginWithGoogle === "function") {
+      await window.loginWithGoogle();
+      updateStatusGoogleButton();
       return;
     }
 
-    // Firebase popup fallback
-    if (
-      window.googleProvider &&
-      authObj &&
-      typeof window.signInWithPopup === "function"
-    ) {
-      await window.signInWithPopup(authObj, window.googleProvider);
-      location.reload();
+    const entryLoginBtn = document.querySelector(".google-entry-btn");
+    if (entryLoginBtn && entryLoginBtn !== document.getElementById("googleLoginLogoutBtn")) {
+      entryLoginBtn.click();
       return;
     }
 
-    alert("找不到 Google 登入功能");
-
+    alert("Google 登入功能尚未載入，請重新整理後再試。");
   } catch (error) {
     console.error(error);
-    alert("Google 登入失敗");
+    alert("Google 登入/登出失敗，請稍後再試。");
   }
 }
 
-function updateGoogleAuthButton() {
+function updateStatusGoogleButton() {
   const btn = document.getElementById("googleLoginLogoutBtn");
   const text = document.getElementById("loginAccountText");
-
   if (!btn || !text) return;
 
-  const authObj = window.auth || window.firebaseAuth;
-  const user = authObj?.currentUser;
+  const authObj = window.firebaseAuth || window.auth;
+  const user = authObj && authObj.currentUser;
 
   if (user) {
     btn.textContent = "【登出】";
-    text.textContent =
-      user.displayName ||
-      user.email ||
-      "Google帳號";
+    text.textContent = user.displayName || user.email || "Google帳號";
   } else {
     btn.textContent = "【登入】";
     text.textContent = "未登入";
@@ -1421,15 +1381,13 @@ function updateGoogleAuthButton() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(updateGoogleAuthButton, 1200);
+  updateStatusGoogleButton();
+  setTimeout(updateStatusGoogleButton, 500);
+  setTimeout(updateStatusGoogleButton, 1200);
+  setTimeout(updateStatusGoogleButton, 2500);
 
-  const authObj = window.auth || window.firebaseAuth;
-
-  if (authObj && typeof authObj.onAuthStateChanged === "function") {
-    authObj.onAuthStateChanged(() => {
-      updateGoogleAuthButton();
-    });
-  }
+  const timer = setInterval(updateStatusGoogleButton, 1500);
+  setTimeout(() => clearInterval(timer), 10000);
 });
 </script>
 
