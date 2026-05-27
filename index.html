@@ -978,7 +978,7 @@ h1 {
 
       if (user) {
         window.currentPikminUser = user;
-        if (status) status.textContent = `已登入：${user.displayName || user.email || "Google 使用者"}`;
+        if (status) status.textContent = `${user.displayName || user.email || "Google 使用者"}`;
         if (loginBtn) loginBtn.style.display = "none";
         if (logoutBtn) logoutBtn.style.display = "inline-flex";
       } else {
@@ -1009,7 +1009,7 @@ h1 {
           gate.style.setProperty("pointer-events", "none", "important");
         }
       } catch (error) {
-        console.error("Google 登出失敗", error);
+        console.error("Google 失敗", error);
       }
     };
 
@@ -1112,10 +1112,10 @@ h1 {
 
     <div class="nickname-input-wrap">
       <div class="google-login-box">
-        <div id="googleLoginStatus" class="google-login-status">尚未登入 Google</div>
+        
         <div class="google-login-actions">
           <button type="button" id="googleLoginBtn" class="enter-btn google-login-btn" onclick="loginWithGoogle()">登入 Google</button>
-          <button type="button" id="googleLogoutBtn" class="enter-btn google-logout-btn" onclick="logoutGoogle()" style="display:none;">登出</button>
+          <button type="button" id="googleLogoutBtn" class="enter-btn google-logout-btn" onclick="logoutGoogle()" style="display:none;"></button>
         </div>
         <p class="nickname-tip">※ 需先登入 Google，才能進入網站與使用許願池。</p>
       </div>
