@@ -1335,7 +1335,7 @@ label textarea {
   max-height: 52vh;
   overflow-y: auto;
   margin-bottom: 24px;
-  padding-right: 8px;
+  padding-left: 8px;
 }
 
 .rule-section {
@@ -3085,7 +3085,7 @@ label textarea {
 /* ===== 回到頂部按鈕 ===== */
 #backToTopBtn {
   position: fixed !important;
-  right: 16px !important;
+  left: 16px !important;
   bottom: 18px !important;
   width: 46px !important;
   height: 46px !important;
@@ -4058,7 +4058,7 @@ h1 {
   max-height: 135px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 6px;
+  padding-left: 6px;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: auto;
@@ -4243,7 +4243,7 @@ html {
 
 .quick-bookmark-nav {
   position: fixed;
-  right: 14px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 9999;
