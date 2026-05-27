@@ -185,6 +185,74 @@
   to{ transform:rotate(360deg); }
 }
 
+
+/* ===== Google 進站登入視窗 ===== */
+.google-entry-overlay{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(7,10,14,.58);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  transition:opacity .3s ease, visibility .3s ease;
+}
+
+.google-entry-overlay.hide{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.google-entry-card{
+  width:min(92vw, 360px);
+  border-radius:28px;
+  padding:34px 28px 28px;
+  text-align:center;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 18px 50px rgba(0,0,0,.24);
+  color:#fff;
+}
+
+.google-entry-logo{
+  font-size:52px;
+  margin-bottom:12px;
+}
+
+.google-entry-title{
+  font-size:24px;
+  font-weight:800;
+  margin-bottom:10px;
+}
+
+.google-entry-text{
+  font-size:13px;
+  line-height:1.7;
+  color:rgba(255,255,255,.78);
+  margin-bottom:22px;
+}
+
+.google-entry-btn{
+  width:100%;
+  border:none;
+  border-radius:18px;
+  padding:14px 18px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  color:#1f2937;
+  background:#fff;
+  transition:.2s ease;
+}
+
+.google-entry-btn:hover{
+  transform:translateY(-1px);
+}
+
 </style>
 
 <style>
@@ -947,10 +1015,39 @@ h1 {
 
     onAuthStateChanged(auth, (user) => {
       updateGoogleLoginUi(user);
+
+      const googleEntryOverlay = document.getElementById("googleEntryOverlay");
+
+      if (googleEntryOverlay) {
+        if (user) {
+          googleEntryOverlay.classList.add("hide");
+        } else {
+          googleEntryOverlay.classList.remove("hide");
+        }
+      }
+
       window.dispatchEvent(new Event("firebase-ready"));
     });
   </script>
 
+
+
+<div id="googleEntryOverlay" class="google-entry-overlay">
+  <div class="google-entry-card">
+    <div class="google-entry-logo">🌸</div>
+    <div class="google-entry-title">PikminWish</div>
+    <div class="google-entry-text">
+      請先登入 Google 後再進入網站。<br>
+      登入後即可使用許願池與圖鑑功能。
+    </div>
+
+    <button type="button"
+      class="google-entry-btn"
+      onclick="loginWithGoogle()">
+      使用 Google 登入
+    </button>
+  </div>
+</div>
 
 <div id="nicknameGate" class="nickname-gate">
   <div class="nickname-modal">
