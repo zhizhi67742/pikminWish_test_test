@@ -1,5 +1,4 @@
 
-
 const expandedCoordMap = new Map();
 let nickname = "";
 let essenceLimit = 1200;
@@ -1266,7 +1265,7 @@ function renderWishHistory() {
   if (!list) return;
 
   const header = '<div class="wish-history-item history-sticky-head">花朵｜花農 → 許願者｜是否完成｜時間</div>';
-  const sortedHistory = wishHistory.slice().sort(function (a, b) {
+  const sortedHistory = [...wishHistory].sort(function (a, b) {
     return getHistorySortTime(b) - getHistorySortTime(a);
   });
 
@@ -1279,27 +1278,23 @@ function renderWishHistory() {
   if (historyPage > totalPages) historyPage = totalPages;
   if (historyPage < 1) historyPage = 1;
 
-  const startIndex = (historyPage - 1) * HISTORY_PAGE_SIZE;
-  const pageItems = sortedHistory.slice(startIndex, startIndex + HISTORY_PAGE_SIZE);
+  const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+  const pageItems = sortedHistory.slice(start, start + HISTORY_PAGE_SIZE);
 
-  list.innerHTML = header + pageItems.map(function (item) {
+  const rows = pageItems.map(function (item) {
     const flower = escapeHtml(item.flower || "花朵");
-    const farmer = escapeHtml(item.farmer || "—");
+    const farmer = escapeHtml(item.farmer || item.acceptedBy || "—");
     const requester = item.directShare ? "花農直接分享" : escapeHtml(item.requester || item.nickname || "許願者");
     const status = escapeHtml(item.status || "已完成");
-    const time = escapeHtml(item.time || formatHistoryTime(item.historyCreatedAt || item.createdAt));
+    const time = escapeHtml(item.time || formatHistoryTime(getHistorySortTime(item)));
     return `<div class="wish-history-item">${flower}｜${farmer} → ${requester}｜${status}｜${time}</div>`;
   }).join("");
 
-  if (totalPages > 1) {
-    list.innerHTML += `
-      <div class="history-pager">
-        <button type="button" onclick="changeHistoryPage(-1)" ${historyPage <= 1 ? "disabled" : ""}>上一頁</button>
-        <span>${historyPage} / ${totalPages}</span>
-        <button type="button" onclick="changeHistoryPage(1)" ${historyPage >= totalPages ? "disabled" : ""}>下一頁</button>
-      </div>
-    `;
-  }
+  const pager = sortedHistory.length > HISTORY_PAGE_SIZE
+    ? `<div class="history-pager"><button type="button" onclick="changeHistoryPage(-1)" ${historyPage <= 1 ? "disabled" : ""}>上一頁</button><span>${historyPage} / ${totalPages}</span><button type="button" onclick="changeHistoryPage(1)" ${historyPage >= totalPages ? "disabled" : ""}>下一頁</button></div>`
+    : "";
+
+  list.innerHTML = header + rows + pager;
 }
 
 function changeHistoryPage(direction) {
@@ -2658,6 +2653,7 @@ async function startFirebaseSync() {
   }
 
   // 即時同步許願卡：許願區公開、待完成區公開、完成區公開。
+  wishHistory = []; renderWishHistory();
 
   onSnapshot(wishesRef, (snapshot) => {
     const localWishes = wishes.filter(function (item) {
@@ -2708,26 +2704,30 @@ async function startFirebaseSync() {
     bindDynamicButtons();
   });
 
-
-  // 即時同步歷史許願：只顯示完成與刪除/取消紀錄，不記錄新增許願。
+  // 即時同步歷史許願：新增許願不寫入；只顯示完成、刪除/取消、花農分享。
   onSnapshot(wishHistoryRef, (snapshot) => {
-    wishHistory = [];
+    const cloudHistory = [];
 
     snapshot.forEach((docItem) => {
       const data = {
         historyId: docItem.id,
         ...docItem.data()
       };
-      const statusText = String(data.status || "");
-      const isAllowedHistory = statusText.includes("完成") || statusText.includes("取消") || statusText.includes("刪除") || statusText.includes("花農分享");
-      if (!isAllowedHistory) return;
-      addLocalWishHistory(data);
+      const status = String(data.status || "");
+
+      if (status.includes("已完成") || status.includes("已取消") || status.includes("刪除") || status.includes("花農分享")) {
+        cloudHistory.push(data);
+      }
+    });
+
+    wishHistory = [];
+    cloudHistory.forEach(function (item) {
+      addLocalWishHistory(item);
     });
 
     renderWishHistory();
     saveData();
   });
-
 
   // Firebase 新增願望
   const originalAddWish = window.addWish;
