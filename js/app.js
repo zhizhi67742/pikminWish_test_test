@@ -724,6 +724,15 @@ async function addWish() {
     return;
   }
 
+  if (isLockedWishFlowerValue(flower)) {
+    warnLockedFlower();
+    resetFlowerPicker();
+    return;
+  }
+
+  const canSubmitRepeatWish = await askRepeatWishIfNeeded(flower, nickname);
+  if (!canSubmitRepeatWish) return;
+
   const WISH_COOLDOWN_MS = 30 * 1000;
   const lastWishTime = Number(localStorage.getItem("lastWishSubmitTime") || 0);
   const now = Date.now();
@@ -734,15 +743,6 @@ async function addWish() {
     return;
   }
 
-
-  if (isLockedWishFlowerValue(flower)) {
-    warnLockedFlower();
-    resetFlowerPicker();
-    return;
-  }
-
-  const canSubmitRepeatWish = await askRepeatWishIfNeeded(flower, nickname);
-  if (!canSubmitRepeatWish) return;
 
   try {
     await getRecaptchaToken();
