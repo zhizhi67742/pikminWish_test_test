@@ -2368,7 +2368,7 @@ function loadData() {
   if (savedWishes) wishes = JSON.parse(savedWishes);
   if (savedPending) pending = JSON.parse(savedPending);
   if (savedDone) done = JSON.parse(savedDone);
-  wishHistory = []; localStorage.removeItem("flowerWishHistory");
+  if (savedHistory) wishHistory = JSON.parse(savedHistory);
 
   removeDemoWishesFromStorage();
 
@@ -2655,7 +2655,17 @@ async function startFirebaseSync() {
   } = window.firebaseFns;
 
   const wishesRef = collection(db, "wishes");
+  
   const wishHistoryRef = collection(db, "wishHistory");
+
+  // 清空所有歷史許願紀錄
+  onSnapshot(wishHistoryRef, (snapshot) => {
+    snapshot.forEach((docItem) => {
+      deleteDoc(doc(db, "wishHistory", docItem.id));
+    });
+  });
+
+
 
   // Firebase 準備好後，先讀取這個暱稱的雲端圖鑑。
   const savedDexName = getCurrentNickname();
@@ -2664,7 +2674,22 @@ async function startFirebaseSync() {
   }
 
   // 即時同步許願卡：許願區公開、待完成區公開、完成區公開。
-  wishHistory = []; renderWishHistory();
+  onSnapshot(wishHistoryRef, (snapshot) => {
+    const localHistory = wishHistory.filter(function (item) {
+      return !item.firebaseId;
+    });
+
+    wishHistory = localHistory;
+
+    snapshot.forEach((docItem) => {
+      addLocalWishHistory({
+        firebaseId: docItem.id,
+        ...docItem.data()
+      });
+    });
+
+    renderWishHistory();
+  });
 
   onSnapshot(wishesRef, (snapshot) => {
     const localWishes = wishes.filter(function (item) {
@@ -2760,8 +2785,6 @@ async function startFirebaseSync() {
       message,
       deleteAt: getWishDeleteAtThreeDaysLater(),
       createdTimestamp: Date.now(),
-      ownerUid: window.currentPikminUser ? window.currentPikminUser.uid : "",
-      ownerEmail: window.currentPikminUser ? window.currentPikminUser.email : "",
       status: "wish"
     };
 
@@ -2792,8 +2815,6 @@ async function startFirebaseSync() {
       farmer: nickname,
       acceptedByPlatform: getCurrentPlatform(),
       farmerPlatform: getCurrentPlatform(),
-      farmerUid: window.currentPikminUser ? window.currentPikminUser.uid : "",
-      farmerEmail: window.currentPikminUser ? window.currentPikminUser.email : "",
       acceptedAt: formatNow(),
       status: "pending"
     });
@@ -2810,11 +2831,6 @@ function enterWebsite() {
   const socialSelect = document.getElementById("socialTypeSelect");
   const rawNickname = input ? input.value.trim() : "";
   const platform = socialSelect ? socialSelect.value : "LINE";
-
-  if (!window.currentPikminUser) {
-    alert("請先使用 Google 登入，登入後才能使用許願池與圖鑑。");
-    return;
-  }
 
   if (!rawNickname) {
     alert("請輸入 LINE 社群或 DC 暱稱");

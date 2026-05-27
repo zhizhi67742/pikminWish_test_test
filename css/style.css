@@ -4694,39 +4694,3 @@ html {
 .clearable-input .clear-input-btn:hover {
   transform: translateY(-50%) !important;
 }
-
-
-/* Google 登入區塊（搬新版時新增） */
-.google-login-box {
-  width: 100%;
-  margin: 0 0 12px;
-  padding: 10px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(12px);
-}
-
-.google-login-status {
-  font-size: 12px;
-  margin-bottom: 8px;
-  opacity: 0.9;
-}
-
-.google-login-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.google-login-btn,
-.google-logout-btn {
-  min-width: 92px;
-  padding: 7px 12px;
-  font-size: 11px;
-}
-
-.google-logout-btn {
-  opacity: 0.85;
-}

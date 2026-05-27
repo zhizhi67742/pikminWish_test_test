@@ -789,13 +789,6 @@ h1 {
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
     import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-    import {
       getFirestore,
       collection,
       addDoc,
@@ -808,24 +801,19 @@ h1 {
     } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyAVMgid570CLZDQTPzhx2jQjatg62inRcY",
-  authDomain: "pikminwish.firebaseapp.com",
-  databaseURL: "https://pikminwish-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "pikminwish",
-  storageBucket: "pikminwish.firebasestorage.app",
-  messagingSenderId: "823415386805",
-  appId: "1:823415386805:web:a8cd25fcb88100619144fc",
-  measurementId: "G-62WR9TP8QT"
-};
+      apiKey: "AIzaSyAiMnrVOduGYTvehcCqb-3GvnrjDkzA-IE",
+      authDomain: "pikmin-wish.firebaseapp.com",
+      projectId: "pikmin-wish",
+      storageBucket: "pikmin-wish.firebasestorage.app",
+      messagingSenderId: "504626817337",
+      appId: "1:504626817337:web:92d164fc431d8c42c5e0e8",
+      measurementId: "G-E49FV9QS2Z"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
 
     window.firebaseDB = db;
-    window.firebaseAuth = auth;
-    window.currentPikminUser = null;
     window.firebaseFns = {
       collection,
       addDoc,
@@ -837,52 +825,7 @@ h1 {
       getDoc
     };
 
-    function updateGoogleLoginUi(user) {
-      const status = document.getElementById("googleLoginStatus");
-      const loginBtn = document.getElementById("googleLoginBtn");
-      const logoutBtn = document.getElementById("googleLogoutBtn");
-
-      if (user) {
-        window.currentPikminUser = user;
-        if (status) status.textContent = `已登入：${user.displayName || user.email || "Google 使用者"}`;
-        if (loginBtn) loginBtn.style.display = "none";
-        if (logoutBtn) logoutBtn.style.display = "inline-flex";
-      } else {
-        window.currentPikminUser = null;
-        if (status) status.textContent = "尚未登入 Google";
-        if (loginBtn) loginBtn.style.display = "inline-flex";
-        if (logoutBtn) logoutBtn.style.display = "none";
-      }
-    }
-
-    window.loginWithGoogle = async function () {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        console.error("Google 登入失敗", error);
-        alert("Google 登入失敗，請稍後再試。");
-      }
-    };
-
-    window.logoutGoogle = async function () {
-      try {
-        await signOut(auth);
-        const gate = document.getElementById("nicknameGate");
-        if (gate) {
-          gate.classList.remove("hidden-gate");
-          gate.style.display = "";
-          gate.style.visibility = "";
-          gate.style.pointerEvents = "";
-        }
-      } catch (error) {
-        console.error("Google 登出失敗", error);
-      }
-    };
-
-    onAuthStateChanged(auth, (user) => {
-      updateGoogleLoginUi(user);
-      window.dispatchEvent(new Event("firebase-ready"));
-    });
+    window.dispatchEvent(new Event("firebase-ready"));
   </script>
 
 
@@ -917,15 +860,6 @@ h1 {
     </div>
 
     <div class="nickname-input-wrap">
-      <div class="google-login-box">
-        <div id="googleLoginStatus" class="google-login-status">尚未登入 Google</div>
-        <div class="google-login-actions">
-          <button type="button" id="googleLoginBtn" class="enter-btn google-login-btn" onclick="loginWithGoogle()">登入 Google</button>
-          <button type="button" id="googleLogoutBtn" class="enter-btn google-logout-btn" onclick="logoutGoogle()" style="display:none;">登出</button>
-        </div>
-        <p class="nickname-tip">※ 需先登入 Google，才能進入網站與使用許願池。</p>
-      </div>
-
       <label>選擇平台並輸入暱稱</label>
 
       <div class="nickname-row">
