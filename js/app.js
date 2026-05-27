@@ -2368,7 +2368,7 @@ function loadData() {
   if (savedWishes) wishes = JSON.parse(savedWishes);
   if (savedPending) pending = JSON.parse(savedPending);
   if (savedDone) done = JSON.parse(savedDone);
-  if (savedHistory) wishHistory = JSON.parse(savedHistory);
+  wishHistory = []; localStorage.removeItem("flowerWishHistory");
 
   removeDemoWishesFromStorage();
 
@@ -2655,7 +2655,7 @@ async function startFirebaseSync() {
   } = window.firebaseFns;
 
   const wishesRef = collection(db, "wishes");
-  const wishHistoryRef = collection(db, "wishHistory_v2");
+  const wishHistoryRef = collection(db, "wishHistory");
 
   // Firebase 準備好後，先讀取這個暱稱的雲端圖鑑。
   const savedDexName = getCurrentNickname();
@@ -2664,22 +2664,7 @@ async function startFirebaseSync() {
   }
 
   // 即時同步許願卡：許願區公開、待完成區公開、完成區公開。
-  onSnapshot(wishHistoryRef, (snapshot) => {
-    const localHistory = wishHistory.filter(function (item) {
-      return !item.firebaseId;
-    });
-
-    wishHistory = localHistory;
-
-    snapshot.forEach((docItem) => {
-      addLocalWishHistory({
-        firebaseId: docItem.id,
-        ...docItem.data()
-      });
-    });
-
-    renderWishHistory();
-  });
+  wishHistory = []; renderWishHistory();
 
   onSnapshot(wishesRef, (snapshot) => {
     const localWishes = wishes.filter(function (item) {
