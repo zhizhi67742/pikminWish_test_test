@@ -1391,5 +1391,89 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<script>
+function isPreviewMode() {
+  return localStorage.getItem("previewMode") === "true";
+}
+
+function enablePreviewMode() {
+  localStorage.setItem("previewMode", "true");
+  applyPreviewMode();
+}
+
+function disablePreviewMode() {
+  localStorage.removeItem("previewMode");
+  location.reload();
+}
+
+function applyPreviewMode() {
+  if (!isPreviewMode()) return;
+
+  document.body.classList.add("preview-mode-active");
+
+  const blocker = document.createElement("div");
+  blocker.id = "previewModeBanner";
+  blocker.innerHTML = "👀 預覽模式中（僅可觀看，無法操作）";
+  blocker.style.cssText = `
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999999;
+    background: rgba(20,20,20,0.75);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+    font-size: 13px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  `;
+  document.body.appendChild(blocker);
+
+  document.addEventListener("click", function(e) {
+    const target = e.target;
+
+    if (
+      target.closest("#googleLoginLogoutBtn") ||
+      target.closest(".google-login-btn") ||
+      target.closest(".google-entry-btn")
+    ) {
+      localStorage.removeItem("previewMode");
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+  }, true);
+
+  document.addEventListener("submit", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+
+  const allInputs = document.querySelectorAll(
+    "input, textarea, select, button"
+  );
+
+  allInputs.forEach(el => {
+    if (
+      el.id === "googleLoginLogoutBtn" ||
+      el.classList.contains("google-login-btn") ||
+      el.classList.contains("google-entry-btn")
+    ) {
+      return;
+    }
+
+    el.disabled = true;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  applyPreviewMode();
+});
+</script>
+
 </body>
 </html>
