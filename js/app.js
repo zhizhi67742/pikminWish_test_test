@@ -453,16 +453,30 @@ function resetFlowerPicker() {
   initFlowerPicker();
 }
 
+let __pikminCurrentSection = document.querySelector(".page-section.active")?.id || "wish";
+
 function showSection(sectionId, btn) {
+  const previousSection = __pikminCurrentSection;
+
   document.querySelectorAll(".page-section").forEach(function (section) {
     section.classList.remove("active");
   });
-  document.getElementById(sectionId).classList.add("active");
+
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) targetSection.classList.add("active");
 
   document.querySelectorAll(".nav-btn").forEach(function (item) {
     item.classList.remove("active");
   });
-  btn.classList.add("active");
+  if (btn) btn.classList.add("active");
+
+  __pikminCurrentSection = sectionId;
+
+  // 從歷史許願切回許願池時，重新整理訂單畫面並短暫提示同步中，避免畫面看起來像訂單消失。
+  if (previousSection === "history" && sectionId === "wish") {
+    showAppLoadingOverlay("正在同步許願池", "正在重新載入訂單資料，請稍等一下。", 900);
+    refreshWishOrderViews();
+  }
 }
 
 
@@ -2626,13 +2640,58 @@ async function cleanupSpamWishGroups(wishList) {
 
 /* ===== 進站載入視窗控制 ===== */
 window.__pikminInitialLoadState = window.__pikminInitialLoadState || { wishes:false, history:false };
+function getOrCreateAppLoadingOverlay() {
+  let overlay = document.getElementById("appLoadingOverlay");
+  if (overlay) return overlay;
+
+  overlay = document.createElement("div");
+  overlay.id = "appLoadingOverlay";
+  overlay.className = "app-loading-overlay hide";
+  overlay.setAttribute("aria-live", "polite");
+  overlay.setAttribute("aria-busy", "true");
+  overlay.innerHTML = `
+    <div class="app-loading-card">
+      <div class="app-loading-spinner"></div>
+      <div class="app-loading-title">資料載入中</div>
+      <div class="app-loading-text">正在同步許願池資料，請稍等一下。</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function showAppLoadingOverlay(title, text, autoHideMs) {
+  const overlay = getOrCreateAppLoadingOverlay();
+  const titleEl = overlay.querySelector(".app-loading-title");
+  const textEl = overlay.querySelector(".app-loading-text");
+  if (titleEl && title) titleEl.textContent = title;
+  if (textEl && text) textEl.textContent = text;
+
+  overlay.classList.remove("hide");
+  overlay.setAttribute("aria-busy", "true");
+
+  if (overlay.__pikminHideTimer) clearTimeout(overlay.__pikminHideTimer);
+  if (autoHideMs) {
+    overlay.__pikminHideTimer = setTimeout(hideAppLoadingOverlay, autoHideMs);
+  }
+}
+
 function hideAppLoadingOverlay() {
   const overlay = document.getElementById("appLoadingOverlay");
   if (!overlay) return;
   overlay.classList.add("hide");
-  setTimeout(function(){
-    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
-  }, 420);
+  overlay.setAttribute("aria-busy", "false");
+}
+
+function refreshWishOrderViews() {
+  try {
+    if (typeof renderWishes === "function") renderWishes();
+    if (typeof renderPending === "function") renderPending();
+    if (typeof renderDone === "function") renderDone();
+    if (typeof bindDynamicButtons === "function") bindDynamicButtons();
+  } catch (error) {
+    console.error("重新整理許願池訂單失敗", error);
+  }
 }
 function markAppInitialLoaded(part) {
   window.__pikminInitialLoadState[part] = true;
