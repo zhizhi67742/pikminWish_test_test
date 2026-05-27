@@ -38,26 +38,11 @@ let spamWishCleanupDoneKeys = new Set();
 
 function getPikminAccountAgeInfo() {
   const user = window.currentPikminUser || (window.firebaseAuth && window.firebaseAuth.currentUser);
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-
-  if (!user) {
-    return { signedIn: false, allowed: false, isNewAccount: true, remainingDays: 7 };
-  }
-
-  const creationTime = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
-  if (!creationTime || Number.isNaN(creationTime.getTime())) {
-    return { signedIn: true, allowed: true, isNewAccount: false, remainingDays: 0 };
-  }
-
-  const ageMs = Date.now() - creationTime.getTime();
-  const remainingMs = sevenDaysMs - ageMs;
-  const isNewAccount = remainingMs > 0;
-
   return {
-    signedIn: true,
-    allowed: !isNewAccount,
-    isNewAccount,
-    remainingDays: isNewAccount ? Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000))) : 0
+    signedIn: !!user,
+    allowed: !!user,
+    isNewAccount: false,
+    remainingDays: 0
   };
 }
 
@@ -66,11 +51,6 @@ function guardPikminAccountCanPost() {
 
   if (!info.signedIn) {
     alert("請先使用 Google 登入，登入後才能發文。");
-    return false;
-  }
-
-  if (info.isNewAccount) {
-    alert(`為了防止惡意刷單，Google 帳號建立需滿 7 天才能發文。\n目前還需要約 ${info.remainingDays} 天。`);
     return false;
   }
 

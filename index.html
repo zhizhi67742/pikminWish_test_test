@@ -977,25 +977,9 @@ h1 {
       const nicknameGate = document.getElementById("nicknameGate");
 
       if (user) {
-        const creationTime = user?.metadata?.creationTime ? new Date(user.metadata.creationTime) : null;
-        const accountAgeMs = creationTime ? (Date.now() - creationTime.getTime()) : Number.MAX_SAFE_INTEGER;
-        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-        const isNewAccount = accountAgeMs < sevenDaysMs;
-
-        if (isNewAccount) {
-          localStorage.setItem("previewMode", "true");
-          setTimeout(() => {
-            if (typeof applyPreviewOnlyLock === "function") {
-              applyPreviewOnlyLock();
-            }
-          }, 200);
-
-          alert("Google 帳號建立未滿 7 天，目前僅能使用預覽模式。");
-        } else {
-          localStorage.removeItem("previewMode");
-          if (typeof removePreviewLock === "function") {
-            removePreviewLock();
-          }
+        localStorage.removeItem("previewMode");
+        if (typeof removePreviewLock === "function") {
+          removePreviewLock();
         }
 
         if (googleEntryOverlay) googleEntryOverlay.classList.add("hide");
