@@ -710,6 +710,17 @@ async function addWish() {
   const flower = document.getElementById("flowerInput").value.trim();
   const message = document.getElementById("messageInput").value.trim();
 
+  const WISH_COOLDOWN_MS = 30 * 1000;
+  const lastWishTime = Number(localStorage.getItem("lastWishSubmitTime") || 0);
+  const now = Date.now();
+
+  if (now - lastWishTime < WISH_COOLDOWN_MS) {
+    const waitSec = Math.ceil((WISH_COOLDOWN_MS - (now - lastWishTime)) / 1000);
+    alert(`請等 ${waitSec} 秒後再送出許願單`);
+    return;
+  }
+
+
   nickname = getCurrentNickname();
 
   if (!guardPikminAccountCanPost()) return;
@@ -732,17 +743,6 @@ async function addWish() {
 
   const canSubmitRepeatWish = await askRepeatWishIfNeeded(flower, nickname);
   if (!canSubmitRepeatWish) return;
-
-  const WISH_COOLDOWN_MS = 30 * 1000;
-  const lastWishTime = Number(localStorage.getItem("lastWishSubmitTime") || 0);
-  const now = Date.now();
-
-  if (now - lastWishTime < WISH_COOLDOWN_MS) {
-    const waitSec = Math.ceil((WISH_COOLDOWN_MS - (now - lastWishTime)) / 1000);
-    alert(`請等 ${waitSec} 秒後再送出許願單`);
-    return;
-  }
-
 
   try {
     await getRecaptchaToken();
