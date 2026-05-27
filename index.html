@@ -515,7 +515,7 @@ h1 {
 </div>
 
 <div class="login-status-bar">
-已登入：<span id="loginAccountText">帳號</span>
+已登入：<span id="loginAccountText">Google帳號</span>
 <button class="nickname-edit-link" type="button">【登出】</button>
 </div>
 <nav class="main-nav">
@@ -1302,5 +1302,31 @@ document.addEventListener("DOMContentLoaded", () => {
 <a href="#quick-pending" onclick="jumpToOrderSection(event, 'quick-pending')">🌱 待完成</a>
 <a href="#quick-done" onclick="jumpToOrderSection(event, 'quick-done')">✅ 已完成</a>
 </nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const updateGoogleAccountName = () => {
+    try {
+      const user =
+        (window.auth && window.auth.currentUser) ||
+        (window.firebaseAuth && window.firebaseAuth.currentUser);
+
+      const target = document.getElementById("loginAccountText");
+
+      if (!target || !user) return;
+
+      target.textContent =
+        user.displayName ||
+        user.email ||
+        "Google帳號";
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  setTimeout(updateGoogleAccountName, 1000);
+});
+</script>
+
 </body>
 </html>
