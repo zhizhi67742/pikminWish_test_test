@@ -1350,41 +1350,52 @@ async function quickGoogleLogout() {
 </script>
 
 
+
+
+
 <script>
 async function handleGoogleAuthButton() {
   try {
-    const user =
-      (window.auth && window.auth.currentUser) ||
-      (window.firebaseAuth && window.firebaseAuth.currentUser);
+    const authObj = window.auth || window.firebaseAuth;
+    const user = authObj?.currentUser;
 
+    // 已登入 → 登出
     if (user) {
-      if (window.auth && typeof window.auth.signOut === "function") {
-        await window.auth.signOut();
-      }
-
-      if (window.firebaseAuth && typeof window.firebaseAuth.signOut === "function") {
-        await window.firebaseAuth.signOut();
-      }
-
+      await authObj.signOut();
       alert("已登出 Google 帳號");
       location.reload();
       return;
     }
 
-    const loginBtn =
-      document.querySelector(".google-login-btn") ||
-      document.querySelector("[onclick*=google]") ||
-      document.querySelector("[onclick*=Google]");
+    // 未登入 → 找原本 Google 登入按鈕
+    const googleBtn = Array.from(document.querySelectorAll("button"))
+      .find(btn =>
+        btn.textContent.includes("Google") ||
+        btn.textContent.includes("登入")
+      );
 
-    if (loginBtn) {
-      loginBtn.click();
-    } else {
-      alert("找不到 Google 登入按鈕");
+    // 避免點到自己
+    if (googleBtn && googleBtn.id !== "googleLoginLogoutBtn") {
+      googleBtn.click();
+      return;
     }
+
+    // Firebase popup fallback
+    if (
+      window.googleProvider &&
+      authObj &&
+      typeof window.signInWithPopup === "function"
+    ) {
+      await window.signInWithPopup(authObj, window.googleProvider);
+      location.reload();
+      return;
+    }
+
+    alert("找不到 Google 登入功能");
 
   } catch (error) {
     console.error(error);
-    alert("操作失敗，請稍後再試");
+    alert("Google 登入失敗");
   }
 }
 
@@ -1394,9 +1405,8 @@ function updateGoogleAuthButton() {
 
   if (!btn || !text) return;
 
-  const user =
-    (window.auth && window.auth.currentUser) ||
-    (window.firebaseAuth && window.firebaseAuth.currentUser);
+  const authObj = window.auth || window.firebaseAuth;
+  const user = authObj?.currentUser;
 
   if (user) {
     btn.textContent = "【登出】";
@@ -1411,7 +1421,15 @@ function updateGoogleAuthButton() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(updateGoogleAuthButton, 1000);
+  setTimeout(updateGoogleAuthButton, 1200);
+
+  const authObj = window.auth || window.firebaseAuth;
+
+  if (authObj && typeof authObj.onAuthStateChanged === "function") {
+    authObj.onAuthStateChanged(() => {
+      updateGoogleAuthButton();
+    });
+  }
 });
 </script>
 
