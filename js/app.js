@@ -2337,7 +2337,7 @@ function loadData() {
   if (savedWishes) wishes = JSON.parse(savedWishes);
   if (savedPending) pending = JSON.parse(savedPending);
   if (savedDone) done = JSON.parse(savedDone);
-  wishHistory = []; localStorage.removeItem("flowerWishHistory");
+  if (savedHistory) wishHistory = JSON.parse(savedHistory);
 
   removeDemoWishesFromStorage();
 
