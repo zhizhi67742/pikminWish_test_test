@@ -1,3 +1,12 @@
+
+setInterval(function () {
+  wishHistory = [];
+  const historyList = document.getElementById("wishHistoryList");
+  if (historyList) {
+    historyList.innerHTML = '<div class="wish-history-item history-sticky-head">花朵｜花農 → 許願者｜是否完成｜時間</div><div class="empty">目前還沒有歷史許願紀錄。</div>';
+  }
+}, 1000);
+
 const expandedCoordMap = new Map();
 let nickname = "";
 let essenceLimit = 1200;
