@@ -921,6 +921,9 @@ h1 {
 
     window.loginWithGoogle = async function () {
       localStorage.removeItem("previewMode");
+      const googleEntryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
+      if (googleEntryOverlayBeforeLogin) googleEntryOverlayBeforeLogin.classList.add("hide");
+      localStorage.removeItem("previewMode");
       const entryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
       if (entryOverlayBeforeLogin) entryOverlayBeforeLogin.classList.add("hide");
       localStorage.removeItem("previewMode");
@@ -936,6 +939,10 @@ h1 {
     window.logoutGoogle = async function () {
       try {
         await signOut(auth);
+        localStorage.removeItem("previewMode");
+        removePreviewLock();
+        const googleEntryOverlayAfterLogout = document.getElementById("googleEntryOverlay");
+        if (googleEntryOverlayAfterLogout) googleEntryOverlayAfterLogout.classList.remove("hide");
         localStorage.removeItem("previewMode");
         const entryOverlayAfterLogout = document.getElementById("googleEntryOverlay");
         if (entryOverlayAfterLogout) entryOverlayAfterLogout.classList.remove("hide");
@@ -1348,6 +1355,8 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 async function loginLogoutGoogleFromStatus() {
   localStorage.removeItem("previewMode");
+  removePreviewLock();
+  localStorage.removeItem("previewMode");
   localStorage.removeItem("previewMode");
   localStorage.removeItem("previewMode");
   localStorage.removeItem("previewMode");
@@ -1414,10 +1423,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 (function () {
-  function authUserNow() {
-    const authObj = window.firebaseAuth || window.auth;
+  function getAuthObj() {
+    return window.firebaseAuth || window.auth || null;
+  }
+
+  function getCurrentUser() {
+    const authObj = getAuthObj();
     return authObj && authObj.currentUser ? authObj.currentUser : null;
   }
+
+  window.removePreviewLock = function () {
+    const lock = document.getElementById("previewSiteClickLock");
+    const banner = document.getElementById("previewModeBanner");
+    const oldLock = document.getElementById("previewClickLockOverlay");
+
+    if (lock) lock.remove();
+    if (banner) banner.remove();
+    if (oldLock) oldLock.remove();
+
+    document.body.classList.remove("preview-mode-active");
+  };
 
   window.enterPreviewOnlyMode = function () {
     localStorage.setItem("previewMode", "true");
@@ -1425,28 +1450,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const entryOverlay = document.getElementById("googleEntryOverlay");
     if (entryOverlay) entryOverlay.classList.add("hide");
 
-    applyPreviewSiteLock();
+    applyPreviewOnlyLock();
   };
 
-  window.clearPreviewOnlyMode = function () {
-    localStorage.removeItem("previewMode");
-
-    const lock = document.getElementById("previewSiteClickLock");
-    const banner = document.getElementById("previewModeBanner");
-
-    if (lock) lock.remove();
-    if (banner) banner.remove();
-
-    document.body.classList.remove("preview-mode-active");
-  };
-
-  window.applyPreviewSiteLock = function () {
+  window.applyPreviewOnlyLock = function () {
     if (localStorage.getItem("previewMode") !== "true") return;
 
-    if (authUserNow()) {
-      clearPreviewOnlyMode();
+    if (getCurrentUser()) {
+      localStorage.removeItem("previewMode");
+      removePreviewLock();
       return;
     }
+
+    const entryOverlay = document.getElementById("googleEntryOverlay");
+    if (entryOverlay) entryOverlay.classList.add("hide");
 
     document.body.classList.add("preview-mode-active");
 
@@ -1477,6 +1494,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }, true);
 
+      lock.addEventListener("touchstart", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert("請先登入 Google 帳號，登入後才能使用功能。");
+        return false;
+      }, true);
+
       document.body.appendChild(lock);
     }
 
@@ -1489,43 +1513,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function showEntryIfNeeded() {
     const entryOverlay = document.getElementById("googleEntryOverlay");
+    const user = getCurrentUser();
 
-    // 重點：未登入且不是預覽時，進入畫面固定顯示，不要自動消失
-    if (localStorage.getItem("previewMode") !== "true" && !authUserNow()) {
-      if (entryOverlay) entryOverlay.classList.remove("hide");
-    }
-
-    // 預覽模式才隱藏進入畫面並鎖網站
-    if (localStorage.getItem("previewMode") === "true" && !authUserNow()) {
+    if (user) {
+      localStorage.removeItem("previewMode");
+      removePreviewLock();
       if (entryOverlay) entryOverlay.classList.add("hide");
-      applyPreviewSiteLock();
+      return;
     }
 
-    // 登入成功後才讓網站可操作
-    const authObj = window.firebaseAuth || window.auth;
+    if (localStorage.getItem("previewMode") === "true") {
+      if (entryOverlay) entryOverlay.classList.add("hide");
+      applyPreviewOnlyLock();
+      return;
+    }
+
+    // 重點：未登入、不是預覽時，進入畫面一定要顯示
+    removePreviewLock();
+    if (entryOverlay) entryOverlay.classList.remove("hide");
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    showEntryIfNeeded();
+
+    const authObj = getAuthObj();
     if (authObj && typeof authObj.onAuthStateChanged === "function") {
-      authObj.onAuthStateChanged(function (user) {
-        if (user) {
-          clearPreviewOnlyMode();
-          if (entryOverlay) entryOverlay.classList.add("hide");
-        } else {
-          if (localStorage.getItem("previewMode") === "true") {
-            if (entryOverlay) entryOverlay.classList.add("hide");
-            applyPreviewSiteLock();
-          } else {
-            if (entryOverlay) entryOverlay.classList.remove("hide");
-          }
-        }
+      authObj.onAuthStateChanged(function () {
+        showEntryIfNeeded();
       });
     }
 
-    setTimeout(function () {
-      if (localStorage.getItem("previewMode") !== "true" && !authUserNow()) {
-        if (entryOverlay) entryOverlay.classList.remove("hide");
-      }
-    }, 500);
+    // Firebase currentUser 可能晚一點才有，補檢查但不自動關登入畫面
+    [300, 800, 1500, 3000].forEach(function (ms) {
+      setTimeout(showEntryIfNeeded, ms);
+    });
   });
 })();
 </script>
