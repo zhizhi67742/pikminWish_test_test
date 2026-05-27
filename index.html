@@ -3,237 +3,1239 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PikminWish 花農許願池</title>
-  <link rel="stylesheet" href="./style.css" />
+  <title>花農許願池</title>
+  <link rel="stylesheet" href="css/style.css?v=mobile-button-radius-20260527" />
+
+<style>
+.wish-history-item{
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+    .nickname-row {
+      display:flex;
+      gap:0;
+      align-items:stretch;
+    }
+
+    #socialTypeSelect {
+      width:96px;
+      flex:0 0 96px;
+      height:52px;
+      background:#111922;
+      color:#ffd966;
+      border:1px solid rgba(255,217,102,.32);
+      border-right:0;
+      border-radius:16px 0 0 16px;
+      padding:0 12px;
+      font-size:14px;
+      font-weight:800;
+      outline:none;
+      cursor:pointer;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    #socialTypeSelect option {
+      background:#111922;
+      color:#ffd966;
+    }
+
+    #gateNicknameInput {
+      height:52px;
+      border-radius:0 16px 16px 0;
+      border:1px solid rgba(255,217,102,.32);
+      background:#111922;
+      color:#f5f7f4;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    #gateNicknameInput::placeholder {
+      color:rgba(245,247,244,.55);
+    }
+
+
+.harvest-quick-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 14px;
+}
+
+.harvest-tag-btn,
+.harvest-tag-clear{
+  border:none;
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:14px;
+  cursor:pointer;
+  transition:0.2s ease;
+  background:rgba(255,255,255,0.08);
+  color:#f5f5f5;
+}
+
+.harvest-tag-btn:hover,
+.harvest-tag-clear:hover{
+  
+  background:rgba(255,255,255,0.14);
+}
+
+.harvest-tag-btn.active{
+  background:#c9df7a;
+  color:#1f3316;
+  font-weight:700;
+}
+
+.harvest-tag-clear{
+  background:rgba(255,180,180,0.16);
+  color:#ffd6d6;
+}
+
+@media (max-width: 768px){
+  .harvest-tag-btn,
+  .harvest-tag-clear{
+    font-size:13px;
+    padding:7px 12px;
+  }
+}
+
+
+@media (max-width: 768px){
+  .harvest-quick-tags{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    flex-direction:row !important;
+    gap:8px !important;
+    align-items:flex-start !important;
+  }
+
+  .harvest-tag-btn,
+  .harvest-tag-clear{
+    width:auto !important;
+    flex:0 0 auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    white-space:nowrap !important;
+    padding:6px 12px !important;
+    font-size:12px !important;
+    border-radius:999px !important;
+  }
+}
+
+</style>
+
+<style>
+
+/* ===== FORCE FIX: 目前暱稱固定在標題下方，不覆蓋大標 ===== */
+#currentNicknameBar,
+.current-nickname-bar,
+.currentNicknameBar,
+.nickname-status,
+.nickname-pill {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  translate: none !important;
+  float: none !important;
+  clear: both !important;
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: calc(100vw - 32px) !important;
+  margin: 16px auto 0 auto !important;
+  z-index: 1 !important;
+}
+
+.hero,
+.hero-section,
+.hero-content,
+.hero-inner,
+.header-content,
+.main-hero,
+.landing-hero {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.hero h1,
+.hero-title,
+.main-title,
+.site-title,
+h1 {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin-bottom: 0 !important;
+  z-index: 2 !important;
+}
+
+#currentNicknameBar {
+  order: 3 !important;
+}
+
+@media (min-width: 769px) {
+  #currentNicknameBar,
+  .current-nickname-bar,
+  .currentNicknameBar,
+  .nickname-status,
+  .nickname-pill {
+    margin-top: 18px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #currentNicknameBar,
+  .current-nickname-bar,
+  .currentNicknameBar,
+  .nickname-status,
+  .nickname-pill {
+    margin-top: 12px !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+  }
+}
+
+
+.harvest-quick-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 14px;
+}
+
+.harvest-tag-btn,
+.harvest-tag-clear{
+  border:none;
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:14px;
+  cursor:pointer;
+  transition:0.2s ease;
+  background:rgba(255,255,255,0.08);
+  color:#f5f5f5;
+}
+
+.harvest-tag-btn:hover,
+.harvest-tag-clear:hover{
+  
+  background:rgba(255,255,255,0.14);
+}
+
+.harvest-tag-btn.active{
+  background:#c9df7a;
+  color:#1f3316;
+  font-weight:700;
+}
+
+.harvest-tag-clear{
+  background:rgba(255,180,180,0.16);
+  color:#ffd6d6;
+}
+
+@media (max-width: 768px){
+  .harvest-tag-btn,
+  .harvest-tag-clear{
+    font-size:13px;
+    padding:7px 12px;
+  }
+}
+
+</style>
+
+<style>
+
+/* ===== FINAL FIX: 剛進入規則頁 LINE/DC 選單箭頭 ===== */
+#nicknameGate select#socialTypeSelect,
+#nicknameGate select.gate-social-select,
+#nicknameGate select.gate-platform-select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-color: #111827 !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 9l5 5 5-5' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 16px center !important;
+  background-size: 18px 18px !important;
+  padding-right: 44px !important;
+}
+
+/* 關掉前幾版造成的第二顆箭頭 */
+#nicknameGate .gate-platform-wrap::after,
+#nicknameGate .gate-platform-field::after,
+#nicknameGate .platform-row::after,
+#nicknameGate .gate-social-select::after,
+#nicknameGate #socialTypeSelect::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* 避免 wrapper 變成額外方塊 */
+#nicknameGate .gate-platform-wrap {
+  display: contents !important;
+}
+
+
+.harvest-quick-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 14px;
+}
+
+.harvest-tag-btn,
+.harvest-tag-clear{
+  border:none;
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:14px;
+  cursor:pointer;
+  transition:0.2s ease;
+  background:rgba(255,255,255,0.08);
+  color:#f5f5f5;
+}
+
+.harvest-tag-btn:hover,
+.harvest-tag-clear:hover{
+  
+  background:rgba(255,255,255,0.14);
+}
+
+.harvest-tag-btn.active{
+  background:#c9df7a;
+  color:#1f3316;
+  font-weight:700;
+}
+
+.harvest-tag-clear{
+  background:rgba(255,180,180,0.16);
+  color:#ffd6d6;
+}
+
+@media (max-width: 768px){
+  .harvest-tag-btn,
+  .harvest-tag-clear{
+    font-size:13px;
+    padding:7px 12px;
+  }
+}
+
+</style>
+
+<style id="final-name-platform-tag-fix">
+.name-platform-tag{display:inline-block!important;position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;float:none!important;width:auto!important;min-width:auto!important;max-width:max-content!important;height:auto!important;margin:0 0 0 6px!important;padding:2px 7px!important;border-radius:999px!important;font-size:11px!important;font-weight:800!important;line-height:1.15!important;vertical-align:baseline!important;white-space:nowrap!important;color:#20351f!important;background:#dff4c8!important;border:1px solid rgba(255,255,255,.45)!important;box-shadow:none!important;box-sizing:border-box!important;}@media(max-width:640px){.name-platform-tag{margin-left:4px!important;padding:1px 6px!important;font-size:10px!important;line-height:1.1!important;vertical-align:1px!important;}}
+</style>
+
+<style id="mobile-button-radius-final-fix">
+@media (max-width: 768px) {
+  #confirmModal .modal-actions > button.confirm-btn,
+  #confirmModal .modal-actions > button.cancel-btn,
+  #uploadConfirmModal .modal-actions > button.confirm-btn,
+  #uploadConfirmModal .modal-actions > button.cancel-btn,
+  #doneModal .modal-actions > button.confirm-btn,
+  #doneModal .modal-actions > button.cancel-btn {
+    border-radius: 17px !important;
+    -webkit-border-radius: 17px !important;
+    overflow: hidden !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+  }
+}
+</style>
+
+<style>
+.clear-button,
+.clear-input-btn,
+.search-clear-btn,
+.flower-clear-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+}
+
+.clear-button svg,
+.clear-input-btn svg,
+.search-clear-btn svg,
+.flower-clear-btn svg {
+  display: block !important;
+  margin: auto !important;
+}
+</style>
+
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <div class="brand">🌸 PikminWish</div>
-      <div class="userbox">
-        <span id="userName" class="muted">尚未登入</span>
-        <img id="userPhoto" class="hidden" alt="使用者頭像" />
-        <button id="headerPreviewBtn" class="btn-light preview-trigger">預覽</button>
-        <button id="loginBtn">登入</button>
-        <button id="logoutBtn" class="btn-light hidden">登出</button>
+  <button id="backToTopBtn" type="button" title="回到頂部" aria-label="回到頂部">⬆</button>
+
+  <div class="bg-decor decor-1">✨</div>
+  <div class="bg-decor decor-2">🌸</div>
+  <div class="bg-decor decor-3">🌱</div>
+
+  <header class="site-header">
+    <div class="tag">PIKMIN WISHING</div>
+    <h1>🌱 花農許願池</h1>
+    <p>留下你的願望，花農幫你實現。</p>
+
+    <div class="current-nickname-bar" id="currentNicknameBar">
+      <span class="nickname-icon">👤</span>
+      <span>目前暱稱：<strong id="currentNicknameText">未設定</strong></span>
+      <button type="button" class="nickname-edit-link" onclick="openNicknameModal()">✏️ 修改暱稱</button>
+    </div>
+
+    <nav class="main-nav">
+      <button class="nav-btn active" onclick="showSection('wish', this)">🌱 許願池</button>
+      <button class="nav-btn" onclick="showSection('history', this)">🕰️ 歷史許願</button>
+      <button class="nav-btn" onclick="showSection('dex', this)">🌸 花朵圖鑑</button>
+      <button class="nav-btn" onclick="showSection('changelog', this)">📜 更新日誌</button>
+    </nav>
+
+    <div class="event-banner">
+      <div class="event-badge">🌼 5月新花</div>
+      <div>
+        <strong>勿忘草登場</strong>
+        <span>本月活動花種，記得更新你的圖鑑庫存！</span>
       </div>
     </div>
   </header>
 
-  <div id="loginScreen" class="login-screen">
-    <div class="login-card">
-      <h1>🌱 歡迎來到 PikminWish</h1>
-      <p class="muted">請先使用 Google 登入，登入後才能使用許願池與圖鑑。</p>
-      <div class="login-actions"><button id="loginBtn2">登入</button><button id="previewBtn" class="btn-light preview-trigger">預覽網站</button></div>
+  <main class="container">
+    <section id="wish" class="page-section active">
+
+      <section class="panel">
+        <h2>🌱 新增願望</h2>
+
+        <div class="form-grid">
+          <div class="wish-top-fields">
+            <label class="flower-field">
+              花種（必填）
+              <input id="flowerInput" type="hidden" />
+              <div class="flower-picker">
+                <div class="flower-picker-row combo-row">
+                  <div class="clearable-input flower-combo-wrap">
+                    <input id="flowerComboInput" type="text" placeholder="🔍 可輸入或點選花種" autocomplete="off" />
+                    <button class="clear-input-btn" type="button" aria-label="清除花種搜尋" onclick="clearFlowerComboInput()">×</button>
+                    <div id="flowerComboDropdown" class="flower-combo-dropdown" role="listbox"></div>
+                  </div>
+                  <select id="flowerColorSelect" aria-label="選擇顏色"></select>
+                </div>
+              </div>
+              <p class="flower-tip">
+                ※ 花種可直接輸入或從選單選擇，再選顏色。單色花種可直接許願。
+              </p>
+            </label>
+
+            <label class="time-field">
+              可收花時間區間
+              <div class="time-range">
+                <div class="time-block">
+                  <span>開始</span>
+                  <select id="startHour"></select>
+                  <b>:</b>
+                  <select id="startMinute"></select>
+                </div>
+
+                <div class="time-block">
+                  <span>結束</span>
+                  <select id="endHour"></select>
+                  <b>:</b>
+                  <select id="endMinute"></select>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <label class="message-field">
+          留言（選填）
+          <textarea id="messageInput" rows="4" placeholder="例如：新手求幫忙、謝謝花農..."></textarea>
+        </label>
+
+        <div class="wish-action-row wish-actions-fixed">
+          <button class="primary-btn" onclick="addWish()">🌱 新增願望卡</button>
+          <button class="farmer-share-btn" type="button" onclick="openFarmerShareModal()">📍 花農直接上傳座標</button>
+        </div>
+      </section>
+
+      <section id="quick-wish" class="section-title collapse-title">
+        <button type="button" class="collapse-btn" data-collapse-target="wishList" aria-expanded="true">
+          <span>🌸 許願區</span>
+          <span class="collapse-icon">▼</span>
+        </button>
+        <div class="order-filter-tabs" data-filter-area="wishList">
+          <button type="button" class="order-filter-btn active" data-filter-target="wishList" data-filter-mode="all">顯示所有訂單</button>
+          <button type="button" class="order-filter-btn" data-filter-target="wishList" data-filter-mode="mine">僅顯示自己發的訂單</button>
+          <button type="button" class="order-filter-btn" data-filter-target="wishList" data-filter-mode="available">目前可接訂單</button>
+        </div>
+      </section>
+      <div id="wishList" class="card-grid collapse-content"></div>
+
+      <section id="quick-pending" class="section-title collapse-title">
+        <button type="button" class="collapse-btn" data-collapse-target="pendingList" aria-expanded="true">
+          <span>🌱 待完成區</span>
+          <span class="collapse-icon">▼</span>
+        </button>
+        <div class="order-filter-tabs" data-filter-area="pendingList">
+          <button type="button" class="order-filter-btn active" data-filter-target="pendingList" data-filter-mode="all">顯示所有訂單</button>
+          <button type="button" class="order-filter-btn" data-filter-target="pendingList" data-filter-mode="mine">僅顯示自己接的訂單</button>
+        </div>
+        <p>大家都看得到進度，但只有接單花農可以按「完成分享」。</p>
+      </section>
+      <div id="pendingList" class="card-grid collapse-content"></div>
+
+      <section id="quick-done" class="section-title collapse-title">
+        <button type="button" class="collapse-btn" data-collapse-target="doneList" aria-expanded="true">
+          <span>✨ 已完成區</span>
+          <span class="collapse-icon">▼</span>
+        </button>
+        <p>分享地點支援多行座標，完成後 1 小時自動刪除。</p>
+      </section>
+      <div id="doneList" class="card-grid collapse-content"></div>
+    </section>
+<section id="history" class="page-section">
+      <section class="panel">
+        <h2>🕰️ 歷史許願</h2>
+
+        <div id="wishHistoryList" class="wish-history-list">
+          <div class="wish-history-item history-sticky-head">花朵｜花農 → 許願者｜是否完成｜時間</div>
+          <div class="empty">目前還沒有歷史許願紀錄。</div>
+        </div>
+      </section>
+    </section>
+
+    <section id="dex" class="page-section">
+      <section class="panel dex-header-panel">
+        <div class="dex-header-row">
+          <div>
+            <h2>🌸 花朵圖鑑</h2>
+            <p class="hint dex-jump-tip">點擊花旁邊的「缺」即可跳回許願頁快速許願。</p>
+          </div>
+
+          <div class="limit-settings">
+            <label>
+              精華上限
+              <input id="essenceLimitInput" type="number" min="1" max="1200" value="1200" onchange="saveGlobalLimit('essence', this.value)" />
+            </label>
+
+            <label>
+              花瓣上限
+              <input id="petalLimitInput" type="number" min="1" max="1200" value="1200" onchange="saveGlobalLimit('petal', this.value)" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="dex-search-panel">
+        <div class="dex-search-row">
+          <div class="clearable-input dex-search-wrap">
+            <input
+              id="dexSearchInput"
+              type="text"
+              placeholder="🔍 搜尋花種，例如：玫瑰、櫻花、鬱金香"
+              oninput="renderDex()"
+            />
+            <button class="clear-input-btn" type="button" aria-label="清除圖鑑搜尋" onclick="clearDexSearchInput()">×</button>
+          </div>
+          <button id="dexAdvancedBtn" class="dex-advanced-btn" type="button" onclick="toggleDexAdvanced()">進階</button>
+        </div>
+        <div id="dexAdvancedPanel" class="dex-advanced-panel">
+          <div class="dex-filter-line">
+            <span class="dex-filter-label">缺花狀態</span>
+            <div class="dex-filter-group">
+              <button class="dex-filter-btn active" type="button" data-filter="all" onclick="setDexFilter('all')">全部</button>
+              <button class="dex-filter-btn" type="button" data-filter="missing" onclick="setDexFilter('missing')">只看缺花</button>
+              <button class="dex-filter-btn" type="button" data-filter="full" onclick="setDexFilter('full')">只看已滿</button>
+              <button class="dex-filter-btn" type="button" data-filter="essence" onclick="setDexFilter('essence')">只缺精華</button>
+              <button class="dex-filter-btn" type="button" data-filter="petal" onclick="setDexFilter('petal')">只缺花瓣</button>
+            </div>
+          </div>
+          <div class="dex-filter-line">
+            <span class="dex-filter-label">顏色分類</span>
+            <div class="dex-filter-group">
+              <button class="dex-filter-btn" type="button" data-filter="white" onclick="setDexFilter('white')">🤍 白</button>
+              <button class="dex-filter-btn" type="button" data-filter="yellow" onclick="setDexFilter('yellow')">💛 黃</button>
+              <button class="dex-filter-btn" type="button" data-filter="red" onclick="setDexFilter('red')">❤️ 紅</button>
+              <button class="dex-filter-btn" type="button" data-filter="blue" onclick="setDexFilter('blue')">💙 藍</button>
+            </div>
+          </div>
+          <div class="dex-filter-line">
+            <span class="dex-filter-label">本月花朵</span>
+            <div class="dex-filter-group">
+              <button class="dex-filter-btn special-filter" type="button" data-filter="forget" onclick="setDexFilter('forget')">🌸 本月新花</button>
+              <button class="dex-filter-btn special-filter" type="button" data-filter="rose" onclick="setDexFilter('rose')">🌹 本月副花</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="flowerDexList" class="dex-list"></div>
+    </section>
+  
+    <section id="changelog" class="page-section">
+      <section class="panel changelog-panel">
+        <div class="changelog-title-row">
+          <div>
+            <h2>📜 更新日誌</h2>
+            <p class="changelog-subtitle">每一次調整都記錄在這裡，方便查看網站更新內容。</p>
+          </div>
+          <span class="changelog-badge">UPDATE LOG</span>
+        </div>
+
+        <div class="changelog-grid">
+<article class="update-card latest">
+            <div class="update-card-head">
+              <div>
+                <div class="update-version">🌸 PikminWish v1.2.0</div>
+                <div class="update-date">2026 / 05 / 26</div>
+              </div>
+              <span class="latest-tag">最新</span>
+            </div>
+
+            <div class="update-section">
+              <h3>🌱 功能新增</h3>
+              <ul>
+                <li>新增大區塊折疊功能</li>
+                <li>新增右下角「回到頂部」按鈕</li>
+                <li>新增「顯示所有訂單 / 僅顯示自己接發的訂單」切換功能</li>
+                <li>新增 DC / LINE 選擇功能</li>
+                <li>新增快速勾選選項功能</li>
+                <li>新增重複許願提醒懸浮視窗</li>
+                <li>新增花農取消接單功能</li>
+                <li>新增花種「輸入 + 下拉式選單」整合功能</li>
+              </ul>
+            </div>
+
+            <div class="update-section">
+              <h3>🛠️ 系統優化</h3>
+              <ul>
+                <li>修正電腦版未顯示「進入網站」按鈕問題</li>
+                <li>優化許願單時間排序邏輯</li>
+                <li>許願單改為三天後自動刪除</li>
+                <li>優化手機版花種選單顯示</li>
+                <li>改善手機版與平板版排版體驗</li>
+                <li>優化區塊切換與按鈕操作體驗</li>
+              </ul>
+            </div>
+          </article>
+
+<article class="update-card">
+            <div class="update-card-head">
+              <div>
+                <div class="update-version">🌸 PikminWish v1.1.0</div>
+                <div class="update-date">2026 / 05 / 25</div>
+              </div>
+            </div>
+
+            <div class="update-section">
+              <h3>🌱 功能優化</h3>
+              <ul>
+                <li>新增「歷史許願」頁面，可查看完成與取消紀錄。</li>
+                <li>新增「更新日誌」頁面，方便查看網站更新內容。</li>
+                <li>新增圖鑑篩選功能，可快速查看缺花與已滿花朵。</li>
+                <li>新增進階選項複選功能，篩選更加方便。</li>
+                <li>新增「服務條款」頁面。</li>
+                <li>新增 LINE 與 Discord 社群連結。</li>
+              </ul>
+            </div>
+          </article>
+
+<article class="update-card">
+            <div class="update-card-head">
+              <div>
+                <div class="update-version">✨ PikminWish v1.0.1</div>
+                <div class="update-date">2026 / 05 / 25</div>
+              </div>
+            </div>
+
+            <div class="update-section">
+              <h3>🛠 系統修正</h3>
+              <ul>
+                <li>修正花朵圖鑑於手機板時，精華／花瓣輸入造成選單自動關閉的問題。</li>
+                <li>修正手機板圖鑑介面重疊與版面跑位問題。</li>
+                <li>優化輸入欄位尺寸，避免內容超出顯示範圍。</li>
+              </ul>
+            </div>
+
+            <div class="update-section">
+              <h3>🌱 功能優化</h3>
+              <ul>
+                <li>新增「連續輸入不中斷」功能，更新圖鑑更加流暢。</li>
+                <li>新增「更新日誌」獨立頁面。</li>
+                <li>新增快速提示：點擊花朵旁邊的「缺」即可快速跳轉許願。</li>
+              </ul>
+            </div>
+          </article>
+
+<article class="update-card">
+            <div class="update-card-head">
+              <div>
+                <div class="update-version">🌼 PikminWish v1.0.0</div>
+                <div class="update-date">2026 / 05 / 24</div>
+              </div>
+            </div>
+
+            <div class="update-section">
+              <h3>🌱 初版功能</h3>
+              <ul>
+                <li>PikminWish 花農許願池正式上線。</li>
+                <li>新增願望卡分享功能。</li>
+                <li>支援接單與完成分享系統。</li>
+                <li>新增花朵圖鑑功能。</li>
+              </ul>
+            </div>
+
+            <div class="update-section">
+              <h3>💌 社群互動</h3>
+              <ul>
+                <li>建立花農與採花者互助分享機制。</li>
+                <li>支援快速查看花種需求與收藏狀態。</li>
+              </ul>
+            </div>
+          </article></div>
+      </section>
+    </section>
+
+  </main>
+
+  <div id="confirmModal" class="modal">
+    <div class="modal-box">
+      <h2>確認接單？</h2>
+      <p>接單後這張願望卡會被鎖定，並移到待完成區，避免其他花農重複接單。</p>
+
+      <div class="modal-actions">
+        <button class="cancel-btn" onclick="closeConfirmModal()">取消</button>
+        <button class="confirm-btn" onclick="confirmTakeOrder()">確認接單</button>
+      </div>
     </div>
   </div>
 
-  <nav class="quick-nav hidden" id="quickNav">
-    <a href="#wishPanel">許願區</a>
-    <a href="#progressPanel">待完成</a>
-    <a href="#donePanel">已完成</a>
+  <div id="doneModal" class="modal">
+    <div class="modal-box modal-box-large">
+      <h2 id="doneModalTitle">完成分享</h2>
+      <p id="doneModalDesc">請輸入採收資訊與分享地點。分享地點可以直接貼上多行座標。</p>
+
+      <div class="harvest-copy-row" style="display:flex;gap:8px;align-items:center;">
+        <input
+          id="harvestInfoInput"
+          type="text"
+          placeholder="採收資訊，例如：印度、8朵、首花時間、隨意收"
+          style="flex:1;"
+        />
+        <button
+          type="button"
+          class="harvest-copy-btn"
+          onclick="copyHarvestInfo()"
+          title="快速複製"
+        >📋</button>
+      </div>
+
+
+      <div class="harvest-quick-tags">
+        <button type="button" class="harvest-tag-btn" data-tag="白花/櫻花收">白花/櫻花收</button>
+        <button type="button" class="harvest-tag-btn" data-tag="隨意收">隨意收</button>
+        <button type="button" class="harvest-tag-btn" data-tag="偷田是乞丐">偷田是乞丐</button>
+        <button type="button" class="harvest-tag-btn" data-tag="勿分享">勿分享</button>
+        <button type="button" class="harvest-tag-btn" data-tag="座標已偏移">座標已偏移</button>
+        <button type="button" class="harvest-tag-clear">清空</button>
+      </div>
+
+      <textarea
+        id="shareLocationInput"
+        class="coord-input"
+        rows="5"
+        placeholder="分享地點／座標，例如：
+22.xxx601,89.xxx802
+22.xxx729,89.xxx030
+22.xxx086,89.xxx989"
+      ></textarea>
+
+      <button class="clean-coord-btn" onclick="previewCleanCoords()">整理座標格式</button>
+
+      <div class="modal-actions">
+        <button class="cancel-btn" onclick="closeDoneModal()">取消</button>
+        <button class="confirm-btn" onclick="openUploadConfirmModal()">送出完成</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="uploadConfirmModal" class="modal">
+    <div class="modal-box">
+      <h2>確認上傳座標？</h2>
+      <p>請確認座標與採收資訊都正確。送出後會公開到完成區，並在 1 小時後自動刪除。</p>
+
+      <div class="confirm-preview">
+        <p><strong>採收資訊：</strong><span id="uploadHarvestPreview">尚未填寫</span></p>
+        <p><strong>座標數量：</strong><span id="uploadCoordCount">0</span> 組</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="cancel-btn" onclick="closeUploadConfirmModal()">返回修改</button>
+        <button class="confirm-btn" onclick="confirmDone()">確認上傳</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js?v=dropdown-under-input-fix-20260526"></script>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
+      onSnapshot,
+      setDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyAVMgid570CLZDQTPzhx2jQjatg62inRcY",
+  authDomain: "pikminwish.firebaseapp.com",
+  databaseURL: "https://pikminwish-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pikminwish",
+  storageBucket: "pikminwish.firebasestorage.app",
+  messagingSenderId: "823415386805",
+  appId: "1:823415386805:web:a8cd25fcb88100619144fc",
+  measurementId: "G-62WR9TP8QT"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    window.firebaseDB = db;
+    window.firebaseAuth = auth;
+    window.currentPikminUser = null;
+    window.firebaseFns = {
+      collection,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
+      onSnapshot,
+      setDoc,
+      getDoc
+    };
+
+    function updateGoogleLoginUi(user) {
+      const status = document.getElementById("googleLoginStatus");
+      const loginBtn = document.getElementById("googleLoginBtn");
+      const logoutBtn = document.getElementById("googleLogoutBtn");
+
+      if (user) {
+        window.currentPikminUser = user;
+        if (status) status.textContent = `已登入：${user.displayName || user.email || "Google 使用者"}`;
+        if (loginBtn) loginBtn.style.display = "none";
+        if (logoutBtn) logoutBtn.style.display = "inline-flex";
+      } else {
+        window.currentPikminUser = null;
+        if (status) status.textContent = "尚未登入 Google";
+        if (loginBtn) loginBtn.style.display = "inline-flex";
+        if (logoutBtn) logoutBtn.style.display = "none";
+      }
+    }
+
+    window.loginWithGoogle = async function () {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("Google 登入失敗", error);
+        alert("Google 登入失敗，請稍後再試。");
+      }
+    };
+
+    window.logoutGoogle = async function () {
+      try {
+        await signOut(auth);
+        const gate = document.getElementById("nicknameGate");
+        if (gate) {
+          gate.classList.remove("hidden-gate");
+          gate.style.display = "";
+          gate.style.visibility = "";
+          gate.style.pointerEvents = "";
+        }
+      } catch (error) {
+        console.error("Google 登出失敗", error);
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      updateGoogleLoginUi(user);
+      window.dispatchEvent(new Event("firebase-ready"));
+    });
+  </script>
+
+
+<div id="nicknameGate" class="nickname-gate">
+  <div class="nickname-modal">
+    <h1>🌱 花農許願池規則</h1>
+
+    <div class="rule-scroll">
+
+      <div class="rule-section">
+        <h2>@採花者</h2>
+        <p>花農願意分享是熱心，不是義務，請遵守：</p>
+
+        <ul>
+          <li>非開花時間勿前往</li>
+          <li>不踩未開花花苗</li>
+          <li>指定花瓣請配合（白花收、櫻花收...）</li>
+        </ul>
+      </div>
+
+      <div class="rule-section">
+        <h2>@花農</h2>
+        <p>花農分享前請注意：</p>
+
+        <ul>
+          <li>有限制請備註清楚（花瓣顏色、禁轉傳）</li>
+          <li>先確認田地是否已有他人耕作</li>
+          <li>分享前請先做好被亂採心理準備</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="nickname-input-wrap">
+      <div class="google-login-box">
+        <div id="googleLoginStatus" class="google-login-status">尚未登入 Google</div>
+        <div class="google-login-actions">
+          <button type="button" id="googleLoginBtn" class="enter-btn google-login-btn" onclick="loginWithGoogle()">登入 Google</button>
+          <button type="button" id="googleLogoutBtn" class="enter-btn google-logout-btn" onclick="logoutGoogle()" style="display:none;">登出</button>
+        </div>
+        <p class="nickname-tip">※ 需先登入 Google，才能進入網站與使用許願池。</p>
+      </div>
+
+      <label>選擇平台並輸入暱稱</label>
+
+      <div class="nickname-row">
+        <select class="gate-platform-select gate-social-select"  id="socialTypeSelect">
+          <option value="LINE">LINE</option>
+          <option value="DC">DC</option>
+        </select>
+
+        <input
+          type="text"
+          id="gateNicknameInput"
+          placeholder="請輸入暱稱"
+        />
+      </div>
+
+      <p class="nickname-tip">
+        ※ 請使用 LINE 社群或 DC 暱稱，方便 @提醒
+      </p>
+
+      <button type="button" id="enterWebsiteBtn" class="enter-btn" onclick="return window.enterWebsite(event)">
+        進入網站
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="termsModal" class="terms-modal-overlay" aria-hidden="true">
+  <div class="terms-modal-card" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+    <button type="button" class="terms-close-btn" onclick="closeTermsModal()" aria-label="關閉服務條款">×</button>
+    <h2 id="termsModalTitle">📜 PikminWish 服務條款</h2>
+    <p class="terms-updated">最後更新：2026 / 05 / 25</p>
+
+    <div class="terms-modal-scroll">
+      <section>
+        <h3>🌱 一、服務內容</h3>
+        <p>本網站為《Pikmin Bloom》玩家交流用途之非官方社群工具，提供許願卡發布、花農接單與分享、花朵圖鑑查詢與社群互動功能。本網站與 Nintendo、Niantic 或 Pikmin Bloom 官方無任何關聯。</p>
+      </section>
+
+      <section>
+        <h3>🤝 二、使用者規範</h3>
+        <ul>
+          <li>不得發布違法、騷擾、歧視、色情、暴力或惡意內容。</li>
+          <li>不得冒充他人、偽造資訊或惡意洗版。</li>
+          <li>不得利用網站功能進行商業詐騙或不當交易。</li>
+          <li>不得惡意干擾網站運作、攻擊系統或嘗試取得未授權資料。</li>
+          <li>請尊重其他玩家與花農，避免造成社群糾紛。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>💐 三、接單與分享聲明</h3>
+        <ul>
+          <li>花農提供分享屬自願性質，並非義務。</li>
+          <li>許願者與花農應自行協調分享內容與時間。</li>
+          <li>本網站不保證一定能成功接單、完成分享或取得指定花朵。</li>
+          <li>玩家間互動產生之糾紛，原則上由雙方自行處理。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>🔒 四、資料與隱私</h3>
+        <ul>
+          <li>本網站可能會儲存您輸入之暱稱、願望內容與操作資料，以提供正常功能。</li>
+          <li>本網站不會主動販售或公開您的個人資料。</li>
+          <li>請勿自行公開敏感資訊，如住址、密碼、身分證資料等。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>⚠️ 五、免責聲明</h3>
+        <p>本網站依「現況」提供服務，不保證網站永不中斷、資料完全正確或功能永遠無錯誤。因系統維護或故障、第三方服務異常、使用者操作失誤或玩家間私人糾紛造成之損失，本網站不負責。</p>
+      </section>
+
+      <section>
+        <h3>🛠️ 六、內容管理權</h3>
+        <p>管理者有權刪除不適當內容、調整網站功能、修改網站規則、暫停或終止部分服務，無需事前個別通知。</p>
+      </section>
+
+      <section>
+        <h3>📌 七、條款修改</h3>
+        <p>本網站保留隨時修改本條款之權利。修改後內容將直接公布於網站，若您於修改後繼續使用本網站，即視為同意最新版本條款。</p>
+      </section>
+
+      <section>
+        <h3>💌 八、聯絡方式</h3>
+        <p>若有問題、建議或檢舉事項，請透過社群管理員聯繫。</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="footer" style="text-align:center;">
+  <div style="margin-bottom:8px; font-size:13px; opacity:0.85;">
+    此網頁僅供「皮克敏飛人交流群💐Pikmin Bloom」&「ᴘɪᴋᴍɪɴ ʙʟᴏᴏᴍ皮皮之家🌱」使用
+  </div>
+
+  
+
+
+<div class="footer-mobile-links">
+  <button type="button" class="footer-mobile-btn" onclick="openTermsModal()">📜 條款</button>
+  <a class="footer-mobile-btn" href="https://discord.gg/anKDQyM76Y" target="_blank">💬 DC</a>
+  <a class="footer-mobile-btn" href="https://line.me/ti/g2/J5Fc9xmn_yQcE-ZKfAfGxPe4VjUrdTslS-I9kQ?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank">💚 LINE</a>
+</div>
+
+<div>
+    © 2026 梔梔 v1.1.0 ｜ 許願池及花朵圖鑑
+  </div>
+</div>
+
+<script>
+  function openTermsModal(){
+    const modal = document.getElementById("termsModal");
+    if(!modal) return;
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("terms-modal-open");
+  }
+
+  function closeTermsModal(){
+    const modal = document.getElementById("termsModal");
+    if(!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("terms-modal-open");
+  }
+
+  document.addEventListener("click", function(e){
+    const modal = document.getElementById("termsModal");
+    if(modal && e.target === modal) closeTermsModal();
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closeTermsModal();
+  });
+</script>
+
+
+<script>
+(function () {
+  function normalizeNickname(name) {
+    return String(name || "").trim().replace(/_(LINE|DC)$/i, "");
+  }
+
+  function normalizePlatform(platform) {
+    platform = String(platform || "LINE").trim().toUpperCase();
+    return platform === "DC" ? "DC" : "LINE";
+  }
+
+  function platformTagHtml(platform) {
+    return ' <span class="name-platform-tag">' + normalizePlatform(platform) + '</span>';
+  }
+
+  function closeNicknameGate() {
+    const gate = document.getElementById("nicknameGate");
+    if (!gate) return;
+    gate.classList.add("hidden-gate");
+    gate.style.setProperty("display", "none", "important");
+    gate.style.setProperty("visibility", "hidden", "important");
+    gate.style.setProperty("pointer-events", "none", "important");
+    document.body.style.overflow = "";
+  }
+
+  window.enterWebsite = function (event) {
+    if (event && typeof event.preventDefault === "function") event.preventDefault();
+    if (event && typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+    if (event && typeof event.stopPropagation === "function") event.stopPropagation();
+
+    const input = document.getElementById("gateNicknameInput");
+    const select = document.getElementById("socialTypeSelect");
+    const raw = input ? input.value.trim() : "";
+    const platform = select ? select.value : "LINE";
+
+    if (!raw) {
+      alert("請輸入 LINE 社群或 DC 暱稱");
+      if (input) input.focus();
+      return false;
+    }
+
+    const finalNickname = normalizeNickname(raw);
+    const finalPlatform = normalizePlatform(platform);
+    localStorage.setItem("flowerWishNickname", finalNickname);
+    localStorage.setItem("flowerWishPlatform", finalPlatform);
+    window.nickname = finalNickname;
+
+    const mainInput = document.getElementById("nicknameInput");
+    if (mainInput) mainInput.value = finalNickname;
+
+    const currentText = document.getElementById("currentNicknameText");
+    if (currentText) currentText.innerHTML = finalNickname + platformTagHtml(finalPlatform);
+
+    closeNicknameGate();
+    return false;
+  };
+
+  document.addEventListener("click", function (event) {
+    const btn = event.target.closest && event.target.closest("#enterWebsiteBtn, .enter-btn");
+    if (!btn) return;
+    window.enterWebsite(event);
+  }, true);
+})();
+</script>
+
+
+<script>
+(function () {
+  function splitSavedNicknameForGate(savedNickname) {
+    const text = String(savedNickname || "").trim();
+    const match = text.match(/_(LINE|DC)$/i);
+    return {
+      name: match ? text.replace(/_(LINE|DC)$/i, "") : text,
+      platform: match ? match[1].toUpperCase() : (localStorage.getItem("flowerWishPlatform") || "LINE")
+    };
+  }
+
+  window.openNicknameModal = function () {
+    const gate = document.getElementById("nicknameGate");
+    if (!gate) return false;
+
+    const savedNickname = localStorage.getItem("flowerWishNickname") || "";
+    const parsed = splitSavedNicknameForGate(savedNickname);
+
+    const input = document.getElementById("gateNicknameInput");
+    const select = document.getElementById("socialTypeSelect");
+
+    if (input) input.value = parsed.name;
+    if (select) select.value = parsed.platform;
+
+    gate.classList.remove("hidden-gate");
+    gate.style.setProperty("display", "flex", "important");
+    gate.style.setProperty("visibility", "visible", "important");
+    gate.style.setProperty("pointer-events", "auto", "important");
+    document.body.style.overflow = "hidden";
+
+    setTimeout(function () {
+      if (input) input.focus();
+    }, 80);
+
+    return false;
+  };
+
+  window.openRuleModal = window.openNicknameModal;
+
+  window.updateNicknameDisplay = function () {
+    const currentText = document.getElementById("currentNicknameText");
+    const currentName = localStorage.getItem("flowerWishNickname") || "";
+    if (currentText) currentText.textContent = currentName || "未設定";
+  };
+
+  window.addEventListener("load", function () {
+    window.updateNicknameDisplay();
+  });
+})();
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const harvestInput = document.getElementById("harvestInfoInput");
+  const tagButtons = document.querySelectorAll(".harvest-tag-btn");
+  const clearButton = document.querySelector(".harvest-tag-clear");
+
+  function getCurrentTags() {
+    return harvestInput.value
+      .split("、")
+      .map(tag => tag.trim())
+      .filter(Boolean);
+  }
+
+  function syncButtonStates() {
+    const currentTags = getCurrentTags();
+
+    tagButtons.forEach(btn => {
+      const tag = btn.dataset.tag;
+      btn.classList.toggle("active", currentTags.includes(tag));
+    });
+  }
+
+  tagButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tag = btn.dataset.tag;
+      let currentTags = getCurrentTags();
+
+      if (currentTags.includes(tag)) {
+        currentTags = currentTags.filter(t => t !== tag);
+      } else {
+        currentTags.push(tag);
+      }
+
+      harvestInput.value = currentTags.join("、");
+      syncButtonStates();
+    });
+  });
+
+  clearButton.addEventListener("click", () => {
+    harvestInput.value = "";
+    syncButtonStates();
+  });
+
+  harvestInput.addEventListener("input", syncButtonStates);
+
+  syncButtonStates();
+});
+</script>
+  <nav class="quick-bookmark-nav" aria-label="訂單快速跳轉">
+    <a href="#quick-wish" onclick="jumpToOrderSection(event, 'quick-wish')">🌸 許願區</a>
+    <a href="#quick-pending" onclick="jumpToOrderSection(event, 'quick-pending')">🌱 待完成</a>
+    <a href="#quick-done" onclick="jumpToOrderSection(event, 'quick-done')">✅ 已完成</a>
   </nav>
 
-  <main id="app" class="hidden">
-    <section id="homePage" class="home-page">
-      <div class="home-kicker">PIKMIN WISHING</div>
-      <div class="home-title-row">
-        <div class="home-sprout" aria-hidden="true">🌱</div>
-        <h1>花農許願池</h1>
-      </div>
-
-      <div class="home-profile">
-        <span>👤 目前暱稱：</span>
-        <strong id="homeNick">尚未登入</strong>
-        <span class="home-tag">LINE</span>
-        <button id="editNickBtn" class="home-link-btn" type="button">✏️ 修改暱稱</button>
-      </div>
-
-      <p class="home-subtitle">留下你的願望，花農幫你實現。</p>
-
-      <div class="home-actions">
-        <button class="home-action primary" data-home-tab="wishPage">🌱 許願池</button>
-        <button class="home-action" data-home-tab="historyPage">🎡 歷史許願</button>
-        <button class="home-action" data-home-tab="dexPage">🌺 花朵圖鑑</button>
-        <button class="home-action" data-home-tab="logsPage">📜 更新日誌</button>
-      </div>
-
-      <div class="home-news">
-        <div class="home-news-badge">🪻 5月新花</div>
-        <div>
-          <h2>勿忘草登場</h2>
-          <p>本月活動花種，記得更新你的圖鑑庫存！</p>
-        </div>
-      </div>
-    </section>
-
-    <div class="tabs hidden" id="mainTabs">
-      <button class="tab-btn active" data-tab="wishPage">🌸 許願池</button>
-      <button class="tab-btn" data-tab="dexPage">📖 花朵圖鑑</button>
-      <button class="tab-btn" data-tab="historyPage">🕘 歷史許願</button>
-      <button class="tab-btn" data-tab="logsPage">📝 更新日誌</button>
-      <button class="tab-btn" data-tab="termsPage">📜 服務條款</button>
-    </div>
-
-    <div id="wishPage" class="page">
-      <section class="panel" id="newWishPanel">
-        <div class="panel-head">
-          <h2>🌱 新增願望卡</h2>
-          <button class="btn-light btn-small collapse-btn">收合</button>
-        </div>
-        <div class="panel-body">
-          <form id="wishForm" class="grid form-grid">
-            <div class="field">
-              <label>暱稱</label>
-              <input id="wishName" required placeholder="輸入你的暱稱" />
-            </div>
-            <div class="field">
-              <label>聯絡方式</label>
-              <select id="contactType">
-                <option value="LINE">LINE</option>
-                <option value="Discord">Discord</option>
-              </select>
-            </div>
-            <div class="field full">
-              <label>LINE / Discord ID</label>
-              <input id="contactId" placeholder="方便花農聯絡你" />
-            </div>
-            <div class="field">
-              <label>花種</label>
-              <input id="flowerInput" list="flowerList" required placeholder="可輸入或下拉選擇" />
-              <datalist id="flowerList"></datalist>
-            </div>
-            <div class="field">
-              <label>花色</label>
-              <select id="flowerColor"></select>
-            </div>
-            <div class="field">
-              <label>可採收時間</label>
-              <input id="harvestTime" required placeholder="例：今晚 21:00 後" />
-            </div>
-            <div class="field">
-              <label>進階選項</label>
-              <div class="inline-actions">
-                <label><input type="checkbox" class="quickOpt" value="白花/櫻花收" /> 白花/櫻花收</label>
-                <label><input type="checkbox" class="quickOpt" value="隨意收" /> 隨意收</label>
-                <label><input type="checkbox" class="quickOpt" value="勿分享" /> 勿分享</label>
-                <label><input type="checkbox" class="quickOpt" value="座標已偏移" /> 座標已偏移</label>
-              </div>
-            </div>
-            <div class="field full">
-              <label>備註 / 採收需求</label>
-              <textarea id="wishNote" placeholder="可手動輸入其他需求"></textarea>
-            </div>
-            <div class="full inline-actions">
-              <button type="submit">送出許願</button>
-              <span class="muted">重複花種會跳出提醒視窗。</span>
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <section class="panel" id="wishPanel">
-        <div class="panel-head">
-          <h2>🌸 許願區</h2>
-          <button class="btn-light btn-small collapse-btn">收合</button>
-        </div>
-        <div class="panel-body">
-          <div class="inline-actions" style="margin-bottom:12px;">
-            <button id="showAllBtn" class="btn-light">顯示所有訂單</button>
-            <button id="showMineBtn" class="btn-light">僅顯示自己接發的訂單</button>
-            <button id="availableBtn" class="btn-secondary">目前可接訂單</button>
-          </div>
-          <div id="wishCards" class="cards"></div>
-        </div>
-      </section>
-
-      <section class="panel" id="progressPanel">
-        <div class="panel-head">
-          <h2>🌱 待完成</h2>
-          <button class="btn-light btn-small collapse-btn">收合</button>
-        </div>
-        <div class="panel-body">
-          <div id="progressCards" class="cards"></div>
-        </div>
-      </section>
-
-      <section class="panel" id="donePanel">
-        <div class="panel-head">
-          <h2>✅ 已完成</h2>
-          <button class="btn-light btn-small collapse-btn">收合</button>
-        </div>
-        <div class="panel-body">
-          <div id="doneCards" class="cards"></div>
-        </div>
-      </section>
-    </div>
-
-    <div id="dexPage" class="page hidden">
-      <section class="panel">
-        <div class="panel-head"><h2>📖 花朵圖鑑</h2></div>
-        <div class="inline-actions" style="margin-bottom:12px;">
-          <button class="dex-filter btn-light" data-filter="all">全部</button>
-          <button class="dex-filter btn-light" data-filter="missing">缺花</button>
-          <button class="dex-filter btn-light" data-filter="full">已滿</button>
-        </div>
-        <div id="dexList" class="cards"></div>
-      </section>
-    </div>
-
-    <div id="historyPage" class="page hidden">
-      <section class="panel">
-        <div class="panel-head"><h2>🕘 歷史許願</h2></div>
-        <div id="historyList" class="cards"></div>
-      </section>
-    </div>
-
-    <div id="logsPage" class="page hidden">
-      <section class="panel">
-        <div class="panel-head"><h2>📝 更新日誌</h2></div>
-        <div class="log-list">
-          <h3>🌸 PikminWish 初版～新版功能整理</h3>
-          <p>🌱 初版功能：花農許願池正式上線、願望卡分享、接單與完成分享、花朵圖鑑。</p>
-          <p>💌 社群互動：建立花農與採花者互助分享機制，支援快速查看花種需求與收藏狀態。</p>
-          <p>🌱 功能新增：歷史許願、更新日誌、服務條款、LINE / Discord 社群連結、快速跳轉書籤、回到頂部、目前可接訂單、花農直接上傳座標、快速複製資訊、Google 登入。</p>
-          <p>🛠️ 系統優化：手機板圖鑑、選單、按鈕、排序、重複許願提醒、取消接單、風鈴草 5/31 前鎖定、顏色新增混色與隨意色。</p>
-        </div>
-      </section>
-    </div>
-
-    <div id="termsPage" class="page hidden">
-      <section class="panel">
-        <div class="panel-head"><h2>📜 服務條款</h2></div>
-        <div class="terms-box">
-          <p>本網站為 Pikmin 花農與採花者互助使用。請勿惡意刪單、冒用他人名稱、散播不實座標或騷擾使用者。</p>
-          <p>登入僅用於辨識建立者與操作權限，不會公開你的 Google 信箱。</p>
-          <p>社群連結：<a href="#" target="_blank">LINE</a> / <a href="#" target="_blank">Discord</a></p>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <button id="topBtn" class="hidden">↑</button>
-
-  <dialog id="duplicateDialog">
-    <div class="modal">
-      <h3>⚠️ 重複許願提醒</h3>
-      <p id="duplicateText" class="muted"></p>
-      <div class="inline-actions">
-        <button id="confirmDuplicate">還是送出</button>
-        <button id="cancelDuplicate" class="btn-light">取消</button>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="detailDialog">
-    <div class="modal">
-      <h3 id="detailTitle">詳細資訊</h3>
-      <div id="detailContent"></div>
-      <div class="inline-actions" id="detailActions"></div>
-      <button class="btn-light" onclick="detailDialog.close()">關閉</button>
-    </div>
-  </dialog>
-
-  <script type="module" src="./script.js"></script>
 </body>
 </html>
