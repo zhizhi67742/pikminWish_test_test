@@ -724,6 +724,17 @@ async function addWish() {
     return;
   }
 
+  const WISH_COOLDOWN_MS = 30 * 1000;
+  const lastWishTime = Number(localStorage.getItem("lastWishSubmitTime") || 0);
+  const now = Date.now();
+
+  if (now - lastWishTime < WISH_COOLDOWN_MS) {
+    const waitSec = Math.ceil((WISH_COOLDOWN_MS - (now - lastWishTime)) / 1000);
+    alert(`請等 ${waitSec} 秒後再送出許願單`);
+    return;
+  }
+
+
   if (isLockedWishFlowerValue(flower)) {
     warnLockedFlower();
     resetFlowerPicker();
@@ -744,6 +755,8 @@ async function addWish() {
 
   const start = document.getElementById("startHour").value + ":" + document.getElementById("startMinute").value;
   const end = document.getElementById("endHour").value + ":" + document.getElementById("endMinute").value;
+
+  localStorage.setItem("lastWishSubmitTime", String(now));
 
   wishes.push({
     id: Date.now(),
