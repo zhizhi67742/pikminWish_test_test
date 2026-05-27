@@ -36,6 +36,47 @@ let locallyDeletedWishKeys = new Set();
 let spamWishCleanupRunning = false;
 let spamWishCleanupDoneKeys = new Set();
 
+function getPikminAccountAgeInfo() {
+  const user = window.currentPikminUser || (window.firebaseAuth && window.firebaseAuth.currentUser);
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+  if (!user) {
+    return { signedIn: false, allowed: false, isNewAccount: true, remainingDays: 7 };
+  }
+
+  const creationTime = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime) : null;
+  if (!creationTime || Number.isNaN(creationTime.getTime())) {
+    return { signedIn: true, allowed: true, isNewAccount: false, remainingDays: 0 };
+  }
+
+  const ageMs = Date.now() - creationTime.getTime();
+  const remainingMs = sevenDaysMs - ageMs;
+  const isNewAccount = remainingMs > 0;
+
+  return {
+    signedIn: true,
+    allowed: !isNewAccount,
+    isNewAccount,
+    remainingDays: isNewAccount ? Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000))) : 0
+  };
+}
+
+function guardPikminAccountCanPost() {
+  const info = getPikminAccountAgeInfo();
+
+  if (!info.signedIn) {
+    alert("請先使用 Google 登入，登入後才能發文。");
+    return false;
+  }
+
+  if (info.isNewAccount) {
+    alert(`為了防止惡意刷單，Google 帳號建立需滿 7 天才能發文。\n目前還需要約 ${info.remainingDays} 天。`);
+    return false;
+  }
+
+  return true;
+}
+
 function getCurrentNickname() {
   const savedNickname = normalizeNicknameOnly(localStorage.getItem("flowerWishNickname") || "");
   if (savedNickname.trim()) {
@@ -690,6 +731,8 @@ async function addWish() {
   const message = document.getElementById("messageInput").value.trim();
 
   nickname = getCurrentNickname();
+
+  if (!guardPikminAccountCanPost()) return;
 
   if (!nickname) {
     alert("請先設定暱稱，建議使用 LINE 社群暱稱。");
@@ -2848,6 +2891,8 @@ async function startFirebaseSync() {
   window.addWish = async function () {
     const flower = document.getElementById("flowerInput")?.value?.trim();
     const nickname = getCurrentNickname();
+
+    if (!guardPikminAccountCanPost()) return;
 
     if (!nickname) {
       alert("請先輸入 LINE 社群暱稱，才能新增願望。");
