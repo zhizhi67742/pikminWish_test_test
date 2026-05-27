@@ -921,6 +921,9 @@ h1 {
 
     window.loginWithGoogle = async function () {
       localStorage.removeItem("previewMode");
+      const entryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
+      if (entryOverlayBeforeLogin) entryOverlayBeforeLogin.classList.add("hide");
+      localStorage.removeItem("previewMode");
       localStorage.removeItem("previewMode");
       try {
         await signInWithPopup(auth, provider);
@@ -933,6 +936,9 @@ h1 {
     window.logoutGoogle = async function () {
       try {
         await signOut(auth);
+        localStorage.removeItem("previewMode");
+        const entryOverlayAfterLogout = document.getElementById("googleEntryOverlay");
+        if (entryOverlayAfterLogout) entryOverlayAfterLogout.classList.remove("hide");
         localStorage.removeItem("previewMode");
         const entryOverlay = document.getElementById("googleEntryOverlay");
         if (entryOverlay) entryOverlay.classList.remove("hide");
@@ -1408,7 +1414,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 (function () {
-  function getAuthUser() {
+  function authUserNow() {
     const authObj = window.firebaseAuth || window.auth;
     return authObj && authObj.currentUser ? authObj.currentUser : null;
   }
@@ -1436,7 +1442,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.applyPreviewSiteLock = function () {
     if (localStorage.getItem("previewMode") !== "true") return;
-    if (getAuthUser()) {
+
+    if (authUserNow()) {
       clearPreviewOnlyMode();
       return;
     }
@@ -1470,17 +1477,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }, true);
 
-      lock.addEventListener("touchstart", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        alert("請先登入 Google 帳號，登入後才能使用功能。");
-        return false;
-      }, true);
-
       document.body.appendChild(lock);
     }
 
-    // 讓「目前暱稱下面的登入」可以按
     const statusLoginBtn = document.getElementById("googleLoginLogoutBtn");
     if (statusLoginBtn) {
       statusLoginBtn.style.position = "relative";
@@ -1493,18 +1492,18 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("DOMContentLoaded", function () {
     const entryOverlay = document.getElementById("googleEntryOverlay");
 
-    // 未登入 + 非預覽：進入畫面要出現
-    if (!getAuthUser() && localStorage.getItem("previewMode") !== "true") {
+    // 重點：未登入且不是預覽時，進入畫面固定顯示，不要自動消失
+    if (localStorage.getItem("previewMode") !== "true" && !authUserNow()) {
       if (entryOverlay) entryOverlay.classList.remove("hide");
     }
 
-    // 預覽模式：登入畫面不出現，只鎖網站
-    if (localStorage.getItem("previewMode") === "true") {
+    // 預覽模式才隱藏進入畫面並鎖網站
+    if (localStorage.getItem("previewMode") === "true" && !authUserNow()) {
       if (entryOverlay) entryOverlay.classList.add("hide");
       applyPreviewSiteLock();
     }
 
-    // 監聽登入成功：解除預覽鎖，讓全部功能可按
+    // 登入成功後才讓網站可操作
     const authObj = window.firebaseAuth || window.auth;
     if (authObj && typeof authObj.onAuthStateChanged === "function") {
       authObj.onAuthStateChanged(function (user) {
@@ -1513,20 +1512,20 @@ document.addEventListener("DOMContentLoaded", () => {
           if (entryOverlay) entryOverlay.classList.add("hide");
         } else {
           if (localStorage.getItem("previewMode") === "true") {
+            if (entryOverlay) entryOverlay.classList.add("hide");
             applyPreviewSiteLock();
-          } else if (entryOverlay) {
-            entryOverlay.classList.remove("hide");
+          } else {
+            if (entryOverlay) entryOverlay.classList.remove("hide");
           }
         }
       });
     }
 
     setTimeout(function () {
-      if (localStorage.getItem("previewMode") === "true" && !getAuthUser()) {
-        if (entryOverlay) entryOverlay.classList.add("hide");
-        applyPreviewSiteLock();
+      if (localStorage.getItem("previewMode") !== "true" && !authUserNow()) {
+        if (entryOverlay) entryOverlay.classList.remove("hide");
       }
-    }, 800);
+    }, 500);
   });
 })();
 </script>
