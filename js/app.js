@@ -2655,7 +2655,7 @@ async function startFirebaseSync() {
   } = window.firebaseFns;
 
   const wishesRef = collection(db, "wishes");
-  const wishHistoryRef = collection(db, "wishHistory");
+  const wishHistoryRef = collection(db, "wishHistory_v2");
 
   // Firebase 準備好後，先讀取這個暱稱的雲端圖鑑。
   const savedDexName = getCurrentNickname();
