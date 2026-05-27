@@ -54,7 +54,7 @@ button {
   cursor: pointer;
   background: linear-gradient(180deg, var(--main), var(--main-dark));
   color: #1e2d3d;
-  font-weight: 900;
+  font-weight: 700;
   box-shadow: 0 5px 0 rgba(0,0,0,0.22), 0 9px 18px rgba(0,0,0,0.18);
   transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
   white-space: nowrap;
@@ -107,7 +107,7 @@ button:disabled {
 
 a {
   color: var(--green-dark);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 header {
@@ -134,10 +134,10 @@ header {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 950;
+  font-weight: 800;
   font-size: 21px;
   color: var(--main);
-  text-shadow: 0 2px 0 rgba(0,0,0,0.28);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.18);
 }
 
 .userbox {
@@ -232,7 +232,7 @@ section.panel {
   margin: 0;
   font-size: 21px;
   color: #274730;
-  text-shadow: 0 1px 0 #fff1a8;
+  text-shadow: none;
 }
 
 .panel-body.collapsed { display: none; }
@@ -250,7 +250,7 @@ section.panel {
 
 label {
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 700;
   color: #274730;
 }
 
@@ -314,7 +314,7 @@ textarea {
 
 .card-title {
   font-size: 18px;
-  font-weight: 950;
+  font-weight: 800;
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -329,7 +329,7 @@ textarea {
   color: var(--text);
   padding: 3px 8px;
   font-size: 12px;
-  font-weight: 950;
+  font-weight: 800;
   border: 1px solid rgba(91,85,36,0.16);
 }
 
@@ -367,7 +367,7 @@ textarea {
   border-radius: 16px;
   padding: 11px 7px;
   box-shadow: var(--shadow);
-  font-weight: 950;
+  font-weight: 800;
   font-size: 13px;
 }
 
