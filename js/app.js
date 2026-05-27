@@ -328,7 +328,7 @@ function getWishColorOptions(baseColors) {
   // 許願單不提供「白／白色」選項；白花仍保留在花朵圖鑑 DEFAULT_FLOWER_DEX 裡顯示。
   // 混色／隨意色依照花種原本的顏色數量判斷：原本有 2 色以上，即使扣掉白色後只剩 1 色，也要顯示。
   const colors = Array.isArray(baseColors) && baseColors.length ? baseColors.slice() : ["黃", "紅", "藍"];
-  const shouldAddSpecialColors = colors.length >= 2 || ["鈴蘭","水仙花"].includes(String(document.getElementById("flowerInput")?.value||"").trim());
+  const shouldAddSpecialColors = colors.length >= 2;
   const seen = {};
   const uniqueColors = [];
   colors.forEach(function (color) {
@@ -342,6 +342,45 @@ function getWishColorOptions(baseColors) {
     if (!uniqueColors.includes("隨意色")) uniqueColors.push("隨意色");
   }
   return uniqueColors;
+}
+
+
+function findCatalogFlowerForWish(name) {
+  const key = String(name || "").trim().toLowerCase();
+  if (!key) return null;
+  const sources = [];
+  try { if (Array.isArray(flowerDex)) sources.push(flowerDex); } catch (e) {}
+  try { if (Array.isArray(DEFAULT_FLOWER_DEX)) sources.push(DEFAULT_FLOWER_DEX); } catch (e) {}
+  for (const list of sources) {
+    const found = list.find(function (flower) {
+      return String(flower && flower.name || "").trim().toLowerCase() === key;
+    });
+    if (found) return found;
+  }
+  return null;
+}
+
+function getCurrentWishFlowerName() {
+  const input = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
+  return input ? input.value.trim() : "";
+}
+
+function shouldShowWishSpecialColors(flowerName) {
+  const flower = findCatalogFlowerForWish(flowerName);
+  return !!(flower && Array.isArray(flower.colors) && flower.colors.length >= 2);
+}
+
+function appendWishColorOptionIfMissing(colorSelect, color) {
+  if (!colorSelect) return;
+  const normalized = normalizeWishColorValue(color);
+  const exists = Array.from(colorSelect.options).some(function (option) {
+    return normalizeWishColorValue(option.value || option.textContent) === normalized;
+  });
+  if (exists) return;
+  const option = document.createElement("option");
+  option.value = normalized;
+  option.textContent = getWishColorLabel(normalized);
+  colorSelect.appendChild(option);
 }
 
 function getWishColorLabel(color) {
@@ -362,6 +401,14 @@ function removeWhiteWishColorOptions() {
       option.remove();
     }
   });
+
+  const currentFlowerName = getCurrentWishFlowerName();
+  if (shouldShowWishSpecialColors(currentFlowerName)) {
+    colorSelect.style.display = "";
+    appendWishColorOptionIfMissing(colorSelect, "混色");
+    appendWishColorOptionIfMissing(colorSelect, "隨意色");
+  }
+
   if (colorSelect.options.length && isWhiteWishColor(colorSelect.value)) {
     colorSelect.selectedIndex = 0;
   }
@@ -466,7 +513,7 @@ function initFlowerPicker() {
     const baseColors = selectedFlower && Array.isArray(selectedFlower.colors) ? selectedFlower.colors : null;
 
     // 單色花：櫻花、向日葵、粉蝶花等，直接許願，不顯示顏色選單
-    if (selectedFlower && (!baseColors || baseColors.length <= 1)) {
+    if (selectedFlower && (!baseColors || (baseColors.length <= 1 && getWishColorOptions(baseColors).length <= 1))) {
       colorSelect.style.display = "none";
       colorSelect.innerHTML = "";
       const option = document.createElement("option");
@@ -3620,7 +3667,7 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
 
       colorSelect.innerHTML = "";
 
-      if (baseFlowerColors.length <= 1) {
+      if (baseFlowerColors.length <= 1 && colors.length <= 1) {
         colorSelect.style.display = "none";
         const option = document.createElement("option");
         option.value = "";
