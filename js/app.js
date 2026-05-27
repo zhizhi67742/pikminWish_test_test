@@ -315,11 +315,25 @@ function buildTimeOptions() {
 }
 
 
+function normalizeWishColorValue(color) {
+  return String(color || "").trim().replace(/色$/u, "");
+}
+
+function isWhiteWishColor(color) {
+  const normalized = normalizeWishColorValue(color);
+  return normalized === "白" || normalized === "white";
+}
+
 function getWishColorOptions(baseColors) {
-  // 許願單不提供「白色」選項；白花仍保留在花朵圖鑑 DEFAULT_FLOWER_DEX 裡顯示。
+  // 許願單不提供「白／白色」選項；白花仍保留在花朵圖鑑 DEFAULT_FLOWER_DEX 裡顯示。
   const colors = Array.isArray(baseColors) && baseColors.length ? baseColors.slice() : ["黃", "紅", "藍"];
-  const uniqueColors = colors.filter(function (color, index) {
-    return color !== "白" && color !== "白色" && colors.indexOf(color) === index;
+  const seen = {};
+  const uniqueColors = [];
+  colors.forEach(function (color) {
+    const normalized = normalizeWishColorValue(color);
+    if (!normalized || isWhiteWishColor(normalized) || seen[normalized]) return;
+    seen[normalized] = true;
+    uniqueColors.push(normalized);
   });
   if (uniqueColors.length >= 2) {
     if (!uniqueColors.includes("混色")) uniqueColors.push("混色");
@@ -336,6 +350,19 @@ function buildWishFlowerName(color, flowerName) {
   if (!flowerName) return "";
   if (!color) return flowerName;
   return getWishColorLabel(color) + flowerName;
+}
+
+function removeWhiteWishColorOptions() {
+  const colorSelect = document.getElementById("flowerColorSelect");
+  if (!colorSelect) return;
+  Array.from(colorSelect.options).forEach(function (option) {
+    if (isWhiteWishColor(option.value) || isWhiteWishColor(option.textContent)) {
+      option.remove();
+    }
+  });
+  if (colorSelect.options.length && isWhiteWishColor(colorSelect.value)) {
+    colorSelect.selectedIndex = 0;
+  }
 }
 
 function initFlowerPicker() {
@@ -459,7 +486,9 @@ function initFlowerPicker() {
       colorSelect.appendChild(option);
     });
 
-    if (colors.includes(currentColor)) {
+    removeWhiteWishColorOptions();
+
+    if (colors.includes(currentColor) && !isWhiteWishColor(currentColor)) {
       colorSelect.value = currentColor;
     }
 
@@ -3604,7 +3633,8 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
           colorSelect.appendChild(option);
         });
 
-        if (colors.includes(current)) colorSelect.value = current;
+        removeWhiteWishColorOptions();
+        if (colors.includes(current) && !isWhiteWishColor(current)) colorSelect.value = current;
       }
 
       updateHiddenValue();
@@ -3713,3 +3743,25 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
       });
     }
   });
+
+
+(function installNoWhiteWishColorGuard() {
+  function setup() {
+    const colorSelect = document.getElementById("flowerColorSelect");
+    if (!colorSelect || colorSelect.dataset.noWhiteGuard === "1") return;
+    colorSelect.dataset.noWhiteGuard = "1";
+    removeWhiteWishColorOptions();
+    colorSelect.addEventListener("focus", removeWhiteWishColorOptions);
+    colorSelect.addEventListener("click", removeWhiteWishColorOptions);
+    colorSelect.addEventListener("change", function () {
+      removeWhiteWishColorOptions();
+      if (isWhiteWishColor(colorSelect.value) && colorSelect.options.length) colorSelect.selectedIndex = 0;
+    });
+    new MutationObserver(removeWhiteWishColorOptions).observe(colorSelect, { childList: true, subtree: true });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setup);
+  } else {
+    setup();
+  }
+})();
