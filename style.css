@@ -700,41 +700,42 @@ body.preview-mode summary {
   }
 }
 
-/* Center home screen elements */
-.home-page {
-  justify-items: center;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+
+/* Glassmorphism Upgrade */
+.modal,
+.popup,
+.dialog,
+.card,
+.section,
+.panel,
+.history-card,
+.complete-card,
+.wish-card,
+.todo-card,
+.nav-card,
+.home-card,
+button,
+input,
+select,
+textarea,
+header,
+footer,
+.tab-btn,
+.filter-btn {
+    background: rgba(255,255,255,0.08) !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
 }
 
-.home-kicker,
-.home-title-row,
-.home-profile,
-.home-subtitle,
-.home-actions,
-.home-news {
-  margin-left: auto;
-  margin-right: auto;
+button:hover,
+.tab-btn:hover,
+.filter-btn:hover {
+    background: rgba(255,255,255,0.14) !important;
 }
 
-.home-news {
-  justify-content: center;
-  text-align: center;
-}
-
-.home-news > div:last-child {
-  text-align: center;
-}
-
-@media (max-width: 720px) {
-  .home-news {
-    align-items: center;
-    text-align: center;
-  }
-
-  .home-news > div:last-child {
-    width: 100%;
-    text-align: center;
-  }
+input::placeholder,
+textarea::placeholder {
+    color: rgba(255,255,255,0.6);
 }
