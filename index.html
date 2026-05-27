@@ -1489,7 +1489,7 @@ document.addEventListener("DOMContentLoaded", () => {
       lock.id = "previewSiteClickLock";
       lock.style.cssText =
         "position:fixed;inset:0;z-index:2147483646;background:rgba(255,255,255,0);" +
-        "cursor:not-allowed;pointer-events:auto;";
+        "cursor:not-allowed;pointer-events:none;";
 
       lock.addEventListener("click", function (e) {
         e.preventDefault();
@@ -1557,6 +1557,64 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(showEntryIfNeeded, ms);
     });
   });
+})();
+</script>
+
+
+<script>
+/* Preview mode click guard fix: keep page read-only, but let the status 【登入】 button be clicked. */
+(function () {
+  function isPreviewOn() {
+    return localStorage.getItem("previewMode") === "true" && !(window.firebaseAuth && window.firebaseAuth.currentUser);
+  }
+
+  function isAllowedPreviewTarget(target) {
+    return !!(target && target.closest && target.closest("#googleLoginLogoutBtn"));
+  }
+
+  function previewClickGuard(e) {
+    if (!isPreviewOn()) return;
+    if (isAllowedPreviewTarget(e.target)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+    alert("請先登入 Google 帳號，登入後才能使用功能。");
+    return false;
+  }
+
+  if (!window.__pikminPreviewGuardFixed) {
+    window.__pikminPreviewGuardFixed = true;
+    document.addEventListener("click", previewClickGuard, true);
+    document.addEventListener("touchstart", previewClickGuard, true);
+  }
+
+  const oldApplyPreviewOnlyLock = window.applyPreviewOnlyLock;
+  window.applyPreviewOnlyLock = function () {
+    if (typeof oldApplyPreviewOnlyLock === "function") oldApplyPreviewOnlyLock();
+
+    const lock = document.getElementById("previewSiteClickLock");
+    if (lock) {
+      lock.style.pointerEvents = "none";
+      lock.style.zIndex = "1";
+    }
+
+    const statusLoginBtn = document.getElementById("googleLoginLogoutBtn");
+    if (statusLoginBtn) {
+      statusLoginBtn.style.position = "relative";
+      statusLoginBtn.style.zIndex = "2147483647";
+      statusLoginBtn.style.pointerEvents = "auto";
+      statusLoginBtn.removeAttribute("disabled");
+    }
+  };
+
+  const oldRemovePreviewLock = window.removePreviewLock;
+  window.removePreviewLock = function () {
+    if (typeof oldRemovePreviewLock === "function") oldRemovePreviewLock();
+    const lock = document.getElementById("previewSiteClickLock");
+    if (lock) lock.remove();
+    document.body.classList.remove("preview-mode-active");
+  };
 })();
 </script>
 
