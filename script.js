@@ -129,6 +129,13 @@ const firebaseConfig = {
     $("previewBtn").onclick = startPreview;
 
     onAuthStateChanged(auth, (user) => {
+      if (user) {
+        previewMode = false;
+        document.body.classList.remove("preview-mode");
+        const banner = $("previewBanner");
+        if (banner) banner.remove();
+      }
+
       currentUser = user;
       const loggedIn = !!user;
       $("loginScreen").classList.toggle("hidden", loggedIn);
