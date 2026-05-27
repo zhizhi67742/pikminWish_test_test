@@ -127,6 +127,7 @@ const firebaseConfig = {
     $("loginBtn2").onclick = login;
     $("logoutBtn").onclick = logout;
     $("previewBtn").onclick = startPreview;
+    $("headerPreviewBtn").onclick = startPreview;
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -141,11 +142,14 @@ const firebaseConfig = {
       const loggedIn = !!user;
       $("loginScreen").classList.toggle("hidden", loggedIn);
       $("app").classList.toggle("hidden", !loggedIn);
-      $("quickNav").classList.toggle("hidden", !loggedIn);
+      $("quickNav").classList.add("hidden");
+      if (loggedIn) showHome();
       $("topBtn").classList.toggle("hidden", !loggedIn);
       $("loginBtn").classList.toggle("hidden", loggedIn);
+      $("headerPreviewBtn").classList.toggle("hidden", loggedIn);
       $("logoutBtn").classList.toggle("hidden", !loggedIn);
       $("userName").textContent = user ? user.displayName || "已登入" : "尚未登入";
+      if ($("homeNick")) $("homeNick").textContent = user ? user.displayName || "已登入" : "尚未登入";
       $("userPhoto").classList.toggle("hidden", !user?.photoURL);
       if (user?.photoURL) $("userPhoto").src = user.photoURL;
       renderAll();
@@ -457,10 +461,13 @@ const firebaseConfig = {
       document.body.classList.add("preview-mode");
       $("loginScreen").classList.add("hidden");
       $("app").classList.remove("hidden");
-      $("quickNav").classList.remove("hidden");
+      $("quickNav").classList.add("hidden");
       $("topBtn").classList.remove("hidden");
+      if ($("homeNick")) $("homeNick").textContent = "預覽模式";
+      showHome();
 
       $("loginBtn").classList.remove("hidden");
+      $("headerPreviewBtn").classList.add("hidden");
       $("logoutBtn").classList.add("hidden");
       $("userName").textContent = "預覽模式";
       $("userPhoto").classList.add("hidden");
@@ -485,16 +492,40 @@ const firebaseConfig = {
     }
 
     // ==============================
+    // 首頁 / 分頁切換
+    // ==============================
+    function showHome() {
+      if ($("homePage")) $("homePage").classList.remove("hidden");
+      if ($("mainTabs")) $("mainTabs").classList.add("hidden");
+      document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+      $("quickNav").classList.add("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function openPage(tabId) {
+      if ($("homePage")) $("homePage").classList.add("hidden");
+      if ($("mainTabs")) $("mainTabs").classList.remove("hidden");
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+      document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+      $(tabId).classList.remove("hidden");
+      $("quickNav").classList.toggle("hidden", tabId !== "wishPage");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // ==============================
     // 9. UI 操作
     // ==============================
     document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
-        $(btn.dataset.tab).classList.remove("hidden");
-      };
+      btn.onclick = () => openPage(btn.dataset.tab);
     });
+
+    document.querySelectorAll("[data-home-tab]").forEach(btn => {
+      btn.onclick = () => openPage(btn.dataset.homeTab);
+    });
+
+    if ($("editNickBtn")) {
+      $("editNickBtn").onclick = () => alert("目前暱稱會先使用 Google 顯示名稱。之後要改成自訂暱稱，我再幫你接到資料庫。")
+    }
 
     document.querySelectorAll(".collapse-btn").forEach(btn => {
       btn.onclick = () => {
@@ -533,7 +564,7 @@ const firebaseConfig = {
       alert("已複製座標");
     };
     window.jumpWish = (flowerName) => {
-      document.querySelector('[data-tab="wishPage"]').click();
+      openPage("wishPage");
       $("flowerInput").value = flowerName;
       updateColorOptions();
       $("newWishPanel").scrollIntoView({ behavior: "smooth" });
@@ -563,7 +594,9 @@ const firebaseConfig = {
       const allowed =
         e.target.closest("#loginBtn") ||
         e.target.closest("#loginBtn2") ||
-        e.target.closest("#previewBtn");
+        e.target.closest("#previewBtn") ||
+        e.target.closest("#headerPreviewBtn") ||
+        e.target.closest(".preview-trigger");
 
       if (allowed) return;
 

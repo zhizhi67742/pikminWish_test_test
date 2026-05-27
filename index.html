@@ -13,6 +13,7 @@
       <div class="userbox">
         <span id="userName" class="muted">尚未登入</span>
         <img id="userPhoto" class="hidden" alt="使用者頭像" />
+        <button id="headerPreviewBtn" class="btn-light preview-trigger">預覽</button>
         <button id="loginBtn">登入</button>
         <button id="logoutBtn" class="btn-light hidden">登出</button>
       </div>
@@ -23,7 +24,7 @@
     <div class="login-card">
       <h1>🌱 歡迎來到 PikminWish</h1>
       <p class="muted">請先使用 Google 登入，登入後才能使用許願池與圖鑑。</p>
-      <div class="login-actions"><button id="loginBtn2">登入</button><button id="previewBtn" class="btn-light">預覽網站</button></div>
+      <div class="login-actions"><button id="loginBtn2">登入</button><button id="previewBtn" class="btn-light preview-trigger">預覽網站</button></div>
     </div>
   </div>
 
@@ -34,7 +35,39 @@
   </nav>
 
   <main id="app" class="hidden">
-    <div class="tabs">
+    <section id="homePage" class="home-page">
+      <div class="home-kicker">PIKMIN WISHING</div>
+      <div class="home-title-row">
+        <div class="home-sprout" aria-hidden="true">🌱</div>
+        <h1>花農許願池</h1>
+      </div>
+
+      <div class="home-profile">
+        <span>👤 目前暱稱：</span>
+        <strong id="homeNick">尚未登入</strong>
+        <span class="home-tag">LINE</span>
+        <button id="editNickBtn" class="home-link-btn" type="button">✏️ 修改暱稱</button>
+      </div>
+
+      <p class="home-subtitle">留下你的願望，花農幫你實現。</p>
+
+      <div class="home-actions">
+        <button class="home-action primary" data-home-tab="wishPage">🌱 許願池</button>
+        <button class="home-action" data-home-tab="historyPage">🎡 歷史許願</button>
+        <button class="home-action" data-home-tab="dexPage">🌺 花朵圖鑑</button>
+        <button class="home-action" data-home-tab="logsPage">📜 更新日誌</button>
+      </div>
+
+      <div class="home-news">
+        <div class="home-news-badge">🪻 5月新花</div>
+        <div>
+          <h2>勿忘草登場</h2>
+          <p>本月活動花種，記得更新你的圖鑑庫存！</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="tabs hidden" id="mainTabs">
       <button class="tab-btn active" data-tab="wishPage">🌸 許願池</button>
       <button class="tab-btn" data-tab="dexPage">📖 花朵圖鑑</button>
       <button class="tab-btn" data-tab="historyPage">🕘 歷史許願</button>
