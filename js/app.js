@@ -1,4 +1,25 @@
 
+async function getRecaptchaToken() {
+  return new Promise((resolve, reject) => {
+    if (typeof grecaptcha === "undefined") {
+      reject("reCAPTCHA 載入失敗");
+      return;
+    }
+
+    grecaptcha.ready(function () {
+      grecaptcha.execute('6LdB3_8sAAAAACpmmd4Muihc2v1oz0ukNrA85rK-', { action: 'submit' })
+        .then(function (token) {
+          console.log("reCAPTCHA 驗證成功", token);
+          resolve(token);
+        })
+        .catch(function (error) {
+          reject(error);
+        });
+    });
+  });
+}
+
+
 const expandedCoordMap = new Map();
 let nickname = "";
 let essenceLimit = 1200;
@@ -688,6 +709,15 @@ async function addWish() {
 
   const canSubmitRepeatWish = await askRepeatWishIfNeeded(flower, nickname);
   if (!canSubmitRepeatWish) return;
+
+  try {
+    await getRecaptchaToken();
+  } catch (error) {
+    console.error(error);
+    alert("reCAPTCHA 驗證失敗，請重新整理後再試一次。");
+    return;
+  }
+
 
   const start = document.getElementById("startHour").value + ":" + document.getElementById("startMinute").value;
   const end = document.getElementById("endHour").value + ":" + document.getElementById("endMinute").value;
