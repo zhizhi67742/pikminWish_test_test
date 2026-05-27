@@ -360,6 +360,25 @@ function findCatalogFlowerForWish(name) {
   return null;
 }
 
+
+function getWishFlowerBaseNameFromValue(value) {
+  let text = String(value || "").trim();
+  if (!text) return "";
+  ["隨意色", "混色", "黃色", "紅色", "藍色", "白色", "黃", "紅", "藍", "白"].forEach(function (prefix) {
+    if (text.startsWith(prefix)) text = text.slice(prefix.length).trim();
+  });
+  return text;
+}
+
+function isCatalogWishFlowerValue(value) {
+  const baseName = getWishFlowerBaseNameFromValue(value);
+  return !!findCatalogFlowerForWish(baseName);
+}
+
+function warnChooseCatalogFlower() {
+  alert("請從花種選單選擇圖鑑裡已有的花種，不能自由輸入新花種。");
+}
+
 function getCurrentWishFlowerName() {
   const input = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
   return input ? input.value.trim() : "";
@@ -485,6 +504,7 @@ function initFlowerPicker() {
           return;
         }
         comboInput.value = flower.name;
+        comboInput.removeAttribute("aria-invalid");
         renderColorOptions();
         closeDropdown();
       });
@@ -561,12 +581,22 @@ function initFlowerPicker() {
     const matchedFlower = findFlowerByName(comboInput.value);
     if (!matchedFlower && comboInput.value.trim()) {
       flowerInput.value = "";
+      comboInput.setAttribute("aria-invalid", "true");
+    } else {
+      comboInput.removeAttribute("aria-invalid");
     }
     renderDropdown();
     renderColorOptions();
   };
   comboInput.onfocus = function () {
     renderDropdown();
+  };
+  comboInput.onblur = function () {
+    const matchedFlower = findFlowerByName(comboInput.value);
+    if (!matchedFlower && comboInput.value.trim()) {
+      flowerInput.value = "";
+      comboInput.setAttribute("aria-invalid", "true");
+    }
   };
   comboInput.onkeydown = function (event) {
     if (event.key === "Escape") closeDropdown();
@@ -839,7 +869,13 @@ async function addWish() {
   }
 
   if (!flower) {
-    alert("請輸入花種。");
+    warnChooseCatalogFlower();
+    return;
+  }
+
+  if (!isCatalogWishFlowerValue(flower)) {
+    warnChooseCatalogFlower();
+    resetFlowerPicker();
     return;
   }
 
@@ -3006,7 +3042,13 @@ async function startFirebaseSync() {
     }
 
     if (!flower) {
-      alert("請輸入花種");
+      warnChooseCatalogFlower();
+      return;
+    }
+
+    if (!isCatalogWishFlowerValue(flower)) {
+      warnChooseCatalogFlower();
+      resetFlowerPicker();
       return;
     }
 
