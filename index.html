@@ -1003,10 +1003,10 @@ h1 {
         await signOut(auth);
         const gate = document.getElementById("nicknameGate");
         if (gate) {
-          gate.classList.remove("hidden-gate");
-          gate.style.display = "";
-          gate.style.visibility = "";
-          gate.style.pointerEvents = "";
+          gate.classList.add("hidden-gate");
+          gate.style.setProperty("display", "none", "important");
+          gate.style.setProperty("visibility", "hidden", "important");
+          gate.style.setProperty("pointer-events", "none", "important");
         }
       } catch (error) {
         console.error("Google 登出失敗", error);
@@ -1018,18 +1018,34 @@ h1 {
 
       const googleEntryOverlay = document.getElementById("googleEntryOverlay");
 
-      if (googleEntryOverlay) {
-        if (user) {
-          googleEntryOverlay.classList.add("hide");
+      const nicknameGate = document.getElementById("nicknameGate");
 
-          const nicknameGate = document.getElementById("nicknameGate");
-          if (nicknameGate) {
-            nicknameGate.classList.remove("hidden");
-          }
+      if (user) {
+        if (googleEntryOverlay) googleEntryOverlay.classList.add("hide");
 
-        } else {
-          googleEntryOverlay.classList.remove("hide");
+        if (nicknameGate) {
+          nicknameGate.classList.add("hidden-gate");
+          nicknameGate.style.setProperty("display", "none", "important");
+          nicknameGate.style.setProperty("visibility", "hidden", "important");
+          nicknameGate.style.setProperty("pointer-events", "none", "important");
+
+          setTimeout(() => {
+            nicknameGate.classList.remove("hidden-gate");
+            nicknameGate.style.setProperty("display", "flex", "important");
+            nicknameGate.style.setProperty("visibility", "visible", "important");
+            nicknameGate.style.setProperty("pointer-events", "auto", "important");
+            document.body.style.overflow = "hidden";
+          }, 260);
         }
+
+      } else {
+        if (nicknameGate) {
+          nicknameGate.classList.add("hidden-gate");
+          nicknameGate.style.setProperty("display", "none", "important");
+          nicknameGate.style.setProperty("visibility", "hidden", "important");
+          nicknameGate.style.setProperty("pointer-events", "none", "important");
+        }
+        if (googleEntryOverlay) googleEntryOverlay.classList.remove("hide");
       }
 
       window.dispatchEvent(new Event("firebase-ready"));
@@ -1055,7 +1071,7 @@ h1 {
   </div>
 </div>
 
-<div id="nicknameGate" class="nickname-gate">
+<div id="nicknameGate" class="nickname-gate hidden-gate">
   <div class="nickname-modal">
     <h1>🌱 花農許願池規則</h1>
 
