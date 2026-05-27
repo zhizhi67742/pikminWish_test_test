@@ -1335,7 +1335,7 @@ label textarea {
   max-height: 52vh;
   overflow-y: auto;
   margin-bottom: 24px;
-  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .rule-section {
@@ -1374,7 +1374,7 @@ label textarea {
   border-radius: 16px 0 0 16px;
   padding: 0 12px;
   border: 1px solid rgba(255, 217, 102, 0.32);
-  border-right: 0;
+  border-left: 0;
   background: #111922;
   color: #ffd966;
   font-weight: 800;
@@ -4258,7 +4258,7 @@ html {
   display: block;
   width: 46px;
   padding: 10px 6px;
-  border-radius: 14px 0 0 14px;
+  border-radius: 0 14px 14px 0;
   border: 1px solid rgba(177, 220, 181, 0.95);
   border-right: 0;
   background: rgba(246, 255, 245, 0.94);
@@ -4278,7 +4278,7 @@ html {
 
 .quick-bookmark-nav a:hover,
 .quick-bookmark-nav a:focus-visible {
-  transform: translateX(-4px);
+  transform: translateX(4px);
   background: #e8ffe9;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
