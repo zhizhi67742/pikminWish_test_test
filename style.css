@@ -497,7 +497,7 @@ body.preview-mode textarea {
 }
 
 
-/* preview no click */
+/* preview mode disable */
 body.preview-mode .card,
 body.preview-mode section.panel,
 body.preview-mode .details {

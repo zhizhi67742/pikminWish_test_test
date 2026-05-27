@@ -132,6 +132,7 @@ const firebaseConfig = {
       if (user) {
         previewMode = false;
         document.body.classList.remove("preview-mode");
+
         const banner = $("previewBanner");
         if (banner) banner.remove();
       }
@@ -553,7 +554,9 @@ const firebaseConfig = {
     };
 
 
-    // 預覽模式攔截所有互動
+    // ==============================
+    // 預覽模式：禁止操作
+    // ==============================
     document.addEventListener("click", (e) => {
       if (!previewMode) return;
 
@@ -567,6 +570,6 @@ const firebaseConfig = {
       e.preventDefault();
       e.stopPropagation();
 
-      alert("目前是預覽模式，無法操作網站功能。請先登入。");
+      alert("目前是預覽模式，請登入後才能使用功能。");
     }, true);
 
