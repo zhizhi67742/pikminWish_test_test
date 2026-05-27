@@ -365,6 +365,44 @@ function getCurrentWishFlowerName() {
   return input ? input.value.trim() : "";
 }
 
+function findExactWishFlowerOption(name) {
+  const key = String(name || "").trim().toLowerCase();
+  if (!key) return null;
+  const sources = [];
+  try { if (Array.isArray(flowerDex)) sources.push(flowerDex); } catch (e) {}
+  try { if (Array.isArray(DEFAULT_FLOWER_DEX)) sources.push(DEFAULT_FLOWER_DEX); } catch (e) {}
+  for (const list of sources) {
+    const found = list.find(function (flower) {
+      return String(flower && flower.name || "").trim().toLowerCase() === key;
+    });
+    if (found) return found;
+  }
+  return null;
+}
+
+function validateWishFlowerSelection(options) {
+  const silent = options && options.silent;
+  const comboInput = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
+  const hiddenInput = document.getElementById("flowerInput");
+  const typedName = comboInput ? comboInput.value.trim() : "";
+  const selectedFlower = findExactWishFlowerOption(typedName);
+
+  if (!typedName || !selectedFlower) {
+    if (hiddenInput) hiddenInput.value = "";
+    if (!silent) alert("請從花種選單選擇花種，不能自行輸入自訂名稱喔～");
+    if (comboInput) comboInput.focus();
+    return false;
+  }
+
+  if (selectedFlower.locked || isLockedFlowerName(typedName)) {
+    if (hiddenInput) hiddenInput.value = "";
+    if (!silent) warnLockedFlower();
+    return false;
+  }
+
+  return true;
+}
+
 function shouldShowWishSpecialColors(flowerName) {
   const flower = findCatalogFlowerForWish(flowerName);
   return !!(flower && Array.isArray(flower.colors) && flower.colors.length >= 2);
@@ -461,7 +499,7 @@ function initFlowerPicker() {
     if (!flowers.length) {
       const empty = document.createElement("div");
       empty.className = "flower-combo-empty";
-      empty.textContent = "沒有符合的花種，可直接輸入自訂花名";
+      empty.textContent = "沒有符合的花種，請改用其他關鍵字搜尋";
       dropdown.appendChild(empty);
       dropdown.classList.add("open");
       return;
@@ -498,6 +536,17 @@ function initFlowerPicker() {
     const flowerName = getTypedFlowerName();
     const selectedFlower = findFlowerByName(flowerName);
     const currentColor = colorSelect.value;
+
+    if (!flowerName || !selectedFlower) {
+      colorSelect.style.display = "";
+      colorSelect.innerHTML = "";
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = flowerName ? "請從選單選擇花種" : "請先搜尋花種";
+      colorSelect.appendChild(option);
+      flowerInput.value = "";
+      return;
+    }
 
     if (selectedFlower && selectedFlower.locked) {
       colorSelect.style.display = "";
@@ -547,11 +596,12 @@ function initFlowerPicker() {
   function updateSelectedFlowerInput() {
     const flowerName = getTypedFlowerName();
     const color = colorSelect.value;
-    if (isLockedFlowerName(flowerName)) {
+    const selectedFlower = findFlowerByName(flowerName);
+    if (!selectedFlower || isLockedFlowerName(flowerName)) {
       flowerInput.value = "";
       return;
     }
-    flowerInput.value = buildWishFlowerName(color, flowerName);
+    flowerInput.value = buildWishFlowerName(color, selectedFlower.name);
   }
 
   comboInput.oninput = function () {
@@ -832,9 +882,12 @@ async function addWish() {
   }
 
   if (!flower) {
-    alert("請輸入花種。");
+    alert("請從花種選單選擇花種。");
+    validateWishFlowerSelection();
     return;
   }
+
+  if (!validateWishFlowerSelection()) return;
 
   if (isLockedWishFlowerValue(flower)) {
     warnLockedFlower();
@@ -1186,9 +1239,12 @@ function openFarmerShareModal() {
   }
 
   if (!flower) {
-    alert("請先選擇或輸入花種，再上傳座標。");
+    alert("請先從花種選單選擇花種，再上傳座標。");
+    validateWishFlowerSelection();
     return;
   }
+
+  if (!validateWishFlowerSelection()) return;
 
   selectedPendingId = "__farmer_direct_share__";
   setDoneModalText(true);
@@ -1521,9 +1577,12 @@ async function confirmDone() {
     }
 
     if (!flower) {
-      alert("請先選擇或輸入花種。");
+      alert("請先從花種選單選擇花種。");
+      validateWishFlowerSelection();
       return;
     }
+
+    if (!validateWishFlowerSelection()) return;
 
     if (isLockedWishFlowerValue(flower)) {
       warnLockedFlower();
@@ -2363,7 +2422,20 @@ function clampDexValuesToLimits() {
 function wishFromDex(name, color) {
   const firstBtn = document.querySelectorAll(".nav-btn")[0];
   showSection("wish", firstBtn);
-  document.getElementById("flowerInput").value = color + "色" + name;
+  const comboInput = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
+  const colorSelect = document.getElementById("flowerColorSelect");
+  const flowerInput = document.getElementById("flowerInput");
+  if (comboInput) {
+    comboInput.value = name;
+    comboInput.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  if (colorSelect && color && !isWhiteWishColor(color)) {
+    colorSelect.value = normalizeWishColorValue(color);
+    colorSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  if (flowerInput && color && !isWhiteWishColor(color)) {
+    flowerInput.value = getWishColorLabel(normalizeWishColorValue(color)) + name;
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -2999,9 +3071,12 @@ async function startFirebaseSync() {
     }
 
     if (!flower) {
-      alert("請輸入花種");
+      alert("請從花種選單選擇花種。");
+      validateWishFlowerSelection();
       return;
     }
+
+    if (!validateWishFlowerSelection()) return;
 
     if (isLockedWishFlowerValue(flower)) {
       warnLockedFlower();
@@ -3643,16 +3718,27 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
     function updateHiddenValue() {
       const name = input.value.trim();
       const color = colorSelect.value;
-      if (isLockedFlowerName(name)) {
+      const found = findFlower(name);
+      if (!found || isLockedFlowerName(name)) {
         hiddenInput.value = "";
         return;
       }
-      hiddenInput.value = buildWishFlowerName(color, name);
+      hiddenInput.value = buildWishFlowerName(color, found.name);
     }
 
     function renderColors() {
       const current = colorSelect.value;
       const found = findFlower(input.value);
+      if (!input.value.trim() || !found) {
+        colorSelect.style.display = "";
+        colorSelect.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = input.value.trim() ? "請從選單選擇花種" : "請先搜尋花種";
+        colorSelect.appendChild(option);
+        hiddenInput.value = "";
+        return;
+      }
       if (found && found.locked) {
         colorSelect.innerHTML = "";
         const option = document.createElement("option");
@@ -3707,7 +3793,7 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
       if (!flowers.length) {
         const empty = document.createElement("div");
         empty.className = "flower-combo-empty";
-        empty.textContent = "沒有符合的花種，可直接輸入自訂花名";
+        empty.textContent = "沒有符合的花種，請改用其他關鍵字搜尋";
         dropdown.appendChild(empty);
       } else {
         flowers.forEach(function (flower) {
