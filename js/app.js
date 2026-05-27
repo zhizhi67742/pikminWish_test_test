@@ -319,7 +319,7 @@ function getWishColorOptions(baseColors) {
   // 許願單不提供「白色」選項；白花仍保留在花朵圖鑑 DEFAULT_FLOWER_DEX 裡顯示。
   const colors = Array.isArray(baseColors) && baseColors.length ? baseColors.slice() : ["黃", "紅", "藍"];
   const uniqueColors = colors.filter(function (color, index) {
-    return color !== "白" && colors.indexOf(color) === index;
+    return color !== "白" && color !== "白色" && colors.indexOf(color) === index;
   });
   if (uniqueColors.length >= 2) {
     if (!uniqueColors.includes("混色")) uniqueColors.push("混色");
