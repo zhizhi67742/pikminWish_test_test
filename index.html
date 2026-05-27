@@ -1331,6 +1331,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <script>
 async function loginLogoutGoogleFromStatus() {
   localStorage.removeItem("previewMode");
+  localStorage.removeItem("previewMode");
   try {
     const authObj = window.firebaseAuth || window.auth;
     const user = authObj && authObj.currentUser;
@@ -1392,51 +1393,37 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-
 <script>
 (function () {
-  function isGoogleAuthAllowed(target) {
-    return !!(
-      target.closest("#googleLoginLogoutBtn") ||
-      target.closest(".google-login-btn") ||
-      target.closest(".google-entry-btn") ||
-      target.closest("[data-google-login]") ||
-      target.closest("[onclick*='loginWithGoogle']") ||
-      target.closest("[onclick*='loginLogoutGoogleFromStatus']")
-    );
-  }
-
-  window.isPreviewMode = function () {
-    return localStorage.getItem("previewMode") === "true";
-  };
-
   window.enablePreviewMode = function () {
     localStorage.setItem("previewMode", "true");
-    applyPreviewModeStrict();
+    applyPreviewOverlayLock();
   };
 
   window.disablePreviewMode = function () {
     localStorage.removeItem("previewMode");
-    document.body.classList.remove("preview-mode-active");
+    const overlay = document.getElementById("previewClickLockOverlay");
     const banner = document.getElementById("previewModeBanner");
+    if (overlay) overlay.remove();
     if (banner) banner.remove();
+    document.body.classList.remove("preview-mode-active");
   };
 
-  window.applyPreviewModeStrict = function () {
-    if (!window.isPreviewMode()) return;
+  window.applyPreviewOverlayLock = function () {
+    if (localStorage.getItem("previewMode") !== "true") return;
 
     document.body.classList.add("preview-mode-active");
 
     if (!document.getElementById("previewModeBanner")) {
       const banner = document.createElement("div");
       banner.id = "previewModeBanner";
-      banner.textContent = "👀 預覽模式中（只能觀看，登入後可操作）";
+      banner.textContent = "👀 預覽模式中｜請先登入才能使用功能";
       banner.style.cssText = [
         "position:fixed",
         "top:12px",
         "left:50%",
         "transform:translateX(-50%)",
-        "z-index:2147483647",
+        "z-index:2147483646",
         "background:rgba(35,35,35,.78)",
         "color:#fff",
         "padding:9px 16px",
@@ -1450,53 +1437,56 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.appendChild(banner);
     }
 
-    document.querySelectorAll("input, textarea, select").forEach(function (el) {
-      el.setAttribute("readonly", "readonly");
-      el.setAttribute("disabled", "disabled");
-    });
+    if (!document.getElementById("previewClickLockOverlay")) {
+      const overlay = document.createElement("div");
+      overlay.id = "previewClickLockOverlay";
+      overlay.style.cssText = [
+        "position:fixed",
+        "inset:0",
+        "z-index:2147483645",
+        "background:rgba(255,255,255,0)",
+        "cursor:not-allowed"
+      ].join(";");
 
-    document.querySelectorAll("button").forEach(function (btn) {
-      if (!isGoogleAuthAllowed(btn)) {
-        btn.setAttribute("disabled", "disabled");
-        btn.style.pointerEvents = "none";
-      } else {
-        btn.removeAttribute("disabled");
-        btn.style.pointerEvents = "auto";
-      }
-    });
+      overlay.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert("請先登入 Google 帳號，登入後才能使用功能。");
+      }, true);
 
-    document.querySelectorAll("a, [onclick], [role='button'], summary").forEach(function (el) {
-      if (!isGoogleAuthAllowed(el)) {
-        el.style.pointerEvents = "none";
-        el.setAttribute("data-preview-locked", "true");
-      }
-    });
-  };
+      overlay.addEventListener("touchstart", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert("請先登入 Google 帳號，登入後才能使用功能。");
+      }, true);
 
-  function blockPreviewAction(e) {
-    if (!window.isPreviewMode()) return;
-
-    const target = e.target;
-    if (target && isGoogleAuthAllowed(target)) {
-      localStorage.removeItem("previewMode");
-      return;
+      document.body.appendChild(overlay);
     }
 
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    return false;
-  }
+    const loginBtn =
+      document.getElementById("googleLoginLogoutBtn") ||
+      document.querySelector(".google-login-btn") ||
+      document.querySelector(".google-entry-btn") ||
+      document.querySelector("[onclick*='loginWithGoogle']") ||
+      document.querySelector("[onclick*='loginLogoutGoogleFromStatus']");
 
-  ["click", "dblclick", "mousedown", "mouseup", "touchstart", "touchend", "submit", "change", "input", "keydown", "keyup"].forEach(function (eventName) {
-    document.addEventListener(eventName, blockPreviewAction, true);
-  });
+    if (loginBtn) {
+      loginBtn.style.position = "relative";
+      loginBtn.style.zIndex = "2147483647";
+      loginBtn.style.pointerEvents = "auto";
+      loginBtn.removeAttribute("disabled");
+
+      loginBtn.addEventListener("click", function () {
+        localStorage.removeItem("previewMode");
+      }, { once: true, capture: true });
+    }
+  };
 
   document.addEventListener("DOMContentLoaded", function () {
-    applyPreviewModeStrict();
-    setTimeout(applyPreviewModeStrict, 300);
-    setTimeout(applyPreviewModeStrict, 1000);
-    setTimeout(applyPreviewModeStrict, 2500);
+    applyPreviewOverlayLock();
+    setTimeout(applyPreviewOverlayLock, 300);
+    setTimeout(applyPreviewOverlayLock, 1000);
+    setTimeout(applyPreviewOverlayLock, 2500);
   });
 })();
 </script>
