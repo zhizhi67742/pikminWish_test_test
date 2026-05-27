@@ -495,3 +495,22 @@ body.preview-mode select,
 body.preview-mode textarea {
   cursor: not-allowed;
 }
+
+
+/* preview no click */
+body.preview-mode .card,
+body.preview-mode section.panel,
+body.preview-mode .details {
+  user-select: none;
+}
+
+body.preview-mode button:not(#loginBtn):not(#loginBtn2):not(#previewBtn),
+body.preview-mode input,
+body.preview-mode select,
+body.preview-mode textarea,
+body.preview-mode details,
+body.preview-mode summary {
+  pointer-events: none !important;
+  opacity: 0.78;
+}
+

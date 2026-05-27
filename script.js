@@ -551,3 +551,22 @@ const firebaseConfig = {
       $("detailActions").innerHTML = `<button class="btn-secondary" onclick="window.takeWish('${item.id}'); detailDialog.close();">我可以幫忙</button>`;
       $("detailDialog").showModal();
     };
+
+
+    // 預覽模式攔截所有互動
+    document.addEventListener("click", (e) => {
+      if (!previewMode) return;
+
+      const allowed =
+        e.target.closest("#loginBtn") ||
+        e.target.closest("#loginBtn2") ||
+        e.target.closest("#previewBtn");
+
+      if (allowed) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      alert("目前是預覽模式，無法操作網站功能。請先登入。");
+    }, true);
+
