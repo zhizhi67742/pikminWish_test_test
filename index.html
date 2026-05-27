@@ -516,7 +516,7 @@ h1 {
 
 <div class="login-status-bar">
 已登入：<span id="loginAccountText">Google帳號</span>
-<button class="nickname-edit-link" type="button" onclick="quickGoogleLogout()">【登出】</button>
+<button class="nickname-edit-link" type="button" id="googleLoginLogoutBtn" onclick="handleGoogleAuthButton()">【登入】</button>
 </div>
 <nav class="main-nav">
 <button class="nav-btn active" onclick="showSection('wish', this)">🌱 許願池</button>
@@ -1347,6 +1347,72 @@ async function quickGoogleLogout() {
     alert("登出失敗，請稍後再試");
   }
 }
+</script>
+
+
+<script>
+async function handleGoogleAuthButton() {
+  try {
+    const user =
+      (window.auth && window.auth.currentUser) ||
+      (window.firebaseAuth && window.firebaseAuth.currentUser);
+
+    if (user) {
+      if (window.auth && typeof window.auth.signOut === "function") {
+        await window.auth.signOut();
+      }
+
+      if (window.firebaseAuth && typeof window.firebaseAuth.signOut === "function") {
+        await window.firebaseAuth.signOut();
+      }
+
+      alert("已登出 Google 帳號");
+      location.reload();
+      return;
+    }
+
+    const loginBtn =
+      document.querySelector(".google-login-btn") ||
+      document.querySelector("[onclick*=google]") ||
+      document.querySelector("[onclick*=Google]");
+
+    if (loginBtn) {
+      loginBtn.click();
+    } else {
+      alert("找不到 Google 登入按鈕");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("操作失敗，請稍後再試");
+  }
+}
+
+function updateGoogleAuthButton() {
+  const btn = document.getElementById("googleLoginLogoutBtn");
+  const text = document.getElementById("loginAccountText");
+
+  if (!btn || !text) return;
+
+  const user =
+    (window.auth && window.auth.currentUser) ||
+    (window.firebaseAuth && window.firebaseAuth.currentUser);
+
+  if (user) {
+    btn.textContent = "【登出】";
+    text.textContent =
+      user.displayName ||
+      user.email ||
+      "Google帳號";
+  } else {
+    btn.textContent = "【登入】";
+    text.textContent = "未登入";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(updateGoogleAuthButton, 1000);
+});
 </script>
 
 </body>
