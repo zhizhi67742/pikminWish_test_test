@@ -36,6 +36,35 @@ let locallyDeletedWishKeys = new Set();
 let spamWishCleanupRunning = false;
 let spamWishCleanupDoneKeys = new Set();
 
+const WISH_SUBMIT_COOLDOWN_MS = 30000;
+let wishSubmitInProgress = false;
+let lastWishSubmitAt = Number(localStorage.getItem("pikminLastWishSubmitAt") || 0);
+
+function getWishSubmitCooldownRemainingSeconds() {
+  const elapsed = Date.now() - Number(lastWishSubmitAt || 0);
+  return Math.max(0, Math.ceil((WISH_SUBMIT_COOLDOWN_MS - elapsed) / 1000));
+}
+
+function guardWishSubmitCooldown() {
+  if (wishSubmitInProgress) {
+    alert("願望卡正在送出中，請不要重複點擊。");
+    return false;
+  }
+
+  const remaining = getWishSubmitCooldownRemainingSeconds();
+  if (remaining > 0) {
+    alert(`請等 ${remaining} 秒後再送出新的願望卡 🌱`);
+    return false;
+  }
+
+  return true;
+}
+
+function markWishSubmitSuccess() {
+  lastWishSubmitAt = Date.now();
+  localStorage.setItem("pikminLastWishSubmitAt", String(lastWishSubmitAt));
+}
+
 function getPikminAccountAgeInfo() {
   const user = window.currentPikminUser || (window.firebaseAuth && window.firebaseAuth.currentUser);
   return {
@@ -710,18 +739,9 @@ async function addWish() {
   const flower = document.getElementById("flowerInput").value.trim();
   const message = document.getElementById("messageInput").value.trim();
 
-  const WISH_COOLDOWN_MS = 30 * 1000;
-  const lastWishTime = Number(localStorage.getItem("lastWishSubmitTime") || 0);
-  const now = Date.now();
-
-  if (now - lastWishTime < WISH_COOLDOWN_MS) {
-    const waitSec = Math.ceil((WISH_COOLDOWN_MS - (now - lastWishTime)) / 1000);
-    alert(`請等 ${waitSec} 秒後再送出許願單`);
-    return;
-  }
-
-
   nickname = getCurrentNickname();
+
+  if (!guardWishSubmitCooldown()) return;
 
   if (!guardPikminAccountCanPost()) return;
 
@@ -756,7 +776,7 @@ async function addWish() {
   const start = document.getElementById("startHour").value + ":" + document.getElementById("startMinute").value;
   const end = document.getElementById("endHour").value + ":" + document.getElementById("endMinute").value;
 
-  localStorage.setItem("lastWishSubmitTime", String(now));
+  wishSubmitInProgress = true;
 
   wishes.push({
     id: Date.now(),
@@ -774,6 +794,8 @@ async function addWish() {
   document.getElementById("messageInput").value = "";
   saveData();
   renderAll();
+  markWishSubmitSuccess();
+  wishSubmitInProgress = false;
   alert("已成功送出許願 🌸");
 }
 
@@ -2885,6 +2907,8 @@ async function startFirebaseSync() {
     const flower = document.getElementById("flowerInput")?.value?.trim();
     const nickname = getCurrentNickname();
 
+    if (!guardWishSubmitCooldown()) return;
+
     if (!guardPikminAccountCanPost()) return;
 
     if (!nickname) {
@@ -2930,13 +2954,25 @@ async function startFirebaseSync() {
       status: "wish"
     };
 
-    await addDoc(wishesRef, newWish);
+    wishSubmitInProgress = true;
 
-    alert("已成功送出許願 🌸");
+    try {
+      await getRecaptchaToken();
+      await addDoc(wishesRef, newWish);
+      markWishSubmitSuccess();
 
-    document.getElementById("flowerInput").value = "";
-    if (document.getElementById("messageInput")) {
-      document.getElementById("messageInput").value = "";
+      alert("已成功送出許願 🌸");
+
+      document.getElementById("flowerInput").value = "";
+      resetFlowerPicker();
+      if (document.getElementById("messageInput")) {
+        document.getElementById("messageInput").value = "";
+      }
+    } catch (error) {
+      console.error(error);
+      alert("送出失敗，請稍後再試。");
+    } finally {
+      wishSubmitInProgress = false;
     }
   };
 
