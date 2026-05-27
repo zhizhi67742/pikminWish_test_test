@@ -1021,6 +1021,12 @@ h1 {
       if (googleEntryOverlay) {
         if (user) {
           googleEntryOverlay.classList.add("hide");
+
+          const nicknameGate = document.getElementById("nicknameGate");
+          if (nicknameGate) {
+            nicknameGate.classList.remove("hidden");
+          }
+
         } else {
           googleEntryOverlay.classList.remove("hide");
         }
