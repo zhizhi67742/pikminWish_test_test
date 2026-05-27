@@ -699,3 +699,42 @@ body.preview-mode summary {
     padding: 18px;
   }
 }
+
+/* Center home screen elements */
+.home-page {
+  justify-items: center;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home-kicker,
+.home-title-row,
+.home-profile,
+.home-subtitle,
+.home-actions,
+.home-news {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home-news {
+  justify-content: center;
+  text-align: center;
+}
+
+.home-news > div:last-child {
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .home-news {
+    align-items: center;
+    text-align: center;
+  }
+
+  .home-news > div:last-child {
+    width: 100%;
+    text-align: center;
+  }
+}
