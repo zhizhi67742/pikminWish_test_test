@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PikminWish 花農許願池</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">🌸 PikminWish</div>
+      <div class="userbox">
+        <span id="userName" class="muted">尚未登入</span>
+        <img id="userPhoto" class="hidden" alt="使用者頭像" />
+        <button id="headerPreviewBtn" class="btn-light preview-trigger">預覽</button>
+        <button id="loginBtn">登入</button>
+        <button id="logoutBtn" class="btn-light hidden">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>🌱 歡迎來到 PikminWish</h1>
+      <p class="muted">請先使用 Google 登入，登入後才能使用許願池與圖鑑。</p>
+      <div class="login-actions"><button id="loginBtn2">登入</button><button id="previewBtn" class="btn-light preview-trigger">預覽網站</button></div>
+    </div>
+  </div>
+
+  <nav class="quick-nav hidden" id="quickNav">
+    <a href="#wishPanel">許願區</a>
+    <a href="#progressPanel">待完成</a>
+    <a href="#donePanel">已完成</a>
+  </nav>
+
+  <main id="app" class="hidden">
+    <section id="homePage" class="home-page">
+      <div class="home-kicker">PIKMIN WISHING</div>
+      <div class="home-title-row">
+        <div class="home-sprout" aria-hidden="true">🌱</div>
+        <h1>花農許願池</h1>
+      </div>
+
+      <div class="home-profile">
+        <span>👤 目前暱稱：</span>
+        <strong id="homeNick">尚未登入</strong>
+        <span class="home-tag">LINE</span>
+        <button id="editNickBtn" class="home-link-btn" type="button">✏️ 修改暱稱</button>
+      </div>
+
+      <p class="home-subtitle">留下你的願望，花農幫你實現。</p>
+
+      <div class="home-actions">
+        <button class="home-action primary" data-home-tab="wishPage">🌱 許願池</button>
+        <button class="home-action" data-home-tab="historyPage">🎡 歷史許願</button>
+        <button class="home-action" data-home-tab="dexPage">🌺 花朵圖鑑</button>
+        <button class="home-action" data-home-tab="logsPage">📜 更新日誌</button>
+      </div>
+
+      <div class="home-news">
+        <div class="home-news-badge">🪻 5月新花</div>
+        <div>
+          <h2>勿忘草登場</h2>
+          <p>本月活動花種，記得更新你的圖鑑庫存！</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="tabs hidden" id="mainTabs">
+      <button class="tab-btn active" data-tab="wishPage">🌸 許願池</button>
+      <button class="tab-btn" data-tab="dexPage">📖 花朵圖鑑</button>
+      <button class="tab-btn" data-tab="historyPage">🕘 歷史許願</button>
+      <button class="tab-btn" data-tab="logsPage">📝 更新日誌</button>
+      <button class="tab-btn" data-tab="termsPage">📜 服務條款</button>
+    </div>
+
+    <div id="wishPage" class="page">
+      <section class="panel" id="newWishPanel">
+        <div class="panel-head">
+          <h2>🌱 新增願望卡</h2>
+          <button class="btn-light btn-small collapse-btn">收合</button>
+        </div>
+        <div class="panel-body">
+          <form id="wishForm" class="grid form-grid">
+            <div class="field">
+              <label>暱稱</label>
+              <input id="wishName" required placeholder="輸入你的暱稱" />
+            </div>
+            <div class="field">
+              <label>聯絡方式</label>
+              <select id="contactType">
+                <option value="LINE">LINE</option>
+                <option value="Discord">Discord</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>LINE / Discord ID</label>
+              <input id="contactId" placeholder="方便花農聯絡你" />
+            </div>
+            <div class="field">
+              <label>花種</label>
+              <input id="flowerInput" list="flowerList" required placeholder="可輸入或下拉選擇" />
+              <datalist id="flowerList"></datalist>
+            </div>
+            <div class="field">
+              <label>花色</label>
+              <select id="flowerColor"></select>
+            </div>
+            <div class="field">
+              <label>可採收時間</label>
+              <input id="harvestTime" required placeholder="例：今晚 21:00 後" />
+            </div>
+            <div class="field">
+              <label>進階選項</label>
+              <div class="inline-actions">
+                <label><input type="checkbox" class="quickOpt" value="白花/櫻花收" /> 白花/櫻花收</label>
+                <label><input type="checkbox" class="quickOpt" value="隨意收" /> 隨意收</label>
+                <label><input type="checkbox" class="quickOpt" value="勿分享" /> 勿分享</label>
+                <label><input type="checkbox" class="quickOpt" value="座標已偏移" /> 座標已偏移</label>
+              </div>
+            </div>
+            <div class="field full">
+              <label>備註 / 採收需求</label>
+              <textarea id="wishNote" placeholder="可手動輸入其他需求"></textarea>
+            </div>
+            <div class="full inline-actions">
+              <button type="submit">送出許願</button>
+              <span class="muted">重複花種會跳出提醒視窗。</span>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel" id="wishPanel">
+        <div class="panel-head">
+          <h2>🌸 許願區</h2>
+          <button class="btn-light btn-small collapse-btn">收合</button>
+        </div>
+        <div class="panel-body">
+          <div class="inline-actions" style="margin-bottom:12px;">
+            <button id="showAllBtn" class="btn-light">顯示所有訂單</button>
+            <button id="showMineBtn" class="btn-light">僅顯示自己接發的訂單</button>
+            <button id="availableBtn" class="btn-secondary">目前可接訂單</button>
+          </div>
+          <div id="wishCards" class="cards"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="progressPanel">
+        <div class="panel-head">
+          <h2>🌱 待完成</h2>
+          <button class="btn-light btn-small collapse-btn">收合</button>
+        </div>
+        <div class="panel-body">
+          <div id="progressCards" class="cards"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="donePanel">
+        <div class="panel-head">
+          <h2>✅ 已完成</h2>
+          <button class="btn-light btn-small collapse-btn">收合</button>
+        </div>
+        <div class="panel-body">
+          <div id="doneCards" class="cards"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="dexPage" class="page hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>📖 花朵圖鑑</h2></div>
+        <div class="inline-actions" style="margin-bottom:12px;">
+          <button class="dex-filter btn-light" data-filter="all">全部</button>
+          <button class="dex-filter btn-light" data-filter="missing">缺花</button>
+          <button class="dex-filter btn-light" data-filter="full">已滿</button>
+        </div>
+        <div id="dexList" class="cards"></div>
+      </section>
+    </div>
+
+    <div id="historyPage" class="page hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>🕘 歷史許願</h2></div>
+        <div id="historyList" class="cards"></div>
+      </section>
+    </div>
+
+    <div id="logsPage" class="page hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>📝 更新日誌</h2></div>
+        <div class="log-list">
+          <h3>🌸 PikminWish 初版～新版功能整理</h3>
+          <p>🌱 初版功能：花農許願池正式上線、願望卡分享、接單與完成分享、花朵圖鑑。</p>
+          <p>💌 社群互動：建立花農與採花者互助分享機制，支援快速查看花種需求與收藏狀態。</p>
+          <p>🌱 功能新增：歷史許願、更新日誌、服務條款、LINE / Discord 社群連結、快速跳轉書籤、回到頂部、目前可接訂單、花農直接上傳座標、快速複製資訊、Google 登入。</p>
+          <p>🛠️ 系統優化：手機板圖鑑、選單、按鈕、排序、重複許願提醒、取消接單、風鈴草 5/31 前鎖定、顏色新增混色與隨意色。</p>
+        </div>
+      </section>
+    </div>
+
+    <div id="termsPage" class="page hidden">
+      <section class="panel">
+        <div class="panel-head"><h2>📜 服務條款</h2></div>
+        <div class="terms-box">
+          <p>本網站為 Pikmin 花農與採花者互助使用。請勿惡意刪單、冒用他人名稱、散播不實座標或騷擾使用者。</p>
+          <p>登入僅用於辨識建立者與操作權限，不會公開你的 Google 信箱。</p>
+          <p>社群連結：<a href="#" target="_blank">LINE</a> / <a href="#" target="_blank">Discord</a></p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <button id="topBtn" class="hidden">↑</button>
+
+  <dialog id="duplicateDialog">
+    <div class="modal">
+      <h3>⚠️ 重複許願提醒</h3>
+      <p id="duplicateText" class="muted"></p>
+      <div class="inline-actions">
+        <button id="confirmDuplicate">還是送出</button>
+        <button id="cancelDuplicate" class="btn-light">取消</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="detailDialog">
+    <div class="modal">
+      <h3 id="detailTitle">詳細資訊</h3>
+      <div id="detailContent"></div>
+      <div class="inline-actions" id="detailActions"></div>
+      <button class="btn-light" onclick="detailDialog.close()">關閉</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>
