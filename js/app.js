@@ -2646,6 +2646,27 @@ async function startFirebaseSync() {
   const wishesRef = collection(db, "wishes");
   const wishHistoryRef = collection(db, "wishHistory");
 
+  let firebaseWishesReady = false;
+  let firebaseHistoryReady = false;
+  let loadingOverlayClosed = false;
+
+  function hideSiteLoadingOverlay(force) {
+    if (loadingOverlayClosed) return;
+    if (!force && (!firebaseWishesReady || !firebaseHistoryReady)) return;
+    loadingOverlayClosed = true;
+    const overlay = document.getElementById("siteLoadingOverlay");
+    if (overlay) {
+      overlay.classList.add("hide");
+      setTimeout(function () {
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }, 450);
+    }
+  }
+
+  setTimeout(function () {
+    hideSiteLoadingOverlay(true);
+  }, 5000);
+
   // Firebase 準備好後，先讀取這個暱稱的雲端圖鑑。
   const savedDexName = getCurrentNickname();
   if (savedDexName) {
@@ -2695,6 +2716,7 @@ async function startFirebaseSync() {
     });
 
     cleanupSpamWishGroups(wishes);
+    firebaseWishesReady = true;
 
     renderWishes();
     renderPending();
@@ -2702,6 +2724,11 @@ async function startFirebaseSync() {
     renderWishHistory();
     saveData();
     bindDynamicButtons();
+    hideSiteLoadingOverlay(false);
+  }, (error) => {
+    console.error("Firebase 許願池同步失敗", error);
+    firebaseWishesReady = true;
+    hideSiteLoadingOverlay(false);
   });
 
   // 即時同步歷史許願：新增許願不寫入；只顯示完成、刪除/取消、花農分享。
@@ -2725,8 +2752,14 @@ async function startFirebaseSync() {
       addLocalWishHistory(item);
     });
 
+    firebaseHistoryReady = true;
     renderWishHistory();
     saveData();
+    hideSiteLoadingOverlay(false);
+  }, (error) => {
+    console.error("Firebase 歷史許願同步失敗", error);
+    firebaseHistoryReady = true;
+    hideSiteLoadingOverlay(false);
   });
 
   // Firebase 新增願望
@@ -3523,3 +3556,13 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
       });
     }
   });
+
+
+// Loading 保底：避免網路或權限異常時載入畫面永久停住。
+window.hideSiteLoadingOverlayFallbackInstalled = true;
+window.addEventListener("load", function () {
+  setTimeout(function () {
+    const overlay = document.getElementById("siteLoadingOverlay");
+    if (overlay) overlay.classList.add("hide");
+  }, 7000);
+});
