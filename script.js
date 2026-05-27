@@ -58,6 +58,47 @@ const firebaseConfig = {
     let wishes = [];
     let currentFilter = "all";
     let pendingSubmit = null;
+    let previewMode = false;
+
+    const PREVIEW_WISHES = [
+      {
+        id: "preview-open",
+        requesterName: "AAA",
+        requesterUid: "preview-user",
+        contactType: "LINE",
+        contactId: "preview_line",
+        flowerName: "向日葵",
+        flowerColor: "黃",
+        harvestTime: "今晚 21:00 後",
+        note: "白花/櫻花收、勿分享",
+        status: "open"
+      },
+      {
+        id: "preview-progress",
+        requesterName: "BBB",
+        requesterUid: "preview-other",
+        helperUid: "preview-user",
+        helperName: "花農CCC",
+        flowerName: "粉蝶花",
+        flowerColor: "藍",
+        harvestTime: "明天晚上",
+        note: "隨意收",
+        status: "progress"
+      },
+      {
+        id: "preview-done",
+        requesterName: "DDD",
+        requesterUid: "preview-other",
+        helperUid: "preview-user",
+        helperName: "花農EEE",
+        flowerName: "玫瑰",
+        flowerColor: "紅",
+        harvestTime: "已完成",
+        note: "座標已偏移",
+        coords: "25.12345, 121.54321",
+        status: "done"
+      }
+    ];
 
     const $ = (id) => document.getElementById(id);
     const fmtTime = (value) => {
@@ -85,6 +126,7 @@ const firebaseConfig = {
     $("loginBtn").onclick = login;
     $("loginBtn2").onclick = login;
     $("logoutBtn").onclick = logout;
+    $("previewBtn").onclick = startPreview;
 
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
@@ -134,6 +176,7 @@ const firebaseConfig = {
     // ==============================
     const wishesQuery = query(collection(db, "wishes"), orderBy("createdAt", "desc"));
     onSnapshot(wishesQuery, (snapshot) => {
+      if (previewMode) return;
       wishes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       autoCleanOldDone();
       renderAll();
@@ -187,6 +230,7 @@ const firebaseConfig = {
 
     $("wishForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (previewOnly()) return;
       if (!currentUser) return alert("請先登入");
       const data = collectWishForm();
       if (!data) return;
@@ -214,6 +258,7 @@ const firebaseConfig = {
     // 7. 訂單操作
     // ==============================
     async function takeWish(id) {
+      if (previewOnly()) return;
       const helperName = prompt("請輸入花農名稱");
       if (!helperName) return;
       await updateDoc(doc(db, "wishes", id), {
@@ -226,6 +271,7 @@ const firebaseConfig = {
     }
 
     async function cancelTake(id) {
+      if (previewOnly()) return;
       const reason = prompt("請輸入取消原因");
       if (reason === null) return;
       await updateDoc(doc(db, "wishes", id), {
@@ -238,6 +284,7 @@ const firebaseConfig = {
     }
 
     async function completeWish(id) {
+      if (previewOnly()) return;
       const coords = prompt("請輸入座標");
       if (!coords) return;
       await updateDoc(doc(db, "wishes", id), {
@@ -249,6 +296,7 @@ const firebaseConfig = {
     }
 
     async function directUpload() {
+      if (previewOnly()) return;
       const flowerName = prompt("花種");
       if (!flowerName) return;
       const helperName = prompt("花農名稱");
@@ -274,10 +322,12 @@ const firebaseConfig = {
     }
 
     async function deleteWish(id) {
+      if (previewOnly()) return;
       await deleteDoc(doc(db, "wishes", id));
     }
 
     function copyInfo(item, includeCoords = false) {
+      if (previewOnly()) return;
       const lines = [
         `${item.flowerName || "花種"} / ${item.note || "採收資訊"}`,
         "-",
@@ -292,13 +342,14 @@ const firebaseConfig = {
     // 8. 渲染
     // ==============================
     function renderAll() {
-      if (!currentUser) return;
+      if (!currentUser && !previewMode) return;
       renderWishes();
       renderDex();
       renderHistory();
     }
 
     function canManage(item) {
+      if (previewMode) return true;
       return item.requesterUid === currentUser?.uid || item.helperUid === currentUser?.uid;
     }
 
@@ -322,7 +373,7 @@ const firebaseConfig = {
         <div class="card-actions">
           <button onclick="window.showDetail('${item.id}')">詳細資訊</button>
           <button class="btn-secondary" onclick="window.takeWish('${item.id}')">我可以幫忙</button>
-          ${item.requesterUid === currentUser.uid ? `<button class="btn-danger" onclick="window.deleteWish('${item.id}')">刪除</button>` : ""}
+          ${(previewMode || item.requesterUid === currentUser?.uid) ? `<button class="btn-danger" onclick="window.deleteWish('${item.id}')">刪除</button>` : ""}
         </div>
       </article>`;
     }
@@ -335,7 +386,7 @@ const firebaseConfig = {
         <div>🌼 採收資訊：${escapeHtml(item.note || "無")}</div>
         <div class="card-actions">
           <button class="btn-light" onclick="window.copyInfoById('${item.id}')">複製資訊</button>
-          ${item.helperUid === currentUser.uid ? `<button class="btn-secondary" onclick="window.completeWish('${item.id}')">上傳座標</button><button class="btn-light" onclick="window.cancelTake('${item.id}')">取消接單</button>` : ""}
+          ${(previewMode || item.helperUid === currentUser?.uid) ? `<button class="btn-secondary" onclick="window.completeWish('${item.id}')">上傳座標</button><button class="btn-light" onclick="window.cancelTake('${item.id}')">取消接單</button>` : ""}
         </div>
       </article>`;
     }
@@ -382,6 +433,49 @@ const firebaseConfig = {
       </article>`).join("") || `<p class="muted">目前沒有歷史紀錄。</p>`;
     }
 
+
+    // ==============================
+    // 預覽模式：只看版面，不能操作資料
+    // ==============================
+    function startPreview() {
+      previewMode = true;
+      currentUser = {
+        uid: "preview-user",
+        displayName: "預覽模式",
+        photoURL: ""
+      };
+      wishes = [...PREVIEW_WISHES];
+
+      document.body.classList.add("preview-mode");
+      $("loginScreen").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      $("quickNav").classList.remove("hidden");
+      $("topBtn").classList.remove("hidden");
+
+      $("loginBtn").classList.remove("hidden");
+      $("logoutBtn").classList.add("hidden");
+      $("userName").textContent = "預覽模式";
+      $("userPhoto").classList.add("hidden");
+
+      if (!$("previewBanner")) {
+        const banner = document.createElement("div");
+        banner.id = "previewBanner";
+        banner.className = "preview-banner";
+        banner.textContent = "目前是預覽模式，可以查看版面，但不能新增、接單、上傳或刪除資料。右上角登入後即可正式使用。";
+        $("app").prepend(banner);
+      }
+
+      renderAll();
+    }
+
+    function previewOnly() {
+      if (previewMode) {
+        alert("這是預覽模式，只能查看版面。請按右上角「登入」後正式使用。");
+        return true;
+      }
+      return false;
+    }
+
     // ==============================
     // 9. UI 操作
     // ==============================
@@ -424,6 +518,7 @@ const firebaseConfig = {
       if (item) copyInfo(item);
     };
     window.copyCoords = (id) => {
+      if (previewOnly()) return;
       const item = wishes.find(w => w.id === id);
       if (!item?.coords) return;
       navigator.clipboard.writeText(item.coords);
