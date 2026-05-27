@@ -326,7 +326,9 @@ function isWhiteWishColor(color) {
 
 function getWishColorOptions(baseColors) {
   // 許願單不提供「白／白色」選項；白花仍保留在花朵圖鑑 DEFAULT_FLOWER_DEX 裡顯示。
+  // 混色／隨意色依照花種原本的顏色數量判斷：原本有 2 色以上，即使扣掉白色後只剩 1 色，也要顯示。
   const colors = Array.isArray(baseColors) && baseColors.length ? baseColors.slice() : ["黃", "紅", "藍"];
+  const shouldAddSpecialColors = colors.length >= 2;
   const seen = {};
   const uniqueColors = [];
   colors.forEach(function (color) {
@@ -335,7 +337,7 @@ function getWishColorOptions(baseColors) {
     seen[normalized] = true;
     uniqueColors.push(normalized);
   });
-  if (uniqueColors.length >= 2) {
+  if (shouldAddSpecialColors) {
     if (!uniqueColors.includes("混色")) uniqueColors.push("混色");
     if (!uniqueColors.includes("隨意色")) uniqueColors.push("隨意色");
   }
