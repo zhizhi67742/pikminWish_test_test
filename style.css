@@ -30,6 +30,7 @@ body {
     radial-gradient(circle at 90% 14%, rgba(184, 207, 104, 0.2), transparent 28%),
     linear-gradient(180deg, #111922 0%, #1b2a23 52%, #274730 100%);
   color: var(--text);
+  font-size: 12px;
   min-height: 100vh;
 }
 
@@ -54,6 +55,7 @@ button {
   cursor: pointer;
   background: linear-gradient(180deg, var(--main), var(--main-dark));
   color: #1e2d3d;
+  font-size: 11px;
   font-weight: 700;
   box-shadow: 0 2px 0 rgba(0,0,0,0.10), 0 4px 10px rgba(0,0,0,0.10);
   transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
@@ -189,6 +191,7 @@ main {
 
 .login-card h1 {
   margin: 0 0 8px;
+  font-size: 50px;
   color: #274730;
 }
 
@@ -548,7 +551,7 @@ body.preview-mode summary {
 
 .home-title-row h1 {
   margin: 0;
-  font-size: clamp(48px, 8vw, 86px);
+  font-size: 50px;
   line-height: 1;
   letter-spacing: 0.04em;
   font-weight: 800;
@@ -561,7 +564,7 @@ body.preview-mode summary {
   height: clamp(92px, 12vw, 136px);
   display: grid;
   place-items: center;
-  font-size: clamp(70px, 9vw, 112px);
+  font-size: 50px;
   filter: drop-shadow(0 16px 18px rgba(0,0,0,0.28));
 }
 
