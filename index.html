@@ -516,7 +516,7 @@ h1 {
 
 <div class="login-status-bar">
 已登入：<span id="loginAccountText">Google帳號</span>
-<button class="nickname-edit-link" type="button">【登出】</button>
+<button class="nickname-edit-link" type="button" onclick="quickGoogleLogout()">【登出】</button>
 </div>
 <nav class="main-nav">
 <button class="nav-btn active" onclick="showSection('wish', this)">🌱 許願池</button>
@@ -1326,6 +1326,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setTimeout(updateGoogleAccountName, 1000);
 });
+</script>
+
+
+<script>
+async function quickGoogleLogout() {
+  try {
+    if (window.auth && typeof window.auth.signOut === "function") {
+      await window.auth.signOut();
+    }
+
+    if (window.firebaseAuth && typeof window.firebaseAuth.signOut === "function") {
+      await window.firebaseAuth.signOut();
+    }
+
+    alert("已登出 Google 帳號");
+    location.reload();
+  } catch (error) {
+    console.error(error);
+    alert("登出失敗，請稍後再試");
+  }
+}
 </script>
 
 </body>
