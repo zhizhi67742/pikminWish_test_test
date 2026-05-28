@@ -4261,8 +4261,9 @@ html {
   border-radius: 0 14px 14px 0;
   border: 1px solid rgba(177, 220, 181, 0.95);
   border-right: 0;
-  background: rgba(246, 255, 245, 0.94);
+  background: rgba(246, 255, 245, 0.7);
   color: #2d6240;
+  opacity: 0.7;
   font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
@@ -4280,12 +4281,13 @@ html {
 .quick-bookmark-nav a:focus-visible {
   transform: translateX(4px);
   background: #e8ffe9;
+  opacity: 1;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
   .quick-bookmark-nav {
-    right: 6px;
+    left: 0;
     gap: 7px;
   }
 
