@@ -2404,10 +2404,69 @@ function clampDexValuesToLimits() {
 }
 
 function wishFromDex(name, color) {
-  const firstBtn = document.querySelectorAll(".nav-btn")[0];
-  showSection("wish", firstBtn);
-  document.getElementById("flowerInput").value = color + "色" + name;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const firstBtn = document.querySelector('.nav-btn[onclick*="showSection(\'wish\'"]') ||
+    document.querySelector('.nav-btn[onclick*="showSection(&quot;wish&quot;)"]') ||
+    document.querySelectorAll(".nav-btn")[0];
+
+  if (typeof showSection === "function") {
+    showSection("wish", firstBtn);
+  }
+
+  const flowerName = String(name || "").trim();
+  const rawColor = String(color || "").trim();
+  const normalizedColor = normalizeWishColorValue(rawColor);
+
+  function applyQuickWishSelection() {
+    const comboInput = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
+    const colorSelect = document.getElementById("flowerColorSelect");
+    const flowerInput = document.getElementById("flowerInput");
+    const dropdown = document.getElementById("flowerComboDropdown");
+    const catalogFlower = findCatalogFlowerForWish(flowerName);
+
+    if (!comboInput || !colorSelect || !flowerInput || !catalogFlower) return false;
+
+    // 先初始化選單事件，再把快速許願的花名真正寫進搜尋框。
+    initFlowerPicker();
+
+    comboInput.value = flowerName;
+    comboInput.removeAttribute("aria-invalid");
+    comboInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const baseColors = Array.isArray(catalogFlower.colors) ? catalogFlower.colors : [];
+    const wishColors = getWishColorOptions(baseColors);
+    const isSingleColorFlower = baseColors.length <= 1 && wishColors.length <= 1;
+
+    if (isSingleColorFlower) {
+      colorSelect.style.display = "none";
+      colorSelect.innerHTML = '<option value="">單色花</option>';
+      flowerInput.value = flowerName;
+    } else {
+      colorSelect.style.display = "";
+      if (normalizedColor && !isWhiteWishColor(normalizedColor)) {
+        appendWishColorOptionIfMissing(colorSelect, normalizedColor);
+        colorSelect.value = normalizedColor;
+      } else if (colorSelect.options.length) {
+        colorSelect.selectedIndex = 0;
+      }
+      colorSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      flowerInput.value = buildWishFlowerName(colorSelect.value, flowerName);
+    }
+
+    if (dropdown) dropdown.classList.remove("open");
+
+    const messageInput = document.getElementById("messageInput");
+    if (messageInput) messageInput.focus();
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return true;
+  }
+
+  // 有些手機瀏覽器切換頁籤後 DOM 會晚一點完成 active，補兩次確保會自動填入。
+  if (!applyQuickWishSelection()) {
+    setTimeout(applyQuickWishSelection, 60);
+  } else {
+    setTimeout(applyQuickWishSelection, 80);
+  }
 }
 
 function getDexStatus(essence, petal) {
