@@ -1,142 +1,232 @@
 
-/* ===== 管理後台重製版 ===== */
+* {
+  box-sizing: border-box;
+}
 
+html,
 body {
   margin: 0;
-  min-height: 100vh;
-  font-family:
-    "Noto Sans TC",
-    "Microsoft JhengHei",
-    sans-serif;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  color: #3f3b46;
   background:
-    radial-gradient(circle at top left,
-      rgba(255, 216, 235, 0.7),
-      transparent 32%),
-    radial-gradient(circle at bottom right,
-      rgba(212, 235, 255, 0.7),
-      transparent 34%),
+    radial-gradient(circle at 20% 18%, rgba(255, 221, 237, 0.85), transparent 28%),
+    radial-gradient(circle at 82% 78%, rgba(212, 237, 255, 0.9), transparent 32%),
     linear-gradient(135deg, #fff8fb 0%, #f5fbff 100%);
 }
 
-.admin-shell {
+.admin-page {
   min-height: 100vh;
 }
 
 .admin-login-gate {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  box-sizing: border-box;
 }
 
 .admin-panel {
-  width: min(460px, 100%);
-  padding: 34px;
-  border-radius: 32px;
-  background: rgba(255,255,255,0.76);
+  width: min(430px, 100%);
+  padding: 32px 28px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 20px 48px rgba(112, 118, 148, 0.16);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  box-shadow:
-    0 20px 50px rgba(120,130,160,0.16),
-    inset 0 1px 0 rgba(255,255,255,0.7);
-  border: 1px solid rgba(255,255,255,0.85);
+  text-align: center;
 }
 
-.admin-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.admin-badge {
+.admin-brand {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
+  padding: 6px 13px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.75);
+  background: rgba(255, 255, 255, 0.78);
+  color: #82798d;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
-  color: #7a7383;
   margin-bottom: 14px;
 }
 
-.admin-panel h1 {
+.admin-brand.small {
+  margin-bottom: 8px;
+}
+
+.admin-panel h1,
+.admin-header h1 {
   margin: 0;
-  font-size: 30px;
-  font-weight: 800;
-  color: #47424f;
-  letter-spacing: -0.02em;
+  color: #4b4654;
+  font-size: 28px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
 }
 
 .admin-account-info {
-  margin-top: 22px;
-  padding: 14px 16px;
+  margin: 20px 0 0;
+  padding: 13px 16px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.7);
-  border: 1px solid rgba(255,255,255,0.85);
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(235, 232, 242, 0.95);
+  color: #4f4a58;
   font-size: 13px;
-  line-height: 1.7;
-  color: #4d4b57;
+  line-height: 1.6;
 }
 
-.admin-email {
+.admin-account-info strong,
+.admin-account-info span,
+.admin-account-info em {
+  display: block;
+}
+
+.admin-account-info span {
   font-size: 11px;
-  opacity: 0.7;
+  color: #77717f;
+}
+
+.admin-account-info em {
+  margin-top: 5px;
+  color: #c36b7d;
+  font-style: normal;
+  font-size: 12px;
 }
 
 .admin-desc {
-  margin: 22px 0;
+  margin: 20px 0 22px;
+  color: #5f5a68;
   font-size: 13px;
-  line-height: 1.9;
-  color: #5d5b66;
+  line-height: 1.8;
 }
 
 .admin-actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 12px;
 }
 
-.admin-actions button {
-  height: 50px;
+.admin-actions button,
+.home-link {
+  height: 48px;
   border: 0;
   border-radius: 999px;
-  cursor: pointer;
+  padding: 0 18px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #37343d;
   font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 9px 18px rgba(112, 118, 148, 0.11);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-actions .secondary,
+.home-link {
+  background: rgba(255, 255, 255, 0.62);
   font-weight: 700;
-  transition: 0.18s ease;
 }
 
-#adminGoogleLoginBtn {
-  background: #ffffff;
-  color: #333;
-  box-shadow: 0 10px 20px rgba(130,130,160,0.12);
+.admin-content {
+  display: none;
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0;
 }
 
-#adminGoogleLoginBtn:hover {
-  transform: translateY(-1px);
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 36px rgba(112, 118, 148, 0.12);
 }
 
-.secondary {
-  background: rgba(255,255,255,0.6);
-  color: #555;
+.admin-header p {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #686273;
 }
 
-.secondary:hover {
-  background: rgba(255,255,255,0.82);
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 18px;
 }
 
-@media (max-width: 640px) {
-  .admin-panel {
-    padding: 28px 22px;
-    border-radius: 28px;
+.admin-card {
+  min-height: 160px;
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 30px rgba(112, 118, 148, 0.1);
+}
+
+.admin-card h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #4b4654;
+}
+
+.admin-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #686273;
+  line-height: 1.7;
+}
+
+body.admin-locked .admin-content {
+  display: none !important;
+}
+
+body.admin-ready #adminLoginGate {
+  display: none !important;
+}
+
+body.admin-ready .admin-content {
+  display: block !important;
+}
+
+@media (max-width: 760px) {
+  .admin-login-gate {
+    align-items: center;
+    padding: 20px;
   }
 
-  .admin-panel h1 {
+  .admin-panel {
+    padding: 28px 22px;
+    border-radius: 26px;
+  }
+
+  .admin-panel h1,
+  .admin-header h1 {
     font-size: 24px;
+  }
+
+  .admin-header {
+    display: block;
+  }
+
+  .home-link {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
   }
 }
