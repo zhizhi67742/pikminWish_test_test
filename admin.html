@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PikminWish 管理後台</title>
-  <link rel="stylesheet" href="css/admin.css?v=admin-quick-flower-20260528-1" />
+  <link rel="stylesheet" href="css/admin.css?v=admin-style-fixed-20260528-2" />
 </head>
 <body>
 <div class="admin-bg"></div>
@@ -51,54 +51,14 @@
           <span>歷史紀錄</span>
           <strong id="historyCount">0</strong>
         </div>
-        <div class="glass-card stat-card">
-          <span>自訂花種</span>
-          <strong id="customFlowerCount">0</strong>
-        </div>
       </div>
 
       <nav class="tabs" aria-label="管理分類">
-        <button class="tab-btn active" data-tab="flowers" type="button">快速新增花種</button>
-        <button class="tab-btn" data-tab="wishes" type="button">許願資料</button>
+        <button class="tab-btn active" data-tab="wishes" type="button">許願資料</button>
         <button class="tab-btn" data-tab="history" type="button">歷史紀錄</button>
       </nav>
 
-      <section id="flowersTab" class="glass-card data-card" data-tab-panel="flowers">
-        <div class="card-head">
-          <div>
-            <h2>快速新增花種</h2>
-            <p>新增後會同步到正式網站的圖鑑與許願花種選單。</p>
-          </div>
-        </div>
-
-        <form id="quickFlowerForm" class="quick-flower-form">
-          <label>
-            <span>花種名稱</span>
-            <input id="quickFlowerName" class="admin-field" type="text" placeholder="例如：風鈴草" autocomplete="off" required />
-          </label>
-          <label>
-            <span>備註小字（可不填）</span>
-            <input id="quickFlowerSubtitle" class="admin-field" type="text" placeholder="例如：6月新花" autocomplete="off" />
-          </label>
-          <div class="color-checks" aria-label="可用顏色">
-            <span>圖鑑顏色</span>
-            <label><input type="checkbox" name="quickFlowerColor" value="白" checked /> 白</label>
-            <label><input type="checkbox" name="quickFlowerColor" value="黃" /> 黃</label>
-            <label><input type="checkbox" name="quickFlowerColor" value="紅" /> 紅</label>
-            <label><input type="checkbox" name="quickFlowerColor" value="藍" /> 藍</label>
-          </div>
-          <label class="inline-check">
-            <input id="quickFlowerLocked" type="checkbox" />
-            <span>先鎖定，暫時不開放許願</span>
-          </label>
-          <button class="main-btn" type="submit">新增 / 更新花種</button>
-        </form>
-
-        <p class="small-note">提醒：許願單仍會自動隱藏白色；兩色以上會自動出現混色、隨意色。</p>
-        <div id="customFlowerList" class="admin-list flower-admin-list"></div>
-      </section>
-
-      <section id="wishesTab" class="glass-card data-card" data-tab-panel="wishes" hidden>
+      <section id="wishesTab" class="glass-card data-card">
         <div class="card-head">
           <div>
             <h2>許願資料</h2>
@@ -109,7 +69,7 @@
         <div id="wishList" class="admin-list"></div>
       </section>
 
-      <section id="historyTab" class="glass-card data-card" data-tab-panel="history" hidden>
+      <section id="historyTab" class="glass-card data-card" hidden>
         <div class="card-head">
           <div>
             <h2>歷史紀錄</h2>
@@ -122,6 +82,6 @@
     </section>
   </main>
 
-  <script type="module" src="js/admin.js?v=admin-quick-flower-20260528-1"></script>
+  <script type="module" src="js/admin.js?v=admin-style-fixed-20260528-2"></script>
 </body>
 </html>
