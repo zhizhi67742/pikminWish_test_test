@@ -2168,7 +2168,7 @@ function copyHarvestInfo() {
   const locationInput = document.getElementById("shareLocationInput");
 
   const harvestInfo = harvestInput ? harvestInput.value.trim() : "";
-  const locationText = "https://zhizhi67742.github.io/pikmin-wish/";
+  const locationText = "https://zhizhi67742.github.io/pikminWish_New/";
 
   let flowerName = "";
 
