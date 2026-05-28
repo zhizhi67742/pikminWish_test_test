@@ -10,7 +10,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return signedIn() && request.auth.token.email in [
-        "請改成你的gmail@gmail.com"
+        "y0966621741@gmail.com"
       ];
     }
 

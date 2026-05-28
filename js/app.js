@@ -287,30 +287,47 @@ function normalizeCatalogName(name) {
   return String(name || "").trim().toLowerCase();
 }
 
+function getCatalogSortTime(flower) {
+  const value = flower && (flower.createdAt || flower.customAddedAt || flower.updatedAt || flower.createdAtSort);
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const parsed = new Date(value || 0).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 function rebuildFlowerDexFromSources() {
-  const merged = JSON.parse(JSON.stringify(DEFAULT_FLOWER_DEX));
+  const builtInFlowers = JSON.parse(JSON.stringify(DEFAULT_FLOWER_DEX));
+  const customFlowers = [];
 
-  (Array.isArray(cloudFlowerCatalog) ? cloudFlowerCatalog : []).forEach(function (flower) {
-    if (!flower || !flower.name) return;
+  (Array.isArray(cloudFlowerCatalog) ? cloudFlowerCatalog : [])
+    .slice()
+    .sort(function (a, b) { return getCatalogSortTime(b) - getCatalogSortTime(a); })
+    .forEach(function (flower) {
+      if (!flower || !flower.name) return;
 
-    const cleanFlower = {
-      name: String(flower.name || "").trim(),
-      subtitle: String(flower.subtitle || "").trim(),
-      colors: Array.isArray(flower.colors) && flower.colors.length
-        ? flower.colors.map(normalizeCatalogColor).filter(Boolean)
-        : ["白"],
-      locked: !!flower.locked
-    };
+      const cleanFlower = {
+        name: String(flower.name || "").trim(),
+        subtitle: String(flower.subtitle || "").trim(),
+        colors: Array.isArray(flower.colors) && flower.colors.length
+          ? flower.colors.map(normalizeCatalogColor).filter(Boolean)
+          : ["白"],
+        locked: !!flower.locked,
+        isCustomFlower: true,
+        customAddedAt: getCatalogSortTime(flower)
+      };
 
-    const index = merged.findIndex(function (item) {
-      return normalizeCatalogName(item.name) === normalizeCatalogName(cleanFlower.name);
+      const index = builtInFlowers.findIndex(function (item) {
+        return normalizeCatalogName(item.name) === normalizeCatalogName(cleanFlower.name);
+      });
+
+      if (index >= 0) {
+        builtInFlowers[index] = Object.assign({}, builtInFlowers[index], cleanFlower);
+      } else {
+        customFlowers.push(cleanFlower);
+      }
     });
 
-    if (index >= 0) merged[index] = Object.assign({}, merged[index], cleanFlower);
-    else merged.push(cleanFlower);
-  });
-
-  flowerDex = merged;
+  flowerDex = customFlowers.concat(builtInFlowers);
 }
 
 function startFlowerCatalogListener() {

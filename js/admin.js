@@ -256,7 +256,7 @@ function renderCustomFlowers() {
 
   const items = customFlowerDocs
     .slice()
-    .sort((a, b) => String(a.data?.name || "").localeCompare(String(b.data?.name || ""), "zh-Hant"));
+    .sort((a, b) => getSortTime(b) - getSortTime(a) || String(a.data?.name || "").localeCompare(String(b.data?.name || ""), "zh-Hant"));
 
   if (!items.length) {
     list.innerHTML = '<div class="empty">目前沒有自訂花種。新增後會出現在這裡。</div>';
@@ -315,6 +315,8 @@ async function saveQuickFlower(event) {
     colors,
     locked,
     source: "admin",
+    createdAt: now,
+    customAddedAt: now,
     updatedAt: now,
     updatedBy: currentUser.email || ""
   }, { merge: true });
