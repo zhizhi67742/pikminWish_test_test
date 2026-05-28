@@ -2177,6 +2177,8 @@ function renderDex() {
     flower.colors.forEach(function (color) {
       const essenceKey = `dex_${flower.name}_${color}_essence`;
       const petalKey = `dex_${flower.name}_${color}_petal`;
+      const safeEssenceKey = escapeHtml(essenceKey);
+      const safePetalKey = escapeHtml(petalKey);
 
       const essence = Number(safeGetLocalStorage(essenceKey) || 0);
       const petal = Number(safeGetLocalStorage(petalKey) || 0);
@@ -2184,7 +2186,7 @@ function renderDex() {
       if (!isDexRowMatchingFilter(flower.name, color)) return;
 
       rows += `
-        <tr>
+        <tr class="dex-data-row" data-essence-key="${safeEssenceKey}" data-petal-key="${safePetalKey}">
           <td>${getColorEmoji(color)} ${color}</td>
 
           <td>
@@ -2194,8 +2196,9 @@ function renderDex() {
                 min="0"
                 max="${essenceLimit}"
                 value="${essence}"
-                oninput="saveDexValue('${essenceKey}', this.value, ${essenceLimit}, false, this)"
-                onchange="saveDexValue('${essenceKey}', this.value, ${essenceLimit}, false, this)"
+                data-dex-key="${safeEssenceKey}"
+                oninput="saveDexValue('${essenceKey}', this.value, ${essenceLimit}, false)"
+                onchange="saveDexValue('${essenceKey}', this.value, ${essenceLimit}, false)"
               />
               <span>/ ${essenceLimit}</span>
             </div>
@@ -2208,8 +2211,9 @@ function renderDex() {
                 min="0"
                 max="${petalLimit}"
                 value="${petal}"
-                oninput="saveDexValue('${petalKey}', this.value, ${petalLimit}, false, this)"
-                onchange="saveDexValue('${petalKey}', this.value, ${petalLimit}, false, this)"
+                data-dex-key="${safePetalKey}"
+                oninput="saveDexValue('${petalKey}', this.value, ${petalLimit}, false)"
+                onchange="saveDexValue('${petalKey}', this.value, ${petalLimit}, false)"
               />
               <span>/ ${petalLimit}</span>
             </div>
@@ -2339,22 +2343,36 @@ function toggleDex(btn) {
   btn.parentElement.classList.toggle("open");
 }
 
-function updateDexRowStatus(inputEl) {
-  if (!inputEl) return;
+function getDexInputByKey(key) {
+  const safeKey = String(key || "");
+  if (!safeKey) return null;
 
-  const row = inputEl.closest("tr");
-  if (!row) return;
+  if (window.CSS && typeof window.CSS.escape === "function") {
+    return document.querySelector(`[data-dex-key="${CSS.escape(safeKey)}"]`);
+  }
 
-  const statusCell = row.querySelector(".dex-status-cell") || row.children[3];
-  const inputs = row.querySelectorAll('input[type="number"]');
-  if (!statusCell || inputs.length < 2) return;
-
-  const essence = Number(inputs[0].value || 0);
-  const petal = Number(inputs[1].value || 0);
-  statusCell.textContent = getDexStatus(essence, petal);
+  return Array.from(document.querySelectorAll("[data-dex-key]")).find(function (input) {
+    return input.dataset.dexKey === safeKey;
+  }) || null;
 }
 
-function saveDexValue(key, value, limit, shouldRender, inputEl) {
+function updateDexRowStatusFromKey(key) {
+  const input = getDexInputByKey(key);
+  if (!input) return;
+
+  const row = input.closest(".dex-data-row");
+  if (!row) return;
+
+  const essenceKey = row.dataset.essenceKey || "";
+  const petalKey = row.dataset.petalKey || "";
+  const essence = Number(safeGetLocalStorage(essenceKey) || 0);
+  const petal = Number(safeGetLocalStorage(petalKey) || 0);
+  const statusCell = row.querySelector(".dex-status-cell");
+
+  if (statusCell) statusCell.innerHTML = getDexStatus(essence, petal);
+}
+
+function saveDexValue(key, value, limit, shouldRender) {
   let number = Number(value);
 
   if (Number.isNaN(number)) number = 0;
@@ -2365,14 +2383,15 @@ function saveDexValue(key, value, limit, shouldRender, inputEl) {
   safeSetLocalStorage(key, String(number));
   saveDexBackupValue(key, number);
 
-  if (inputEl && String(inputEl.value) !== String(number)) {
-    inputEl.value = number;
+  const activeInput = getDexInputByKey(key);
+  if (activeInput && activeInput.value !== String(number)) {
+    activeInput.value = String(number);
   }
-
-  updateDexRowStatus(inputEl);
 
   if (shouldRender !== false) {
     renderDex();
+  } else {
+    updateDexRowStatusFromKey(key);
   }
 }
 
