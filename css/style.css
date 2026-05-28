@@ -4230,7 +4230,7 @@ h1 {
 }
 
 
-/* 右側書籤快速跳轉 */
+/* 左側書籤快速跳轉 */
 html {
   scroll-behavior: smooth;
 }
@@ -4243,7 +4243,7 @@ html {
 
 .quick-bookmark-nav {
   position: fixed;
-  left: 14px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   z-index: 9999;
@@ -4260,10 +4260,9 @@ html {
   padding: 10px 6px;
   border-radius: 0 14px 14px 0;
   border: 1px solid rgba(177, 220, 181, 0.95);
-  border-right: 0;
-  background: rgba(246, 255, 245, 0.7);
+  border-left: 0;
+  background: rgba(246, 255, 245, 0.94);
   color: #2d6240;
-  opacity: 0.7;
   font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
@@ -4272,22 +4271,25 @@ html {
   text-orientation: mixed;
   text-decoration: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  opacity: 0.7;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 
 .quick-bookmark-nav a:hover,
-.quick-bookmark-nav a:focus-visible {
+.quick-bookmark-nav a:focus-visible,
+.quick-bookmark-nav a:active {
+  opacity: 1;
   transform: translateX(4px);
   background: #e8ffe9;
-  opacity: 1;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
   .quick-bookmark-nav {
     left: 0;
+    right: auto;
     gap: 7px;
   }
 
@@ -4300,8 +4302,9 @@ html {
 
 @media (max-width: 420px) {
   .quick-bookmark-nav {
+    left: 0;
+    right: auto;
     top: auto;
-    right: 8px;
     bottom: 82px;
     transform: none;
   }
