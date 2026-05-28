@@ -397,3 +397,35 @@ onAuthStateChanged(auth, (user) => {
 
   showAdminPage();
 });
+
+
+// 顯示登入帳號資訊
+function updateAdminAccountInfo(user) {
+  const info = document.getElementById("adminAccountInfo");
+  if (!info) return;
+
+  if (!user) {
+    info.innerHTML = "目前狀態：未登入";
+    return;
+  }
+
+  const name = user.displayName || "未命名使用者";
+  const email = user.email || "未知帳號";
+
+  info.innerHTML = `
+    <div><strong>${name}</strong></div>
+    <div class="admin-email">${email}</div>
+  `;
+}
+
+const _oldShowAdminGate = showAdminGate;
+showAdminGate = function(message) {
+  updateAdminAccountInfo(auth.currentUser || null);
+  _oldShowAdminGate(message);
+};
+
+const _oldShowAdminPage = showAdminPage;
+showAdminPage = function() {
+  updateAdminAccountInfo(auth.currentUser || null);
+  _oldShowAdminPage();
+};

@@ -246,3 +246,20 @@ body.admin-locked > *:not(#adminLoginGate) {
   background: #ffffff;
   font-weight: 700;
 }
+
+
+.admin-account-info {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.7);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #444;
+}
+
+.admin-email {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
