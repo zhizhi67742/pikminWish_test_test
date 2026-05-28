@@ -6,7 +6,17 @@
   <title>PikminWish 管理後台</title>
   <link rel="stylesheet" href="css/admin.css?v=admin-20260528" />
 </head>
-<body>
+<body class="admin-locked">
+
+  <div id="adminLoginGate" class="admin-login-gate">
+    <div class="admin-login-card">
+      <h1>管理員登入</h1>
+      <p>請先使用 Google 登入，登入後才能進入管理網站。</p>
+      <button id="adminGoogleLoginBtn" type="button">使用 Google 登入</button>
+      <button id="adminBackHomeBtn" type="button">回正式網站</button>
+    </div>
+  </div>
+
   <div class="admin-bg"></div>
 
   <main class="admin-shell">

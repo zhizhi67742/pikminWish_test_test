@@ -342,3 +342,58 @@ function setupEvents() {
 
 setupEvents();
 onAuthStateChanged(auth, setAuthUi);
+
+
+// 強制管理頁登入：未登入時只顯示登入提醒，不顯示管理內容
+const adminProvider = new GoogleAuthProvider();
+
+function showAdminGate(message) {
+  document.body.classList.add("admin-locked");
+  document.body.classList.remove("admin-ready");
+  const gate = document.getElementById("adminLoginGate");
+  if (gate) gate.style.display = "flex";
+  if (message) alert(message);
+}
+
+function showAdminPage() {
+  document.body.classList.remove("admin-locked");
+  document.body.classList.add("admin-ready");
+  const gate = document.getElementById("adminLoginGate");
+  if (gate) gate.style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const loginBtn = document.getElementById("adminGoogleLoginBtn");
+  const backBtn = document.getElementById("adminBackHomeBtn");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, adminProvider);
+      } catch (error) {
+        alert("Google 登入失敗，請再試一次。");
+        console.error(error);
+      }
+    });
+  }
+
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      location.href = "index.html";
+    });
+  }
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    showAdminGate();
+    return;
+  }
+
+  if (!ADMIN_EMAILS.includes(user.email)) {
+    showAdminGate("你沒有管理權限。");
+    return;
+  }
+
+  showAdminPage();
+});
