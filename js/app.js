@@ -2414,7 +2414,9 @@ function wishFromDex(name, color) {
 
   const flowerName = String(name || "").trim();
   const rawColor = String(color || "").trim();
-  const normalizedColor = normalizeWishColorValue(rawColor);
+  // 圖鑑裡「白色」仍然顯示，但許願單不開放白色；
+  // 從圖鑑按白色的「缺」時，自動改成許願單可用的「混色」。
+  const normalizedColor = isWhiteWishColor(rawColor) ? "混色" : normalizeWishColorValue(rawColor);
 
   function applyQuickWishSelection() {
     const comboInput = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
@@ -2434,7 +2436,7 @@ function wishFromDex(name, color) {
 
     const baseColors = Array.isArray(catalogFlower.colors) ? catalogFlower.colors : [];
     const wishColors = getWishColorOptions(baseColors);
-    const isSingleColorFlower = baseColors.length <= 1 && wishColors.length <= 1;
+    const isSingleColorFlower = baseColors.length <= 1 && wishColors.length <= 1 && normalizedColor !== "混色";
 
     if (isSingleColorFlower) {
       colorSelect.style.display = "none";
