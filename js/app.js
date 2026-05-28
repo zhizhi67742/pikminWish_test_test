@@ -274,13 +274,79 @@ function warnLockedFlower() {
 }
 
 let flowerDex = JSON.parse(JSON.stringify(DEFAULT_FLOWER_DEX));
+let cloudFlowerCatalog = [];
+let flowerCatalogListenerStarted = false;
 let dexFilterMode = "all";
 let dexActiveFilters = [];
+
+function normalizeCatalogColor(color) {
+  return String(color || "").trim().replace(/色$/u, "");
+}
+
+function normalizeCatalogName(name) {
+  return String(name || "").trim().toLowerCase();
+}
+
+function rebuildFlowerDexFromSources() {
+  const merged = JSON.parse(JSON.stringify(DEFAULT_FLOWER_DEX));
+
+  (Array.isArray(cloudFlowerCatalog) ? cloudFlowerCatalog : []).forEach(function (flower) {
+    if (!flower || !flower.name) return;
+
+    const cleanFlower = {
+      name: String(flower.name || "").trim(),
+      subtitle: String(flower.subtitle || "").trim(),
+      colors: Array.isArray(flower.colors) && flower.colors.length
+        ? flower.colors.map(normalizeCatalogColor).filter(Boolean)
+        : ["白"],
+      locked: !!flower.locked
+    };
+
+    const index = merged.findIndex(function (item) {
+      return normalizeCatalogName(item.name) === normalizeCatalogName(cleanFlower.name);
+    });
+
+    if (index >= 0) merged[index] = Object.assign({}, merged[index], cleanFlower);
+    else merged.push(cleanFlower);
+  });
+
+  flowerDex = merged;
+}
+
+function startFlowerCatalogListener() {
+  if (flowerCatalogListenerStarted) return;
+  if (!window.firebaseDB || !window.firebaseFns || !window.firebaseFns.onSnapshot || !window.firebaseFns.collection) {
+    setTimeout(startFlowerCatalogListener, 500);
+    return;
+  }
+
+  flowerCatalogListenerStarted = true;
+  try {
+    window.firebaseFns.onSnapshot(
+      window.firebaseFns.collection(window.firebaseDB, "flowerCatalog"),
+      function (snapshot) {
+        cloudFlowerCatalog = snapshot.docs.map(function (docSnap) {
+          return docSnap.data() || {};
+        });
+        rebuildFlowerDexFromSources();
+        try { renderAll(); } catch (error) { console.warn("自訂花種重新整理失敗", error); }
+      },
+      function (error) {
+        console.warn("讀取自訂花種失敗", error);
+      }
+    );
+  } catch (error) {
+    flowerCatalogListenerStarted = false;
+    console.warn("自訂花種監聽啟動失敗", error);
+  }
+}
 
 document.addEventListener("DOMContentLoaded", function () {
   buildTimeOptions();
   loadData();
+  rebuildFlowerDexFromSources();
   initFlowerPicker();
+  startFlowerCatalogListener();
   fixExampleCardMessageSafely();
   updateLimitInputs();
   renderAll();
@@ -2694,6 +2760,7 @@ function loadData() {
 
 
   flowerDex = JSON.parse(JSON.stringify(DEFAULT_FLOWER_DEX));
+  rebuildFlowerDexFromSources();
   restoreDexBackupValues();
 }
 
@@ -3747,14 +3814,7 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
 
   function getFlowerSourceList() {
     try {
-      if (Array.isArray(flowerDex) && flowerDex.length) {
-        return [...flowerDex].sort(function(a, b) {
-          const aNew = !!(a && (a.isCustom || a.custom || a.createdAt));
-          const bNew = !!(b && (b.isCustom || b.custom || b.createdAt));
-          if (aNew !== bNew) return bNew - aNew;
-          return 0;
-        });
-      }
+      if (Array.isArray(flowerDex) && flowerDex.length) return flowerDex;
     } catch (e) {}
     try {
       if (Array.isArray(DEFAULT_FLOWER_DEX) && DEFAULT_FLOWER_DEX.length) return DEFAULT_FLOWER_DEX;

@@ -11,6 +11,7 @@ import {
   collection,
   doc,
   deleteDoc,
+  setDoc,
   updateDoc,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
@@ -40,8 +41,10 @@ const provider = new GoogleAuthProvider();
 let currentUser = null;
 let wishDocs = [];
 let historyDocs = [];
+let customFlowerDocs = [];
 let unsubscribeWishes = null;
 let unsubscribeHistory = null;
+let unsubscribeFlowers = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -57,6 +60,21 @@ function escapeHtml(value) {
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
 }
+function makeFlowerDocId(name) {
+  return encodeURIComponent(String(name || "").trim()).replaceAll("/", "%2F");
+}
+
+function normalizeFlowerColor(color) {
+  return String(color || "").trim().replace(/色$/u, "");
+}
+
+function getSelectedQuickFlowerColors() {
+  return Array.from(document.querySelectorAll('input[name="quickFlowerColor"]:checked'))
+    .map((input) => normalizeFlowerColor(input.value))
+    .filter(Boolean)
+    .filter((color, index, arr) => arr.indexOf(color) === index);
+}
+
 
 function formatDate(value) {
   if (!value) return "-";
@@ -138,7 +156,7 @@ function setAuthUi(user) {
     $("adminUserEmail").textContent = "-";
   }
 
-  if (allowed) { startAdminListeners(); setupFlowerManager(); }
+  if (allowed) startAdminListeners();
   else stopAdminListeners();
 }
 
@@ -162,17 +180,31 @@ function startAdminListeners() {
       alert("讀取歷史紀錄失敗，請檢查 Firebase Rules。");
     });
   }
+
+  if (!unsubscribeFlowers) {
+    unsubscribeFlowers = onSnapshot(collection(db, "flowerCatalog"), (snapshot) => {
+      customFlowerDocs = snapshot.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() }));
+      renderCustomFlowers();
+    }, (error) => {
+      console.error(error);
+      alert("讀取自訂花種失敗，請檢查 Firebase Rules。");
+    });
+  }
 }
 
 function stopAdminListeners() {
   if (unsubscribeWishes) unsubscribeWishes();
   if (unsubscribeHistory) unsubscribeHistory();
+  if (unsubscribeFlowers) unsubscribeFlowers();
   unsubscribeWishes = null;
   unsubscribeHistory = null;
+  unsubscribeFlowers = null;
   wishDocs = [];
   historyDocs = [];
+  customFlowerDocs = [];
   renderWishes();
   renderHistory();
+  renderCustomFlowers();
 }
 
 function wishMatchesSearch(item, keyword) {
@@ -214,6 +246,104 @@ function statusLabel(status) {
   if (value === "pending") return "待完成";
   if (value === "done") return "已完成";
   return value;
+}
+
+function renderCustomFlowers() {
+  const list = $("customFlowerList");
+  const count = $("customFlowerCount");
+  if (count) count.textContent = String(customFlowerDocs.length);
+  if (!list) return;
+
+  const items = customFlowerDocs
+    .slice()
+    .sort((a, b) => String(a.data?.name || "").localeCompare(String(b.data?.name || ""), "zh-Hant"));
+
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">目前沒有自訂花種。新增後會出現在這裡。</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(({ id, data }) => {
+    const colors = Array.isArray(data.colors) ? data.colors.join("、") : "-";
+    const locked = data.locked ? "已鎖定" : "可許願";
+    return `
+      <article class="admin-item flower-admin-item">
+        <div class="item-top">
+          <div>
+            <div class="item-title">${escapeHtml(data.name || id)}</div>
+            <div class="item-subtitle">${escapeHtml(data.subtitle || "")}</div>
+          </div>
+          <span class="badge">${escapeHtml(locked)}</span>
+        </div>
+        <div class="meta-grid">
+          <div><b>顏色：</b>${escapeHtml(colors)}</div>
+          <div><b>ID：</b>${escapeHtml(id)}</div>
+        </div>
+        <div class="item-actions">
+          <button class="mini-btn" data-action="edit-flower" data-id="${escapeHtml(id)}" type="button">帶入表單</button>
+          <button class="danger-btn mini-btn" data-action="delete-flower" data-id="${escapeHtml(id)}" type="button">刪除花種</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function saveQuickFlower(event) {
+  event.preventDefault();
+  if (!currentUser || !isAdmin(currentUser)) return;
+
+  const name = $("quickFlowerName")?.value.trim();
+  const subtitle = $("quickFlowerSubtitle")?.value.trim();
+  const colors = getSelectedQuickFlowerColors();
+  const locked = !!$("quickFlowerLocked")?.checked;
+
+  if (!name) {
+    alert("請輸入花種名稱。");
+    return;
+  }
+
+  if (!colors.length) {
+    alert("請至少選一個圖鑑顏色。");
+    return;
+  }
+
+  const id = makeFlowerDocId(name);
+  const now = Date.now();
+  await setDoc(doc(db, "flowerCatalog", id), {
+    name,
+    subtitle,
+    colors,
+    locked,
+    source: "admin",
+    updatedAt: now,
+    updatedBy: currentUser.email || ""
+  }, { merge: true });
+
+  $("quickFlowerForm").reset();
+  const white = document.querySelector('input[name="quickFlowerColor"][value="白"]');
+  if (white) white.checked = true;
+  alert(`已新增 / 更新「${name}」。`);
+}
+
+function fillQuickFlowerForm(id) {
+  const item = customFlowerDocs.find((entry) => entry.id === id);
+  if (!item) return;
+  const data = item.data || {};
+  $("quickFlowerName").value = data.name || "";
+  $("quickFlowerSubtitle").value = data.subtitle || "";
+  $("quickFlowerLocked").checked = !!data.locked;
+  const colors = Array.isArray(data.colors) ? data.colors.map(normalizeFlowerColor) : [];
+  document.querySelectorAll('input[name="quickFlowerColor"]').forEach((input) => {
+    input.checked = colors.includes(normalizeFlowerColor(input.value));
+  });
+  $("quickFlowerName").focus();
+}
+
+async function deleteCustomFlower(id) {
+  const item = customFlowerDocs.find((entry) => entry.id === id);
+  const name = item?.data?.name || id;
+  if (!confirm(`確定要刪除自訂花種「${name}」嗎？正式網站也會移除這個自訂選項。`)) return;
+  await deleteDoc(doc(db, "flowerCatalog", id));
 }
 
 function renderWishes() {
@@ -327,14 +457,16 @@ function setupEvents() {
   $("adminLogoutBtn").addEventListener("click", logout);
   $("wishSearch").addEventListener("input", renderWishes);
   $("historySearch").addEventListener("input", renderHistory);
+  $("quickFlowerForm").addEventListener("submit", saveQuickFlower);
 
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab-btn").forEach((item) => item.classList.remove("active"));
       btn.classList.add("active");
       const tab = btn.dataset.tab;
-      $("wishesTab").hidden = tab !== "wishes";
-      $("historyTab").hidden = tab !== "history";
+      document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.tabPanel !== tab;
+      });
     });
   });
 
@@ -348,6 +480,8 @@ function setupEvents() {
       if (action === "status") await updateWishStatus(id, button.dataset.status);
       if (action === "delete-wish") await deleteWish(id);
       if (action === "delete-history") await deleteHistory(id);
+      if (action === "edit-flower") fillQuickFlowerForm(id);
+      if (action === "delete-flower") await deleteCustomFlower(id);
     } catch (error) {
       console.error(error);
       alert("操作失敗，請檢查 Firebase Rules 或網路狀態。");
@@ -357,33 +491,3 @@ function setupEvents() {
 
 setupEvents();
 onAuthStateChanged(auth, setAuthUi);
-
-
-function setupFlowerManager() {
-  const btn = $("addFlowerBtn");
-  if (!btn || btn.dataset.ready) return;
-  btn.dataset.ready = "1";
-
-  btn.addEventListener("click", async () => {
-    const name = $("newFlowerName")?.value?.trim();
-    const color = $("newFlowerColor")?.value || "黃";
-    const status = $("flowerManagerStatus");
-
-    if (!name) {
-      if (status) status.textContent = "請先輸入花名。";
-      return;
-    }
-
-    try {
-      const customFlowers = JSON.parse(localStorage.getItem("customFlowers") || "[]");
-      customFlowers.unshift({ name, color, createdAt: Date.now() });
-      localStorage.setItem("customFlowers", JSON.stringify(customFlowers));
-
-      if (status) status.textContent = `已新增：${color}${name}`;
-      $("newFlowerName").value = "";
-    } catch (error) {
-      console.error(error);
-      if (status) status.textContent = "新增失敗。";
-    }
-  });
-}

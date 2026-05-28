@@ -219,7 +219,7 @@ a:hover {
 
 .status-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   margin: 18px 0;
 }
 
@@ -411,6 +411,81 @@ a:hover {
 
   .search-input {
     margin-top: 12px;
+    width: 100%;
+  }
+}
+
+.quick-flower-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.quick-flower-form label,
+.color-checks {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.admin-field {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.68);
+  color: #4a4454;
+  outline: none;
+  padding: 0 14px;
+}
+
+.color-checks {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+
+.color-checks label,
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.inline-check {
+  align-self: center;
+}
+
+.quick-flower-form .main-btn {
+  justify-self: start;
+}
+
+.flower-admin-list {
+  margin-top: 16px;
+}
+
+.item-subtitle {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .quick-flower-form {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-flower-form .main-btn {
     width: 100%;
   }
 }
