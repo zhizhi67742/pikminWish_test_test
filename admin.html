@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PikminWish 管理後台</title>
+  <link rel="stylesheet" href="css/admin.css?v=admin-20260528" />
+</head>
+<body>
+  <div class="admin-bg"></div>
+
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <p class="eyebrow">PikminWish</p>
+        <h1>管理後台</h1>
+        <p class="hint">這個頁面只給管理員查看、改狀態與刪除資料。</p>
+      </div>
+      <div class="admin-actions">
+        <a class="ghost-btn" href="index.html">回正式網站</a>
+        <button id="adminLoginBtn" class="main-btn" type="button">Google 登入</button>
+        <button id="adminLogoutBtn" class="ghost-btn" type="button" hidden>登出</button>
+      </div>
+    </header>
+
+    <section id="loginPanel" class="glass-card center-card">
+      <h2>請先登入管理員 Google 帳號</h2>
+      <p>登入後系統會檢查信箱是否在管理員清單內。</p>
+      <button id="loginPanelBtn" class="main-btn" type="button">使用 Google 登入</button>
+      <p class="small-note">請到 <code>js/admin.js</code> 把 <code>ADMIN_EMAILS</code> 改成你的 Gmail。</p>
+    </section>
+
+    <section id="noAccessPanel" class="glass-card center-card danger" hidden>
+      <h2>沒有管理權限</h2>
+      <p id="noAccessText">這個 Google 帳號不在管理員清單內。</p>
+      <a class="main-btn" href="index.html">回正式網站</a>
+    </section>
+
+    <section id="adminPanel" hidden>
+      <div class="status-row">
+        <div class="glass-card stat-card">
+          <span>目前登入</span>
+          <strong id="adminUserEmail">-</strong>
+        </div>
+        <div class="glass-card stat-card">
+          <span>許願池</span>
+          <strong id="wishCount">0</strong>
+        </div>
+        <div class="glass-card stat-card">
+          <span>歷史紀錄</span>
+          <strong id="historyCount">0</strong>
+        </div>
+      </div>
+
+      <nav class="tabs" aria-label="管理分類">
+        <button class="tab-btn active" data-tab="wishes" type="button">許願資料</button>
+        <button class="tab-btn" data-tab="history" type="button">歷史紀錄</button>
+      </nav>
+
+      <section id="wishesTab" class="glass-card data-card">
+        <div class="card-head">
+          <div>
+            <h2>許願資料</h2>
+            <p>可改狀態或刪除不適當的單。</p>
+          </div>
+          <input id="wishSearch" class="search-input" type="search" placeholder="搜尋花名 / 暱稱 / 狀態" />
+        </div>
+        <div id="wishList" class="admin-list"></div>
+      </section>
+
+      <section id="historyTab" class="glass-card data-card" hidden>
+        <div class="card-head">
+          <div>
+            <h2>歷史紀錄</h2>
+            <p>完成與刪除紀錄會顯示在這裡。</p>
+          </div>
+          <input id="historySearch" class="search-input" type="search" placeholder="搜尋花名 / 花農 / 許願者" />
+        </div>
+        <div id="historyList" class="admin-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="js/admin.js?v=admin-20260528"></script>
+</body>
+</html>

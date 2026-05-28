@@ -1,0 +1,29 @@
+這份只是範例，不會自動生效。
+請到 Firebase Console > Firestore Database > Rules 貼上並把管理員信箱改成你的 Gmail。
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.email in [
+        "請改成你的gmail@gmail.com"
+      ];
+    }
+
+    match /wishes/{wishId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /wishHistory/{historyId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
