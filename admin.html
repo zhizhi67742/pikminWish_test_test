@@ -8,15 +8,40 @@
 </head>
 <body class="admin-locked">
 
+  
+<div class="admin-shell">
+
   <div id="adminLoginGate" class="admin-login-gate">
-    <div class="admin-login-card">
-      <h1>管理員登入</h1>
-<div id="adminAccountInfo" class="admin-account-info">尚未登入</div>
-      <p>請先使用 Google 登入，登入後才能進入管理網站。</p>
-      <button id="adminGoogleLoginBtn" type="button">使用 Google 登入</button>
-      <button id="adminBackHomeBtn" type="button">回正式網站</button>
+    <div class="admin-panel">
+      <div class="admin-top">
+        <div>
+          <div class="admin-badge">PikminWish</div>
+          <h1>管理後台</h1>
+        </div>
+      </div>
+
+      <div id="adminAccountInfo" class="admin-account-info">
+        目前狀態：未登入
+      </div>
+
+      <p class="admin-desc">
+        請先使用 Google 登入，登入後才能進入管理網站。
+      </p>
+
+      <div class="admin-actions">
+        <button id="adminGoogleLoginBtn" type="button">
+          使用 Google 登入
+        </button>
+
+        <button id="adminBackHomeBtn" type="button" class="secondary">
+          回正式網站
+        </button>
+      </div>
     </div>
   </div>
+
+</div>
+
 
   <div class="admin-bg"></div>
 
