@@ -138,7 +138,7 @@ function setAuthUi(user) {
     $("adminUserEmail").textContent = "-";
   }
 
-  if (allowed) startAdminListeners();
+  if (allowed) { startAdminListeners(); setupFlowerManager(); }
   else stopAdminListeners();
 }
 
@@ -357,3 +357,33 @@ function setupEvents() {
 
 setupEvents();
 onAuthStateChanged(auth, setAuthUi);
+
+
+function setupFlowerManager() {
+  const btn = $("addFlowerBtn");
+  if (!btn || btn.dataset.ready) return;
+  btn.dataset.ready = "1";
+
+  btn.addEventListener("click", async () => {
+    const name = $("newFlowerName")?.value?.trim();
+    const color = $("newFlowerColor")?.value || "黃";
+    const status = $("flowerManagerStatus");
+
+    if (!name) {
+      if (status) status.textContent = "請先輸入花名。";
+      return;
+    }
+
+    try {
+      const customFlowers = JSON.parse(localStorage.getItem("customFlowers") || "[]");
+      customFlowers.unshift({ name, color, createdAt: Date.now() });
+      localStorage.setItem("customFlowers", JSON.stringify(customFlowers));
+
+      if (status) status.textContent = `已新增：${color}${name}`;
+      $("newFlowerName").value = "";
+    } catch (error) {
+      console.error(error);
+      if (status) status.textContent = "新增失敗。";
+    }
+  });
+}
