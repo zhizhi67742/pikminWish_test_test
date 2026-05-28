@@ -1,20 +1,23 @@
 {
   "name": "PikminWish",
   "short_name": "PikminWish",
-  "start_url": "./",
+  "start_url": "./?v3",
   "display": "standalone",
   "background_color": "#fff7fb",
   "theme_color": "#f7b7c8",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "./icon-192.png?v3",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "./icon-512.png?v3",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "scope": "./"
 }
