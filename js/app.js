@@ -316,7 +316,11 @@ function buildTimeOptions() {
 
 
 function normalizeWishColorValue(color) {
-  return String(color || "").trim().replace(/色$/u, "");
+  const text = String(color || "").trim();
+  // 「混色／隨意色」是許願單真正的選項值，不能被切成「混／隨意」，
+  // 否則從圖鑑白色快速許願時，設定 colorSelect.value = "混色" 會對不到選項。
+  if (text === "混色" || text === "隨意色") return text;
+  return text.replace(/色$/u, "");
 }
 
 function isWhiteWishColor(color) {
