@@ -112,6 +112,34 @@ function getCurrentNickname() {
 }
 
 
+
+
+function getCurrentUserUid() {
+  const user = window.currentPikminUser || (window.firebaseAuth && window.firebaseAuth.currentUser);
+  return user && user.uid ? String(user.uid) : "";
+}
+
+
+function getWishOwnerUid(item) {
+  if (!item) return "";
+  return String(item.uid || item.ownerUid || item.requesterUid || "").trim();
+}
+
+function isCurrentWishOwner(item) {
+  const currentUid = getCurrentUserUid();
+  const ownerUid = getWishOwnerUid(item);
+
+  // 新資料一律用 Google UID 判斷，避免同暱稱不同帳號互相看到/操作。
+  if (ownerUid) {
+    return !!currentUid && currentUid === ownerUid;
+  }
+
+  // 舊資料沒有 UID 時，才退回用暱稱相容。
+  const currentName = getCurrentNickname();
+  const ownerName = item && (item.nickname || item.requester || "");
+  return !!currentName && !!ownerName && String(currentName).trim() === String(ownerName).trim();
+}
+
 function normalizeNicknameOnly(value) {
   return String(value || "").trim().replace(/_(LINE|DC)$/i, "");
 }
@@ -993,6 +1021,9 @@ async function addWish() {
     id: Date.now(),
     flower: flower,
     nickname: nickname,
+    uid: getCurrentUserUid(),
+    ownerUid: getCurrentUserUid(),
+    requesterUid: getCurrentUserUid(),
     createdAt: formatNow(),
     timeRange: start + " - " + end,
     deleteAt: getWishDeleteAtThreeDaysLater(),
@@ -1151,7 +1182,7 @@ function deleteWish(id) {
     return;
   }
 
-  if (String(getCurrentNickname()).trim() !== String(wish.nickname).trim()) {
+  if (!isCurrentWishOwner(wish)) {
     alert("只有原許願者可以刪除。");
     return;
   }
@@ -1233,7 +1264,9 @@ function confirmTakeOrder() {
 
   takenWishes.forEach(function (wish) {
     wish.farmer = nickname;
+    wish.farmerUid = getCurrentUserUid();
     wish.acceptedBy = nickname;
+    wish.acceptedByUid = getCurrentUserUid();
     wish.farmerPlatform = getCurrentPlatform();
     wish.acceptedByPlatform = getCurrentPlatform();
     wish.acceptedAt = acceptedAt;
@@ -1244,7 +1277,9 @@ function confirmTakeOrder() {
       const { updateDoc, doc } = window.firebaseFns;
       updateDoc(doc(window.firebaseDB, "wishes", wish.firebaseId), {
         acceptedBy: nickname,
+        acceptedByUid: getCurrentUserUid(),
         farmer: nickname,
+        farmerUid: getCurrentUserUid(),
         acceptedByPlatform: getCurrentPlatform(),
         farmerPlatform: getCurrentPlatform(),
         acceptedAt: wish.acceptedAt,
@@ -1261,9 +1296,20 @@ function confirmTakeOrder() {
 }
 
 function isCurrentFarmer(item) {
+  if (!item) return false;
+
+  const currentUid = getCurrentUserUid();
+  const farmerUid = String(item.farmerUid || item.acceptedByUid || "").trim();
+
+  // 新資料一律用 Google UID 判斷接單花農，暱稱只做顯示。
+  if (farmerUid) {
+    return !!currentUid && currentUid === farmerUid;
+  }
+
+  // 舊資料沒有 UID 時，才退回用暱稱相容。
   const currentName = getCurrentNickname();
   const farmerName = item && (item.farmer || item.acceptedBy || "");
-  return currentName && farmerName && String(currentName).trim() === String(farmerName).trim();
+  return !!currentName && !!farmerName && String(currentName).trim() === String(farmerName).trim();
 }
 
 function openDoneModal(id) {
@@ -1673,7 +1719,9 @@ async function confirmDone() {
       nickname: "",
       requester: "",
       farmer: currentName,
+      farmerUid: currentUid,
       acceptedBy: currentName,
+      acceptedByUid: currentUid,
       farmerPlatform: getCurrentPlatform(),
       acceptedByPlatform: getCurrentPlatform(),
       requesterPlatform: "",
@@ -1981,7 +2029,7 @@ function renderWishes() {
     }).join("");
 
     list.innerHTML += `
-      <article class="${cardClass}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
+      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
         <h3>🌸 ${escapeHtml(firstWish.flower)}</h3>
         <p>目前 ${group.length} 人許願</p>
         <div class="wish-time-summary">
@@ -1991,7 +2039,7 @@ function renderWishes() {
         <div class="wish-actions merged-help-action">
           <button class="detail-btn" type="button" data-detail-wish-key="${escapeHtml(groupWishKeys)}">詳細資訊</button>
           ${group.some(function(wish){
-            return !wish.isExample && getCurrentNickname() && String(getCurrentNickname()).trim() === String(wish.nickname).trim();
+            return !wish.isExample && isCurrentWishOwner(wish);
           }) ? `<button class="delete-btn outer-delete-btn" type="button" data-delete-group="${escapeHtml(groupWishKeys)}">刪除我的許願</button>` : ""}
         </div>
       </article>
@@ -2003,7 +2051,7 @@ function getPendingGroupKey(item) {
   return [
     String(item.flower || "").trim(),
     normalizeWishTimeRange(item.timeRange),
-    String(item.farmer || item.acceptedBy || "").trim(),
+    String(item.farmerUid || item.acceptedByUid || item.farmer || item.acceptedBy || "").trim(),
     String(item.acceptedAt || "").trim()
   ].join("__");
 }
@@ -2039,7 +2087,7 @@ function renderPending() {
       : `<button class="done-btn disabled-btn" type="button" disabled>等待花農完成分享</button>`;
 
     list.innerHTML += `
-      <article class="card">
+      <article class="card" data-farmer-uid="${escapeHtml(String(firstItem.farmerUid || firstItem.acceptedByUid || "").trim())}">
         <h3>🌱 ${escapeHtml(firstItem.flower)}</h3>
         <p>🌙 可收花時間：${escapeHtml(firstItem.timeRange || "未設定")}｜${group.length}人</p>
         <p>🌱 接單花農：${displayNameWithTagHtml(firstItem.farmer || firstItem.acceptedBy || "花農", firstItem.farmerPlatform || firstItem.acceptedByPlatform)}</p>
@@ -3268,7 +3316,9 @@ async function startFirebaseSync() {
       message,
       deleteAt: getWishDeleteAtThreeDaysLater(),
       createdTimestamp: Date.now(),
-      ownerUid: window.currentPikminUser ? window.currentPikminUser.uid : "",
+      uid: getCurrentUserUid(),
+      ownerUid: getCurrentUserUid(),
+      requesterUid: getCurrentUserUid(),
       ownerEmail: window.currentPikminUser ? window.currentPikminUser.email : "",
       status: "wish"
     };
@@ -3309,7 +3359,9 @@ async function startFirebaseSync() {
 
     await updateDoc(doc(db, "wishes", firebaseId), {
       acceptedBy: nickname,
+        acceptedByUid: getCurrentUserUid(),
       farmer: nickname,
+        farmerUid: getCurrentUserUid(),
       acceptedByPlatform: getCurrentPlatform(),
       farmerPlatform: getCurrentPlatform(),
       farmerUid: window.currentPikminUser ? window.currentPikminUser.uid : "",
@@ -3585,20 +3637,29 @@ function orderCardIsCurrentlyAvailable(card) {
 }
 
 function orderCardBelongsToMe(card, listId, currentName) {
-  if (!card || !currentName) return false;
+  if (!card) return false;
 
-  const cleanName = normalizeOrderText(currentName);
+  const currentUid = getCurrentUserUid();
 
   if (listId === "wishList") {
-    if (card.querySelector(".outer-delete-btn")) {
-      return true;
-    }
+    const ownerUid = String(card.dataset.ownerUid || "").trim();
+    if (ownerUid) return !!currentUid && ownerUid === currentUid;
 
+    // 舊卡沒有 UID 時才用刪除按鈕/暱稱相容。
+    if (card.querySelector(".outer-delete-btn")) return true;
+    if (!currentName) return false;
+    const cleanName = normalizeOrderText(currentName);
     const wishOwner = getFieldValueFromCard(card, ["許願者：", "許願者", "暱稱：", "暱稱"]);
     return normalizeOrderText(wishOwner).includes(cleanName);
   }
 
   if (listId === "pendingList") {
+    const farmerUid = String(card.dataset.farmerUid || "").trim();
+    if (farmerUid) return !!currentUid && farmerUid === currentUid;
+
+    // 舊卡沒有 UID 時才用暱稱相容。
+    if (!currentName) return false;
+    const cleanName = normalizeOrderText(currentName);
     const farmer = getFieldValueFromCard(card, ["接單花農：", "接單花農", "花農：", "花農"]);
     return normalizeOrderText(farmer).includes(cleanName);
   }
@@ -4011,11 +4072,9 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
     const deleteGroupButton = event.target.closest("[data-delete-group]");
     if (deleteGroupButton) {
       const keys = String(deleteGroupButton.getAttribute("data-delete-group") || "").split("||").filter(Boolean);
-      const nickname = String(getCurrentNickname() || "").trim();
-
       const myWishes = wishes.filter(function(wish){
         return keys.includes(String(getWishKey(wish))) &&
-          String(wish.nickname || "").trim() === nickname &&
+          isCurrentWishOwner(wish) &&
           wish.status !== "pending" &&
           wish.status !== "done";
       });

@@ -39,6 +39,7 @@ body {
   color: #ffd966;
   font-size: 13px;
   letter-spacing: 2px;
+  text-decoration: none;
   backdrop-filter: blur(10px);
 }
 
@@ -1482,7 +1483,7 @@ label textarea {
   border:none;
   background:none;
   color:#ffd966;
-  text-decoration:underline;
+  text-decoration: none;
   text-underline-offset:4px;
   cursor:pointer;
   font-weight:800;

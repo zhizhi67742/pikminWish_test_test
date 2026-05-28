@@ -521,7 +521,7 @@ h1 {
 <div class="bg-decor decor-2">🌸</div>
 <div class="bg-decor decor-3">🌱</div>
 <header class="site-header">
-<div class="tag">PIKMIN WISHING</div>
+<a class="tag" href="https://zhizhi67742.github.io/pikminWish_New/admin.html" aria-label="前往管理頁面">PIKMIN WISHING</a>
 <h1>🌱 花農許願池</h1>
 <div class="current-nickname-bar" id="currentNicknameBar">
 <span>目前暱稱：<strong id="currentNicknameText">未設定</strong></span>
@@ -646,6 +646,19 @@ h1 {
 <div>
 <h2>🌸 花朵圖鑑</h2>
 <p class="hint dex-jump-tip">點擊花旁邊的「缺」即可跳回許願頁快速許願。</p>
+<div class="panel" style="margin-top:12px;">
+<h3 style="margin-bottom:10px;">📷 圖片辨識匯入</h3>
+<p class="hint">上傳 Pikmin Bloom 花朵截圖，自動辨識精華與花瓣。</p>
+
+<button class="primary-btn" onclick="document.getElementById('flowerOcrInput').click()">
+📷 上傳截圖自動辨識
+</button>
+
+<input type="file" id="flowerOcrInput" accept="image/*" hidden onchange="runFlowerOCR(event)">
+
+<div id="ocrResultBox" style="margin-top:12px;"></div>
+</div>
+
 </div>
 <div class="limit-settings">
 <label>
@@ -898,7 +911,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=url-updated-20260528-v2"></script>
+<script src="js/app.js?v=custom-flower-visible-20260528"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1679,5 +1692,83 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+async function runFlowerOCR(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const resultBox = document.getElementById("ocrResultBox");
+    resultBox.innerHTML = "🔍 圖片辨識中...";
+
+    try {
+        const result = await Tesseract.recognize(
+            file,
+            "chi_tra+eng"
+        );
+
+        const text = result.data.text || "";
+
+        const flowers = [];
+        const lines = text.split(/\n+/).map(v => v.trim()).filter(Boolean);
+
+        const flowerRegex = /(白色|黃色|紅色|藍色|紫色|粉色|黑色)?\s*([\u4e00-\u9fa5]{1,8})(?:草|花|蘭|菊|竹|草)/;
+
+        lines.forEach((line, index) => {
+            const match = line.match(flowerRegex);
+
+            if (match) {
+                const numbers = line.match(/\d+/g) || [];
+
+                flowers.push({
+                    name: line.replace(/\s/g, ""),
+                    essence: numbers[0] || "?",
+                    petal: numbers[numbers.length - 1] || "?"
+                });
+            }
+        });
+
+        if (!flowers.length) {
+            resultBox.innerHTML = `
+                <div class="panel">
+                    ❌ 沒有辨識到花朵資料<br><br>
+                    建議使用完整花朵列表截圖。
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="panel">
+            <h3>🌸 辨識結果</h3>
+        `;
+
+        flowers.forEach(f => {
+            html += `
+                <div style="margin:8px 0;padding:8px;border-radius:12px;background:rgba(255,255,255,.08)">
+                    <strong>${f.name}</strong><br>
+                    精華：${f.essence}<br>
+                    花瓣：${f.petal}
+                </div>
+            `;
+        });
+
+        html += `
+            <p class="hint">目前為測試版辨識，建議確認數字是否正確。</p>
+            </div>
+        `;
+
+        resultBox.innerHTML = html;
+
+    } catch (err) {
+        console.error(err);
+        resultBox.innerHTML = "❌ 圖片辨識失敗";
+    }
+}
+</script>
+
 </body>
 </html>
+
+a, .top-badge a { text-decoration: none !important; }
