@@ -4111,3 +4111,236 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
     setup();
   }
 })();
+
+/* OCR 圖片辨識匯入圖鑑（前台） */
+(function () {
+  const OCR_COLORS = ["白", "黃", "紅", "藍"];
+  let ocrRows = [];
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function normalizeOcrColor(color) {
+    return String(color || "")
+      .trim()
+      .replace(/色$/u, "")
+      .replace(/蓝/g, "藍")
+      .replace(/黄/g, "黃")
+      .replace(/红/g, "紅");
+  }
+
+  function getOcrFlowerNames() {
+    const fromDex = Array.isArray(flowerDex) ? flowerDex.map(function (item) { return item.name; }) : [];
+    const extra = [
+      "風鈴草", "勿忘草", "週年玫瑰", "週年紀念玫瑰", "周年玫瑰", "周年紀念玫瑰", "銀蓮花", "九重葛", "海芋", "山茶花", "油菜花", "康乃馨",
+      "嘉德麗雅蘭", "雞冠花", "櫻花", "菊花", "鐵線蓮", "彼岸花", "鈴蘭", "大波斯菊", "兔耳花", "大理花",
+      "石竹", "小蒼蘭", "龍膽", "聖誕玫瑰", "扶桑花", "風信子", "繡球花", "鳶尾花", "百合", "萬壽菊",
+      "牽牛花", "蝴蝶蘭", "水仙花", "粉蝶花", "睡蓮", "三色堇", "牡丹", "矮牽牛", "梅花", "雞蛋花",
+      "聖誕紅", "櫻草花", "玫瑰", "鼠尾草", "金魚草", "雪花蓮", "天堂鳥", "向日葵", "豌豆花", "鬱金香", "鸚鵡鬱金香"
+    ];
+    return Array.from(new Set(fromDex.concat(extra).filter(Boolean))).sort(function (a, b) { return b.length - a.length; });
+  }
+
+  function cleanOcrText(text) {
+    return String(text || "")
+      .replace(/[|｜]/g, " ")
+      .replace(/[Oo]/g, "0")
+      .replace(/色週年紀念玫瑰/g, "色週年玫瑰")
+      .replace(/周年/g, "週年")
+      .replace(/蓝/g, "藍")
+      .replace(/黄/g, "黃")
+      .replace(/红/g, "紅");
+  }
+
+  function normalizeOcrFlowerName(name) {
+    return String(name || "").trim().replace("週年紀念玫瑰", "週年玫瑰");
+  }
+
+  function escapeRegExp(text) {
+    return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function parseOcrItems(text) {
+    const cleaned = cleanOcrText(text);
+    const itemMatches = [];
+    const colorPattern = "(白|黃|紅|藍)色";
+    const flowerPattern = getOcrFlowerNames().map(escapeRegExp).join("|");
+    if (!flowerPattern) return [];
+    const itemRegex = new RegExp(colorPattern + "\\s*(" + flowerPattern + ")", "gu");
+    let match;
+    while ((match = itemRegex.exec(cleaned))) {
+      itemMatches.push({ index: match.index, color: normalizeOcrColor(match[1]), flower: normalizeOcrFlowerName(match[2]) });
+    }
+
+    const numbers = [];
+    const numberRegex = /\b\d{1,4}\b/g;
+    while ((match = numberRegex.exec(cleaned))) {
+      const value = Number(match[0]);
+      if (Number.isFinite(value) && value >= 0 && value <= 1200) numbers.push({ index: match.index, value: value });
+    }
+
+    return itemMatches.map(function (item) {
+      const before = numbers.filter(function (num) { return num.index < item.index; }).slice(-1)[0];
+      const after = numbers.find(function (num) { return num.index > item.index; });
+      return {
+        flower: item.flower,
+        color: item.color,
+        topNumber: before ? before.value : 0,
+        bottomNumber: after ? after.value : 0
+      };
+    }).filter(function (row, index, arr) {
+      const key = row.color + "_" + row.flower + "_" + row.topNumber + "_" + row.bottomNumber;
+      return arr.findIndex(function (item) {
+        return item.color + "_" + item.flower + "_" + item.topNumber + "_" + item.bottomNumber === key;
+      }) === index;
+    });
+  }
+
+  function rowsWithLayout(rows) {
+    const layout = $("ocrLayoutSelect")?.value || "petalTopEssenceBottom";
+    return rows.map(function (row) {
+      return {
+        flower: row.flower,
+        color: row.color,
+        petal: layout === "petalTopEssenceBottom" ? row.topNumber : row.bottomNumber,
+        essence: layout === "petalTopEssenceBottom" ? row.bottomNumber : row.topNumber
+      };
+    });
+  }
+
+  function renderOcrRows(rows) {
+    ocrRows = rowsWithLayout(rows);
+    const list = $("ocrResultList");
+    if (!list) return;
+    if (!ocrRows.length) {
+      list.innerHTML = '<div class="empty">目前沒有解析到資料。可以手動修正上方文字後按「重新解析文字」。</div>';
+      return;
+    }
+
+    list.innerHTML = `
+      <table class="ocr-result-table">
+        <thead><tr><th>套用</th><th>顏色</th><th>花種</th><th>花瓣</th><th>精華</th></tr></thead>
+        <tbody>
+          ${ocrRows.map(function (row, index) { return `
+            <tr>
+              <td><input data-ocr-field="enabled" data-index="${index}" type="checkbox" checked /></td>
+              <td>
+                <select data-ocr-field="color" data-index="${index}">
+                  ${OCR_COLORS.map(function (color) { return `<option value="${color}" ${color === row.color ? "selected" : ""}>${color}</option>`; }).join("")}
+                </select>
+              </td>
+              <td><input data-ocr-field="flower" data-index="${index}" type="text" value="${escapeHtml(row.flower)}" /></td>
+              <td><input data-ocr-field="petal" data-index="${index}" type="number" min="0" max="1200" value="${escapeHtml(row.petal)}" /></td>
+              <td><input data-ocr-field="essence" data-index="${index}" type="number" min="0" max="1200" value="${escapeHtml(row.essence)}" /></td>
+            </tr>`; }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function collectOcrRowsFromTable() {
+    const tableRows = Array.from(document.querySelectorAll("#ocrResultList tbody tr"));
+    return tableRows.map(function (tr, index) {
+      const get = function (field) { return tr.querySelector('[data-ocr-field="' + field + '"][data-index="' + index + '"]'); };
+      return {
+        enabled: !!get("enabled")?.checked,
+        color: normalizeOcrColor(get("color")?.value),
+        flower: normalizeOcrFlowerName(get("flower")?.value),
+        petal: Math.max(0, Math.min(1200, Number(get("petal")?.value || 0))),
+        essence: Math.max(0, Math.min(1200, Number(get("essence")?.value || 0)))
+      };
+    }).filter(function (row) { return row.enabled && row.flower && row.color; });
+  }
+
+  async function runOcrImport() {
+    const input = $("ocrImageInput");
+    const file = input?.files?.[0];
+    if (!file) {
+      alert("請先選擇截圖。");
+      return;
+    }
+    if (!window.Tesseract) {
+      alert("OCR 套件尚未載入，請重新整理後再試。");
+      return;
+    }
+
+    const progress = $("ocrProgress");
+    const rawText = $("ocrRawText");
+    const actions = $("ocrActions");
+    const runBtn = $("runOcrImportBtn");
+    if (progress) {
+      progress.hidden = false;
+      progress.textContent = "辨識中... 這可能需要 10～30 秒。";
+    }
+    if (rawText) rawText.hidden = true;
+    if (actions) actions.hidden = true;
+    if (runBtn) runBtn.disabled = true;
+
+    try {
+      const result = await window.Tesseract.recognize(file, "chi_tra+eng", {
+        logger: function (message) {
+          if (!progress || !message?.status) return;
+          const percent = typeof message.progress === "number" ? " " + Math.round(message.progress * 100) + "%" : "";
+          progress.textContent = message.status + percent;
+        }
+      });
+      const text = result?.data?.text || "";
+      if (rawText) {
+        rawText.value = cleanOcrText(text);
+        rawText.hidden = false;
+      }
+      if (actions) actions.hidden = false;
+      if (progress) progress.textContent = "辨識完成，請先檢查下方表格再套用。";
+      renderOcrRows(parseOcrItems(rawText?.value || text));
+    } catch (error) {
+      console.error(error);
+      if (progress) progress.textContent = "辨識失敗，請換一張更清楚的截圖再試。";
+    } finally {
+      if (runBtn) runBtn.disabled = false;
+    }
+  }
+
+  function previewOcrImage() {
+    const input = $("ocrImageInput");
+    const file = input?.files?.[0];
+    const wrap = $("ocrPreviewWrap");
+    const image = $("ocrImagePreview");
+    if (!file || !wrap || !image) return;
+    image.src = URL.createObjectURL(file);
+    wrap.hidden = false;
+  }
+
+  function parseOcrTextAgain() {
+    const rawText = $("ocrRawText");
+    renderOcrRows(parseOcrItems(rawText?.value || ""));
+  }
+
+  function applyOcrRowsToDex() {
+    const rows = collectOcrRowsFromTable();
+    if (!rows.length) {
+      alert("沒有可套用的資料。");
+      return;
+    }
+    rows.forEach(function (row) {
+      const petalKey = "dex_" + row.flower + "_" + row.color + "_petal";
+      const essenceKey = "dex_" + row.flower + "_" + row.color + "_essence";
+      safeSetLocalStorage(petalKey, String(row.petal));
+      safeSetLocalStorage(essenceKey, String(row.essence));
+      saveDexBackupValue(petalKey, row.petal);
+      saveDexBackupValue(essenceKey, row.essence);
+    });
+    renderDex();
+    alert("已套用 " + rows.length + " 筆到圖鑑。");
+  }
+
+  function setupFrontOcrImport() {
+    $("ocrImageInput")?.addEventListener("change", previewOcrImage);
+    $("runOcrImportBtn")?.addEventListener("click", runOcrImport);
+    $("parseOcrTextBtn")?.addEventListener("click", parseOcrTextAgain);
+    $("applyOcrResultBtn")?.addEventListener("click", applyOcrRowsToDex);
+    $("ocrLayoutSelect")?.addEventListener("change", parseOcrTextAgain);
+  }
+
+  document.addEventListener("DOMContentLoaded", setupFrontOcrImport);
+})();

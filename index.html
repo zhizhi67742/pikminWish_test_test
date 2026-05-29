@@ -646,19 +646,6 @@ h1 {
 <div>
 <h2>🌸 花朵圖鑑</h2>
 <p class="hint dex-jump-tip">點擊花旁邊的「缺」即可跳回許願頁快速許願。</p>
-<div class="panel" style="margin-top:12px;">
-<h3 style="margin-bottom:10px;">📷 圖片辨識匯入</h3>
-<p class="hint">上傳 Pikmin Bloom 花朵截圖，自動辨識精華與花瓣。</p>
-
-<button class="primary-btn" onclick="document.getElementById('flowerOcrInput').click()">
-📷 上傳截圖自動辨識
-</button>
-
-<input type="file" id="flowerOcrInput" accept="image/*" hidden onchange="runFlowerOCR(event)">
-
-<div id="ocrResultBox" style="margin-top:12px;"></div>
-</div>
-
 </div>
 <div class="limit-settings">
 <label>
@@ -709,6 +696,41 @@ h1 {
 </div>
 </div>
 </section>
+
+<section class="panel dex-ocr-panel">
+  <div class="ocr-head">
+    <div>
+      <h3>📷 圖片辨識匯入圖鑑</h3>
+      <p>上傳 Pikmin Bloom 花朵列表截圖，辨識後可以先檢查表格，再套用到圖鑑。</p>
+    </div>
+  </div>
+  <div class="ocr-controls">
+    <label>
+      <span>選擇截圖</span>
+      <input id="ocrImageInput" type="file" accept="image/*" />
+    </label>
+    <label>
+      <span>畫面數字位置</span>
+      <select id="ocrLayoutSelect">
+        <option value="petalTopEssenceBottom">左上花瓣、右下精華（列表畫面）</option>
+        <option value="essenceTopPetalBottom">左上精華、右下花瓣（大卡片畫面）</option>
+      </select>
+    </label>
+    <button id="runOcrImportBtn" class="confirm-btn" type="button">開始辨識</button>
+  </div>
+  <div id="ocrPreviewWrap" class="ocr-preview-wrap" hidden>
+    <img id="ocrImagePreview" alt="OCR 預覽圖" />
+  </div>
+  <div id="ocrProgress" class="ocr-progress" hidden>準備辨識中...</div>
+  <textarea id="ocrRawText" class="ocr-raw-text" placeholder="辨識文字會出現在這裡，可手動修正後再按「重新解析文字」。" hidden></textarea>
+  <div class="ocr-actions" id="ocrActions" hidden>
+    <button id="parseOcrTextBtn" class="dex-advanced-btn" type="button">重新解析文字</button>
+    <button id="applyOcrResultBtn" class="confirm-btn" type="button">套用到圖鑑</button>
+  </div>
+  <div id="ocrResultList" class="ocr-result-list"></div>
+  <p class="hint ocr-note">提醒：OCR 可能會誤判，套用前可以直接修改表格中的花名、顏色、花瓣與精華。</p>
+</section>
+
 <div class="dex-list" id="flowerDexList"></div>
 </section>
 <section class="page-section" id="changelog">
@@ -911,7 +933,8 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=custom-flower-visible-20260528"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/app.js?v=ocr-import-front-20260529"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1689,82 +1712,6 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js");
   });
-}
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-<script>
-async function runFlowerOCR(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const resultBox = document.getElementById("ocrResultBox");
-    resultBox.innerHTML = "🔍 圖片辨識中...";
-
-    try {
-        const result = await Tesseract.recognize(
-            file,
-            "chi_tra+eng"
-        );
-
-        const text = result.data.text || "";
-
-        const flowers = [];
-        const lines = text.split(/\n+/).map(v => v.trim()).filter(Boolean);
-
-        const flowerRegex = /(白色|黃色|紅色|藍色|紫色|粉色|黑色)?\s*([\u4e00-\u9fa5]{1,8})(?:草|花|蘭|菊|竹|草)/;
-
-        lines.forEach((line, index) => {
-            const match = line.match(flowerRegex);
-
-            if (match) {
-                const numbers = line.match(/\d+/g) || [];
-
-                flowers.push({
-                    name: line.replace(/\s/g, ""),
-                    essence: numbers[0] || "?",
-                    petal: numbers[numbers.length - 1] || "?"
-                });
-            }
-        });
-
-        if (!flowers.length) {
-            resultBox.innerHTML = `
-                <div class="panel">
-                    ❌ 沒有辨識到花朵資料<br><br>
-                    建議使用完整花朵列表截圖。
-                </div>
-            `;
-            return;
-        }
-
-        let html = `
-            <div class="panel">
-            <h3>🌸 辨識結果</h3>
-        `;
-
-        flowers.forEach(f => {
-            html += `
-                <div style="margin:8px 0;padding:8px;border-radius:12px;background:rgba(255,255,255,.08)">
-                    <strong>${f.name}</strong><br>
-                    精華：${f.essence}<br>
-                    花瓣：${f.petal}
-                </div>
-            `;
-        });
-
-        html += `
-            <p class="hint">目前為測試版辨識，建議確認數字是否正確。</p>
-            </div>
-        `;
-
-        resultBox.innerHTML = html;
-
-    } catch (err) {
-        console.error(err);
-        resultBox.innerHTML = "❌ 圖片辨識失敗";
-    }
 }
 </script>
 
