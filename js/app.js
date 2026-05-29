@@ -4253,6 +4253,83 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
     }).filter(function (row) { return row.enabled && row.flower && row.color; });
   }
 
+
+
+  function loadOcrImage(file) {
+    return new Promise(function (resolve, reject) {
+      const img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function makeEnhancedOcrBlob(file, cropTopRatio) {
+    const img = await loadOcrImage(file);
+    const scale = 2;
+    const cropY = Math.floor(img.height * (cropTopRatio || 0.18));
+    const cropH = img.height - cropY;
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width * scale;
+    canvas.height = cropH * scale;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, cropY, img.width, cropH, 0, 0, canvas.width, canvas.height);
+
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < data.data.length; i += 4) {
+      const r = data.data[i];
+      const g = data.data[i + 1];
+      const b = data.data[i + 2];
+      let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      gray = Math.max(0, Math.min(255, (gray - 128) * 1.9 + 128));
+      data.data[i] = data.data[i + 1] = data.data[i + 2] = gray;
+    }
+    ctx.putImageData(data, 0, 0);
+    return await new Promise(function (resolve) { canvas.toBlob(resolve, "image/png"); });
+  }
+
+  function parseOcrItemsLoose(text) {
+    const cleaned = cleanOcrText(text)
+      .replace(/\s+/g, " ")
+      .replace(/白\s*色/g, "白色").replace(/黃\s*色/g, "黃色")
+      .replace(/紅\s*色/g, "紅色").replace(/藍\s*色/g, "藍色");
+    const names = getOcrFlowerNames();
+    const rows = [];
+    names.forEach(function (flower) {
+      OCR_COLORS.forEach(function (color) {
+        const full = color + "色" + flower;
+        let start = 0;
+        while (true) {
+          const index = cleaned.indexOf(full, start);
+          if (index < 0) break;
+          const leftText = cleaned.slice(Math.max(0, index - 45), index);
+          const rightText = cleaned.slice(index + full.length, index + full.length + 45);
+          const beforeNums = (leftText.match(/\d{1,4}/g) || []).map(Number).filter(function (n) { return n >= 0 && n <= 1200; });
+          const afterNums = (rightText.match(/\d{1,4}/g) || []).map(Number).filter(function (n) { return n >= 0 && n <= 1200; });
+          rows.push({ flower: normalizeOcrFlowerName(flower), color: color, topNumber: beforeNums.length ? beforeNums[beforeNums.length - 1] : 0, bottomNumber: afterNums.length ? afterNums[0] : 0 });
+          start = index + full.length;
+        }
+      });
+    });
+    return rows.filter(function (row, index, arr) {
+      const key = row.color + "_" + row.flower;
+      return arr.findIndex(function (item) { return item.color + "_" + item.flower === key; }) === index;
+    });
+  }
+
+  async function recognizeWithTesseract(imageLike, progress, label) {
+    const result = await window.Tesseract.recognize(imageLike, "chi_tra+eng", {
+      tessedit_pageseg_mode: "6",
+      preserve_interword_spaces: "1",
+      logger: function (message) {
+        if (!progress || !message?.status) return;
+        const percent = typeof message.progress === "number" ? " " + Math.round(message.progress * 100) + "%" : "";
+        progress.textContent = (label || "辨識中") + "：" + message.status + percent;
+      }
+    });
+    return result?.data?.text || "";
+  }
+
   async function runOcrImport() {
     const input = $("ocrImageInput");
     const file = input?.files?.[0];
@@ -4271,31 +4348,38 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
     const runBtn = $("runOcrImportBtn");
     if (progress) {
       progress.hidden = false;
-      progress.textContent = "辨識中... 這可能需要 10～30 秒。";
+      progress.textContent = "正在整理圖片，準備辨識...";
     }
     if (rawText) rawText.hidden = true;
     if (actions) actions.hidden = true;
     if (runBtn) runBtn.disabled = true;
 
     try {
-      const result = await window.Tesseract.recognize(file, "chi_tra+eng", {
-        logger: function (message) {
-          if (!progress || !message?.status) return;
-          const percent = typeof message.progress === "number" ? " " + Math.round(message.progress * 100) + "%" : "";
-          progress.textContent = message.status + percent;
-        }
-      });
-      const text = result?.data?.text || "";
+      // 第一輪：先把截圖下方的花朵區域放大、加強對比再辨識，避免上方 UI 干擾。
+      const enhancedBlob = await makeEnhancedOcrBlob(file, 0.18);
+      let text = await recognizeWithTesseract(enhancedBlob || file, progress, "第 1 輪辨識");
+      let rows = parseOcrItems(text);
+      if (!rows.length) rows = parseOcrItemsLoose(text);
+
+      // 第二輪：如果第一輪沒有抓到，改用原圖再跑一次，增加成功率。
+      if (!rows.length) {
+        if (progress) progress.textContent = "第一輪沒抓到資料，正在改用原圖再辨識一次...";
+        const text2 = await recognizeWithTesseract(file, progress, "第 2 輪辨識");
+        text = text + "\n" + text2;
+        rows = parseOcrItems(text);
+        if (!rows.length) rows = parseOcrItemsLoose(text);
+      }
+
       if (rawText) {
         rawText.value = cleanOcrText(text);
         rawText.hidden = false;
       }
       if (actions) actions.hidden = false;
-      if (progress) progress.textContent = "辨識完成，請先檢查下方表格再套用。";
-      renderOcrRows(parseOcrItems(rawText?.value || text));
+      if (progress) progress.textContent = rows.length ? "辨識完成，請先檢查下方表格再套用。" : "有讀到文字，但沒有解析成圖鑑資料。可以手動修正文字後按「重新解析文字」。";
+      renderOcrRows(rows);
     } catch (error) {
       console.error(error);
-      if (progress) progress.textContent = "辨識失敗，請換一張更清楚的截圖再試。";
+      if (progress) progress.textContent = "辨識失敗，請換一張更清楚的截圖再試，或重新整理頁面後再試。";
     } finally {
       if (runBtn) runBtn.disabled = false;
     }
