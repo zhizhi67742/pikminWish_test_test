@@ -2005,12 +2005,41 @@ function renderWishes() {
   if (!list) return;
   list.innerHTML = "";
 
-  const activeWishes = sortOldestFirst(wishes).filter(function (wish) {
+  let activeWishes = sortOldestFirst(wishes).filter(function (wish) {
     return wish.status !== "pending" && wish.status !== "done";
   });
 
+  const orderMode = (window.orderFilterState && window.orderFilterState.wishList) || "all";
+  const platformMode = (window.platformFilterState && window.platformFilterState.wishList) || "all";
+
+  if (platformMode !== "all") {
+    activeWishes = activeWishes.filter(function (wish) {
+      return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform) === platformMode;
+    });
+  }
+
+  if (orderMode === "mine") {
+    // 「顯示自己發的訂單」：先在資料層只留下自己的許願，再分組。
+    // 這樣合併卡片不會把其他人的同花種許願一起顯示出來。
+    activeWishes = activeWishes.filter(function (wish) {
+      return !wish.isExample && isCurrentWishOwner(wish);
+    });
+  } else if (orderMode === "available") {
+    // 「目前可接訂單」：只要還在時間內就顯示，不再排除自己發的單。
+    activeWishes = activeWishes.filter(function (wish) {
+      return !wish.isExample && isTimeRangeCurrentlyAvailable(wish.timeRange);
+    });
+  }
+
   if (activeWishes.length === 0) {
-    list.innerHTML = '<div class="empty">目前沒有願望卡。</div>';
+    const platformText = platformMode === "dc" ? " DC" : platformMode === "line" ? " LINE" : "";
+    const message = orderMode === "mine"
+      ? "目前沒有自己發的" + platformText + "訂單。"
+      : orderMode === "available"
+        ? "目前沒有時間內可接的" + platformText + "訂單。"
+        : "目前沒有" + platformText + "願望卡。";
+    list.innerHTML = '<div class="empty">' + escapeHtml(message) + '</div>';
+    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
   }
 
@@ -2046,6 +2075,11 @@ function renderWishes() {
       </article>
     `;
   });
+
+  // 重新渲染後同步按鈕樣式；篩選已在資料層完成，這裡不再二次隱藏願望卡。
+  syncOrderFilterButtons("wishList");
+  syncPlatformFilterButtons("wishList");
+  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
 }
 
 function getPendingGroupKey(item) {
@@ -3696,17 +3730,7 @@ function orderCardCanBeTaken(card) {
   if (!card || card.dataset.hasRealWish === "false") return false;
   if (!orderCardIsCurrentlyAvailable(card)) return false;
 
-  const currentUid = getCurrentUserUid();
-  const ownerUids = String(card.dataset.ownerUids || card.dataset.ownerUid || "")
-    .split(/\s+/)
-    .map(function (uid) { return uid.trim(); })
-    .filter(Boolean);
-
-  // 如果這張合併卡全都是自己發的願望，就不要列入「目前可接訂單」。
-  if (currentUid && ownerUids.length > 0 && ownerUids.every(function (uid) { return uid === currentUid; })) {
-    return false;
-  }
-
+  // 「目前可接訂單」只看時間內即可，不排除自己發的單。
   return true;
 }
 
@@ -3822,7 +3846,11 @@ function initOrderFilters() {
 
       window.orderFilterState[listId] = mode;
       syncOrderFilterButtons(listId);
-      applyOrderFilter(listId);
+      if (listId === "wishList" && typeof renderWishes === "function") {
+        renderWishes();
+      } else {
+        applyOrderFilter(listId);
+      }
     }, true);
   }
 
@@ -3842,7 +3870,11 @@ function initOrderFilters() {
 
       window.platformFilterState[listId] = mode;
       syncPlatformFilterButtons(listId);
-      applyOrderFilter(listId);
+      if (listId === "wishList" && typeof renderWishes === "function") {
+        renderWishes();
+      } else {
+        applyOrderFilter(listId);
+      }
     }, true);
   }
 
