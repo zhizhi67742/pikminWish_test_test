@@ -3480,9 +3480,10 @@ window.addEventListener("DOMContentLoaded", () => {
     nicknameInput.value = savedNickname;
   }
 
-  // 每次進入網站都顯示規則視窗，但暱稱會自動帶入
+  // 不在 DOMContentLoaded 強制打開規則視窗；改由 Firebase 登入狀態確認後再控制，
+  // 避免 iOS PWA 登入恢復較慢時誤彈登入/規則畫面。
   const gate = document.getElementById("nicknameGate");
-  if (gate) {
+  if (gate && window.currentPikminUser && !localStorage.getItem("flowerWishNickname")) {
     gate.classList.remove("hidden-gate");
   }
 });

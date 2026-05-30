@@ -1,4 +1,4 @@
-const CACHE_NAME = "pikminwish-v-mobile-login-fix-20260531-002";
+const CACHE_NAME = "pikminwish-v-mobile-login-fix-20260531-004";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,8 +9,8 @@ const ASSETS = [
   "./icon-48.png",
   "./icon-192.png",
   "./icon-512.png",
-  "./js/app.js?v=mobile-login-fix-20260531-002",
-  "./css/style.css?v=mobile-login-fix-20260531-002"
+  "./js/app.js?v=mobile-login-fix-20260531-004",
+  "./css/style.css?v=mobile-login-fix-20260531-004"
 ];
 
 self.addEventListener("install", event => {

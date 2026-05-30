@@ -942,7 +942,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=mobile-login-fix-20260531-002"></script>
+<script src="js/app.js?v=mobile-login-fix-20260531-004"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -990,6 +990,8 @@ h1 {
     window.firebaseDB = db;
     window.firebaseAuth = auth;
     window.currentPikminUser = null;
+    window.__pikminAuthResolvedUser = null;
+    window.__pikminAuthStateReady = false;
     window.firebaseFns = {
       collection,
       addDoc,
@@ -1045,12 +1047,18 @@ h1 {
       const logoutBtn = document.getElementById("googleLogoutBtn");
 
       if (user) {
+        window.__pikminAuthStateReady = true;
         window.currentPikminUser = user;
         window.__pikminAuthResolvedUser = user;
+        window.__pikminGoogleSessionOk = true;
+        sessionStorage.setItem("pikminGoogleSessionOk", "true");
         if (status) status.textContent = `${user.displayName || user.email || "Google 使用者"}`;
         if (loginBtn) loginBtn.style.display = "none";
         if (logoutBtn) logoutBtn.style.display = "inline-flex";
       } else {
+        if (!window.__pikminKeepAuthOverlayHidden) {
+          window.__pikminAuthStateReady = true;
+        }
         window.currentPikminUser = null;
         window.__pikminAuthResolvedUser = null;
         if (status) status.textContent = "尚未登入 Google";
@@ -1063,6 +1071,8 @@ h1 {
       updateGoogleLoginUi(user);
       if (user) {
         localStorage.removeItem("previewMode");
+        window.__pikminGoogleSessionOk = true;
+        sessionStorage.setItem("pikminGoogleSessionOk", "true");
         localStorage.removeItem("googleLoginRedirecting");
         localStorage.removeItem("googleLoginRedirectingAt");
         if (typeof removePreviewLock === "function") removePreviewLock();
@@ -1076,6 +1086,11 @@ h1 {
         const isReturningFromGoogle = localStorage.getItem("googleLoginRedirecting") === "true";
         const redirectAt = Number(localStorage.getItem("googleLoginRedirectingAt") || "0");
         const redirectAge = redirectAt ? Date.now() - redirectAt : 0;
+
+        if (!window.__pikminAuthStateReady && !isReturningFromGoogle) {
+          hideGoogleEntryOverlay();
+          return;
+        }
 
         // iOS 主畫面 PWA：Google 回跳後 auth.currentUser 可能比 getRedirectResult 晚恢復。
         // 這段時間先不要把登入畫面蓋回來，避免看起來像「登入成功又被踢回登入」。
@@ -1118,6 +1133,8 @@ h1 {
     window.logoutGoogle = async function () {
       try {
         await signOut(auth);
+        window.__pikminGoogleSessionOk = false;
+        sessionStorage.removeItem("pikminGoogleSessionOk");
         localStorage.removeItem("previewMode");
         removePreviewLock();
         const googleEntryOverlayAfterLogout = document.getElementById("googleEntryOverlay");
@@ -1161,20 +1178,31 @@ h1 {
       });
 
     onAuthStateChanged(auth, (user) => {
+      window.__pikminAuthStateReady = true;
       syncAuthDom(user);
       window.dispatchEvent(new Event("firebase-ready"));
     });
 
     document.addEventListener("DOMContentLoaded", () => {
-      syncAuthDom(auth.currentUser, { openNicknameGate: !!auth.currentUser });
-      setTimeout(() => syncAuthDom(auth.currentUser, { openNicknameGate: !!auth.currentUser }), 350);
+      hideGoogleEntryOverlay();
+      if (auth.currentUser) {
+        syncAuthDom(auth.currentUser, { openNicknameGate: true });
+      }
       setTimeout(() => {
-        if (!auth.currentUser && localStorage.getItem("googleLoginRedirecting") === "true") {
+        if (auth.currentUser) {
+          syncAuthDom(auth.currentUser, { openNicknameGate: false });
+        } else if (window.__pikminAuthStateReady && localStorage.getItem("googleLoginRedirecting") !== "true") {
+          syncAuthDom(null, { openNicknameGate: false });
+        }
+      }, 1200);
+      setTimeout(() => {
+        if (!auth.currentUser && localStorage.getItem("googleLoginRedirecting") === "true" && sessionStorage.getItem("pikminGoogleSessionOk") !== "true") {
           localStorage.removeItem("googleLoginRedirecting");
           localStorage.removeItem("googleLoginRedirectingAt");
+          window.__pikminAuthStateReady = true;
           showGoogleEntryOverlay();
         }
-      }, 16000);
+      }, 22000);
     });
   </script>
 <div class="google-entry-overlay" id="googleEntryOverlay">
@@ -1692,8 +1720,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const entryOverlay = document.getElementById("googleEntryOverlay");
     const user = getCurrentUser();
 
-    if (user || window.__pikminAuthResolvedUser) {
+    if (!window.__pikminAuthStateReady && !window.__pikminAuthResolvedUser) {
+      if (entryOverlay) entryOverlay.classList.add("hide");
+      return;
+    }
+
+    if (user || window.currentPikminUser || window.__pikminAuthResolvedUser) {
       localStorage.removeItem("previewMode");
+      window.__pikminGoogleSessionOk = true;
+      sessionStorage.setItem("pikminGoogleSessionOk", "true");
       localStorage.removeItem("googleLoginRedirecting");
       localStorage.removeItem("googleLoginRedirectingAt");
       removePreviewLock();
@@ -1705,6 +1740,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const redirectAt = Number(localStorage.getItem("googleLoginRedirectingAt") || "0");
     const redirectAge = redirectAt ? Date.now() - redirectAt : 0;
     if (isReturningFromGoogle && (!redirectAt || redirectAge < 15000)) {
+      if (entryOverlay) entryOverlay.classList.add("hide");
+      return;
+    }
+
+    // 已經在本次 PWA 工作階段成功登入過時，不要因為 iOS/Firebase 短暫讀不到 currentUser
+    // 就把登入畫面重新蓋回來。真正登出會在 logoutGoogle() 清掉這個旗標。
+    if (window.__pikminGoogleSessionOk || sessionStorage.getItem("pikminGoogleSessionOk") === "true") {
+      removePreviewLock();
       if (entryOverlay) entryOverlay.classList.add("hide");
       return;
     }
@@ -1746,7 +1789,7 @@ document.addEventListener("DOMContentLoaded", () => {
 /* Preview mode click guard fix: keep page read-only, but let the status 【登入】 button be clicked. */
 (function () {
   function isPreviewOn() {
-    return localStorage.getItem("previewMode") === "true" && !(window.firebaseAuth && window.firebaseAuth.currentUser);
+    return localStorage.getItem("previewMode") === "true" && !(window.currentPikminUser || window.__pikminAuthResolvedUser || (window.firebaseAuth && window.firebaseAuth.currentUser));
   }
 
   function isAllowedPreviewTarget(target) {
