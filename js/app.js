@@ -2034,12 +2034,24 @@ function renderWishes() {
   if (!list) return;
   list.innerHTML = "";
 
-  const activeWishes = sortOldestFirst(wishes).filter(function (wish) {
+  let activeWishes = sortOldestFirst(wishes).filter(function (wish) {
     return wish.status !== "pending" && wish.status !== "done";
   });
 
+  const activeWishFilterMode = window.orderFilterState && window.orderFilterState.wishList ? window.orderFilterState.wishList : "all";
+  if (activeWishFilterMode === "mine") {
+    activeWishes = activeWishes.filter(function (wish) {
+      return isCurrentWishOwner(wish);
+    });
+  } else if (activeWishFilterMode === "available") {
+    activeWishes = activeWishes.filter(function (wish) {
+      return isTimeRangeCurrentlyAvailable(wish.timeRange);
+    });
+  }
+
   if (activeWishes.length === 0) {
-    list.innerHTML = '<div class="empty">目前沒有願望卡。</div>';
+    list.innerHTML = '<div class="empty">' + (activeWishFilterMode === "mine" ? "目前沒有自己發的訂單。" : activeWishFilterMode === "available" ? "目前沒有可接訂單。" : "目前沒有願望卡。") + '</div>';
+    if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("wishList");
     return;
   }
 
@@ -2101,12 +2113,21 @@ function renderPending() {
   if (!list) return;
   list.innerHTML = "";
 
-  if (pending.length === 0) {
-    list.innerHTML = '<div class="empty">目前沒有待完成願望。</div>';
+  let pendingForRender = Array.isArray(pending) ? pending.slice() : [];
+  const activePendingFilterMode = window.orderFilterState && window.orderFilterState.pendingList ? window.orderFilterState.pendingList : "all";
+  if (activePendingFilterMode === "mine") {
+    pendingForRender = pendingForRender.filter(function (item) {
+      return isCurrentFarmer(item);
+    });
+  }
+
+  if (pendingForRender.length === 0) {
+    list.innerHTML = '<div class="empty">' + (activePendingFilterMode === "mine" ? "目前沒有自己接的訂單。" : "目前沒有待完成願望。") + '</div>';
+    if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("pendingList");
     return;
   }
 
-  const groupedPending = groupPendingOrders(sortOldestFirst(pending));
+  const groupedPending = groupPendingOrders(sortOldestFirst(pendingForRender));
 
   groupedPending.forEach(function (group) {
     const firstItem = group[0];
@@ -3835,7 +3856,15 @@ function initOrderFilters() {
 
       window.orderFilterState[listId] = mode;
       syncOrderFilterButtons(listId);
-      applyOrderFilter(listId);
+
+      // 先從資料層重新渲染，避免群組卡片只被 display:none 處理而看起來像沒有篩選。
+      if (listId === "wishList" && typeof renderWishes === "function") {
+        renderWishes();
+      } else if (listId === "pendingList" && typeof renderPending === "function") {
+        renderPending();
+      } else {
+        applyOrderFilter(listId);
+      }
     }, true);
   }
 
