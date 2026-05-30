@@ -4998,3 +4998,82 @@ html {
     padding: 7px 4px !important;
   }
 }
+
+/* ===== FINAL FIX：DC / LINE 分類按鈕位置修正 ===== */
+#quick-wish.collapse-title {
+  display: block !important;
+  width: 100% !important;
+  clear: both !important;
+}
+
+#quick-wish .collapse-btn {
+  display: flex !important;
+  width: 100% !important;
+  margin-bottom: 10px !important;
+}
+
+#quick-wish .platform-filter-tabs,
+#quick-wish .order-filter-tabs {
+  position: relative !important;
+  clear: both !important;
+  float: none !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+#quick-wish .platform-filter-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 8px 0 8px 0 !important;
+}
+
+#quick-wish .order-filter-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 0 0 12px 0 !important;
+}
+
+#quick-wish .platform-filter-btn,
+#quick-wish .order-filter-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  #quick-wish .platform-filter-tabs,
+  #quick-wish .order-filter-tabs {
+    gap: 6px !important;
+  }
+
+  #quick-wish .platform-filter-btn,
+  #quick-wish .order-filter-btn {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 3px !important;
+    font-size: 10px !important;
+    letter-spacing: -0.6px !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  #quick-wish .platform-filter-btn,
+  #quick-wish .order-filter-btn {
+    font-size: 9px !important;
+    letter-spacing: -0.8px !important;
+  }
+}
