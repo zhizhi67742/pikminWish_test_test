@@ -4484,7 +4484,7 @@ document.addEventListener('DOMContentLoaded',()=>{
        return (lat+dLat).toFixed(6)+','+(lng+dLng).toFixed(6);
      });
      ta.value=out.join('\n');
-     alert('已偏移座標 20m');
+     
    };
  }
 });
