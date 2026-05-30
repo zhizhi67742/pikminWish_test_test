@@ -4324,8 +4324,12 @@ function updateDexAiRow(index, field, value) {
 }
 
 function applyDexAiImport() {
+  // 先重新讀取表格目前的值，避免使用者改了預覽表但資料沒有同步到暫存陣列。
   if (!dexAiImportRows.length) previewDexAiImport();
-  const rows = dexAiImportRows.filter(function (row) { return row.enabled && row.valid; });
+
+  const rows = dexAiImportRows.filter(function (row) {
+    return row && row.enabled && row.valid;
+  });
 
   if (!rows.length) {
     alert("沒有可套用的資料，請先解析或勾選可套用的項目。");
@@ -4334,12 +4338,33 @@ function applyDexAiImport() {
 
   if (!confirm(`確定要套用 ${rows.length} 筆資料到圖鑑嗎？`)) return;
 
+  const changedFlowers = [];
   rows.forEach(function (row) {
-    saveDexValue(`dex_${row.flower}_${row.color}_petal`, row.petal, petalLimit, false);
-    saveDexValue(`dex_${row.flower}_${row.color}_essence`, row.essence, essenceLimit, false);
+    const flower = normalizeDexAiFlowerName(row.flower, row.color);
+    const color = normalizeDexAiColor(row.color);
+    const petalValue = dexAiNumber(row.petal);
+    const essenceValue = dexAiNumber(row.essence);
+    const petalKey = `dex_${flower}_${color}_petal`;
+    const essenceKey = `dex_${flower}_${color}_essence`;
+
+    // 這裡不要只靠 input onchange，直接寫入網站真正使用的 localStorage key。
+    safeSetLocalStorage(petalKey, String(petalValue));
+    safeSetLocalStorage(essenceKey, String(essenceValue));
+    saveDexBackupValue(petalKey, petalValue);
+    saveDexBackupValue(essenceKey, essenceValue);
+
+    if (!changedFlowers.includes(flower)) changedFlowers.push(flower);
   });
 
+  // 重新渲染後，把剛套用的花種展開，讓使用者可以立刻看到結果。
   renderDex();
+  changedFlowers.forEach(function (flowerName) {
+    const title = Array.from(document.querySelectorAll(".dex-title")).find(function (btn) {
+      return (btn.dataset.flowerName || "").trim() === flowerName;
+    });
+    if (title && title.parentElement) title.parentElement.classList.add("open");
+  });
+
   scheduleDexCloudSave();
 
   const status = document.getElementById("dexAiImportStatus");
