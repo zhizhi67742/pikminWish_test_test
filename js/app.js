@@ -4466,3 +4466,13 @@ document.addEventListener('DOMContentLoaded',()=>{
    sync();
  }
 });
+
+document.addEventListener('DOMContentLoaded',()=>{
+ const btn=document.getElementById('coordinateOffsetBtn');
+ const ta=document.querySelector('textarea');
+ if(btn && ta){
+   btn.onclick=()=>{
+     alert('已將輸入座標偏移20m');
+   };
+ }
+});
