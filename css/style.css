@@ -5077,3 +5077,15 @@ html {
     letter-spacing: -0.8px !important;
   }
 }
+
+
+/* ===== DC / LINE layout emergency fix 20260530 ===== */
+#quick-wish{display:block!important;width:100%!important;clear:both!important;}
+#quick-wish>.collapse-btn{display:flex!important;width:100%!important;margin:0 0 8px 0!important;}
+#quick-wish .wish-source-filter-row{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;width:100%!important;clear:both!important;margin:10px 0 12px!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;transform:none!important;}
+#quick-wish .platform-filter-tabs{display:inline-flex!important;align-items:center!important;gap:6px!important;flex-wrap:wrap!important;width:auto!important;max-width:100%!important;margin:0!important;clear:none!important;float:none!important;position:relative!important;}
+#quick-wish .platform-filter-btn{appearance:none!important;-webkit-appearance:none!important;border:1px solid rgba(255,255,255,.25)!important;background:rgba(42,88,38,.68)!important;color:#fff!important;border-radius:999px!important;height:30px!important;min-height:30px!important;min-width:54px!important;width:auto!important;padding:0 12px!important;font-size:13px!important;font-weight:700!important;line-height:1!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;box-shadow:none!important;}
+#quick-wish .platform-filter-btn.active{background:#ffdf62!important;color:#20351f!important;border-color:rgba(255,255,255,.55)!important;}
+#quick-wish .order-filter-tabs{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;flex-wrap:wrap!important;width:100%!important;margin:0 0 12px 0!important;clear:both!important;}
+#quick-wish .order-filter-btn{width:auto!important;min-width:0!important;max-width:100%!important;white-space:nowrap!important;}
+@media(max-width:640px){#quick-wish .wish-source-filter-row{gap:6px!important;}#quick-wish .wish-source-filter-label{width:100%!important;height:auto!important;}#quick-wish .platform-filter-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;}#quick-wish .platform-filter-btn{width:100%!important;min-width:0!important;font-size:12px!important;padding:0 6px!important;}#quick-wish .order-filter-tabs{display:grid!important;grid-template-columns:1fr!important;}#quick-wish .order-filter-btn{width:100%!important;}}

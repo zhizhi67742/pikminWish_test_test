@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>花農許願池</title>
-<link href="css/style.css?v=custom-flower-visible-20260528" rel="stylesheet"/>
+<link href="css/style.css?v=dc-line-layout-20260530-2138" rel="stylesheet"/>
 <style>
 .wish-history-item{
   background: rgba(255,255,255,0.05);
@@ -507,6 +507,18 @@ h1 {
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v3">
 <link rel="apple-touch-icon" href="./icon-512.png?v3">
 
+
+<style id="dc-line-layout-emergency-fix">
+#quick-wish{display:block!important;width:100%!important;clear:both!important;}
+#quick-wish>.collapse-btn{display:flex!important;width:100%!important;margin:0 0 8px 0!important;}
+#quick-wish .wish-source-filter-row{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;width:100%!important;clear:both!important;margin:10px 0 12px!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;transform:none!important;}
+#quick-wish .platform-filter-tabs{display:inline-flex!important;align-items:center!important;gap:6px!important;flex-wrap:wrap!important;width:auto!important;max-width:100%!important;margin:0!important;clear:none!important;float:none!important;position:relative!important;}
+#quick-wish .platform-filter-btn{appearance:none!important;-webkit-appearance:none!important;border:1px solid rgba(255,255,255,.25)!important;background:rgba(42,88,38,.68)!important;color:#fff!important;border-radius:999px!important;height:30px!important;min-height:30px!important;min-width:54px!important;width:auto!important;padding:0 12px!important;font-size:13px!important;font-weight:700!important;line-height:1!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;box-shadow:none!important;}
+#quick-wish .platform-filter-btn.active{background:#ffdf62!important;color:#20351f!important;border-color:rgba(255,255,255,.55)!important;}
+#quick-wish .order-filter-tabs{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;flex-wrap:wrap!important;width:100%!important;margin:0 0 12px 0!important;clear:both!important;}
+#quick-wish .order-filter-btn{width:auto!important;min-width:0!important;max-width:100%!important;white-space:nowrap!important;}
+@media(max-width:640px){#quick-wish .wish-source-filter-row{gap:6px!important;}#quick-wish .wish-source-filter-label{width:100%!important;height:auto!important;}#quick-wish .platform-filter-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;}#quick-wish .platform-filter-btn{width:100%!important;min-width:0!important;font-size:12px!important;padding:0 6px!important;}#quick-wish .order-filter-tabs{display:grid!important;grid-template-columns:1fr!important;}#quick-wish .order-filter-btn{width:100%!important;}}
+</style>
 </head>
 <body>
 <div aria-busy="true" aria-live="polite" class="app-loading-overlay" id="appLoadingOverlay">
@@ -603,10 +615,13 @@ h1 {
 <span>🌸 許願區</span>
 <span class="collapse-icon">▼</span>
 </button>
-<div class="platform-filter-tabs" data-platform-filter-area="wishList">
-<button class="platform-filter-btn active" data-platform-mode="all" data-platform-target="wishList" type="button">全部</button>
-<button class="platform-filter-btn" data-platform-mode="dc" data-platform-target="wishList" type="button">DC</button>
-<button class="platform-filter-btn" data-platform-mode="line" data-platform-target="wishList" type="button">LINE</button>
+<div class="wish-source-filter-row" data-platform-filter-area="wishList" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;clear:both;margin:10px 0 12px 0;box-sizing:border-box;">
+<span class="wish-source-filter-label" style="display:inline-flex;align-items:center;height:30px;padding:0 2px;font-size:13px;font-weight:700;color:#ffe16b;white-space:nowrap;">訂單來源</span>
+<div class="platform-filter-tabs" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0;clear:none;width:auto;max-width:100%;" data-platform-filter-area="wishList">
+<button class="platform-filter-btn active" data-platform-mode="all" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">全部</button>
+<button class="platform-filter-btn" data-platform-mode="dc" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">DC</button>
+<button class="platform-filter-btn" data-platform-mode="line" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">LINE</button>
+</div>
 </div>
 <div class="order-filter-tabs" data-filter-area="wishList">
 <button class="order-filter-btn active" data-filter-mode="all" data-filter-target="wishList" type="button">顯示所有訂單</button>
