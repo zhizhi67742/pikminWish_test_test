@@ -50,3 +50,94 @@
 /* 花農完成分享修改按鈕 */
 .edit-done-btn{flex:1;min-width:120px;border-radius:16px;padding:6px 14px;font-weight:900;background:#ffd966;color:#1e2d3d}
 @media (max-width:768px){.edit-done-btn{min-height:30px!important;padding:5px 8px!important;font-size:12px!important}}
+
+
+/* 花農完成分享修改：改成小 emoji 按鈕 */
+.edit-done-btn{
+  flex:0 0 auto !important;
+  min-width:0 !important;
+  width:34px !important;
+  height:30px !important;
+  padding:0 !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  background:rgba(255,217,102,.9) !important;
+  color:#1e2d3d !important;
+}
+@media (max-width:768px){
+  .done-actions .edit-done-btn{
+    width:30px !important;
+    min-width:30px !important;
+    height:30px !important;
+    min-height:30px !important;
+    padding:0 !important;
+    font-size:14px !important;
+    flex:0 0 30px !important;
+  }
+}
+
+/* FIX 2026-05-31：訂單篩選按鈕改回小顆靠左，不拉滿 */
+#quick-wish .order-filter-tabs[data-filter-area="wishList"],
+#quick-pending .order-filter-tabs[data-filter-area="pendingList"],
+.order-filter-tabs[data-filter-area="wishList"],
+.order-filter-tabs[data-filter-area="pendingList"]{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:8px !important;
+  flex-wrap:nowrap !important;
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 0 12px 0 !important;
+  clear:both !important;
+}
+#quick-wish .order-filter-tabs[data-filter-area="wishList"] .order-filter-btn,
+#quick-pending .order-filter-tabs[data-filter-area="pendingList"] .order-filter-btn,
+.order-filter-tabs[data-filter-area="wishList"] .order-filter-btn,
+.order-filter-tabs[data-filter-area="pendingList"] .order-filter-btn{
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:32px !important;
+  min-height:32px !important;
+  padding:0 16px !important;
+  margin:0 !important;
+  border-radius:999px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  box-sizing:border-box !important;
+  font-size:12px !important;
+  line-height:1 !important;
+  letter-spacing:0 !important;
+}
+@media(max-width:640px){
+  #quick-wish .order-filter-tabs[data-filter-area="wishList"],
+  #quick-pending .order-filter-tabs[data-filter-area="pendingList"],
+  .order-filter-tabs[data-filter-area="wishList"],
+  .order-filter-tabs[data-filter-area="pendingList"]{
+    gap:6px !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding-bottom:2px !important;
+  }
+  #quick-wish .order-filter-tabs[data-filter-area="wishList"] .order-filter-btn,
+  #quick-pending .order-filter-tabs[data-filter-area="pendingList"] .order-filter-btn,
+  .order-filter-tabs[data-filter-area="wishList"] .order-filter-btn,
+  .order-filter-tabs[data-filter-area="pendingList"] .order-filter-btn{
+    height:30px !important;
+    min-height:30px !important;
+    padding:0 10px !important;
+    font-size:10px !important;
+    letter-spacing:-.4px !important;
+  }
+}
