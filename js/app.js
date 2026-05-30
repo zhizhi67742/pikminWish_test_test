@@ -2059,7 +2059,7 @@ function renderWishes() {
     }).join("");
 
     list.innerHTML += `
-      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
+      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-owner-uids="${escapeHtml(group.map(function (wish) { return getWishOwnerUid(wish); }).filter(Boolean).join(" "))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
         <h3>🌸 ${escapeHtml(firstWish.flower)}</h3>
         <p>目前 ${group.length} 人許願</p>
         <div class="wish-time-summary">
@@ -2075,6 +2075,10 @@ function renderWishes() {
       </article>
     `;
   });
+
+  if (typeof applyOrderFilter === "function") {
+    setTimeout(function () { applyOrderFilter("wishList"); }, 0);
+  }
 }
 
 function getPendingGroupKey(item) {
@@ -2117,7 +2121,7 @@ function renderPending() {
       : `<button class="done-btn disabled-btn" type="button" disabled>等待花農完成分享</button>`;
 
     list.innerHTML += `
-      <article class="card" data-farmer-uid="${escapeHtml(String(firstItem.farmerUid || firstItem.acceptedByUid || "").trim())}">
+      <article class="card" data-farmer-uid="${escapeHtml(String(firstItem.farmerUid || firstItem.acceptedByUid || "").trim())}" data-platforms="${escapeHtml(group.map(function (item) { return normalizePlatformFilterValue(item.farmerPlatform || item.acceptedByPlatform || item.requesterPlatform || item.platform); }).filter(Boolean).join(" "))}">
         <h3>🌱 ${escapeHtml(firstItem.flower)}</h3>
         <p>🌙 可收花時間：${escapeHtml(firstItem.timeRange || "未設定")}｜${group.length}人</p>
         <p>🌱 接單花農：${displayNameWithTagHtml(firstItem.farmer || firstItem.acceptedBy || "花農", firstItem.farmerPlatform || firstItem.acceptedByPlatform)}</p>
@@ -2129,6 +2133,10 @@ function renderPending() {
       </article>
     `;
   });
+
+  if (typeof applyOrderFilter === "function") {
+    setTimeout(function () { applyOrderFilter("pendingList"); }, 0);
+  }
 }
 
 function renderDone() {
@@ -3690,8 +3698,8 @@ function orderCardBelongsToMe(card, listId, currentName) {
   const currentUid = getCurrentUserUid();
 
   if (listId === "wishList") {
-    const ownerUid = String(card.dataset.ownerUid || "").trim();
-    if (ownerUid) return !!currentUid && ownerUid === currentUid;
+    const ownerUids = String(card.dataset.ownerUids || card.dataset.ownerUid || "").trim().split(/\s+/).filter(Boolean);
+    if (ownerUids.length) return !!currentUid && ownerUids.includes(currentUid);
 
     // 舊卡沒有 UID 時才用刪除按鈕/暱稱相容。
     if (card.querySelector(".outer-delete-btn")) return true;
@@ -3767,14 +3775,15 @@ function applyOrderFilter(listId) {
   }
 
   const currentName = getCurrentPikminUserName();
+  const currentUid = getCurrentUserUid();
 
-  if (!currentName) {
+  if (!currentUid && !currentName) {
     cards.forEach(function (card) {
       card.style.display = "none";
     });
     const empty = document.createElement("div");
     empty.className = "order-filter-empty";
-    empty.textContent = "尚未設定暱稱，無法篩選自己的訂單。";
+    empty.textContent = "尚未登入或設定暱稱，無法篩選自己的訂單。";
     list.appendChild(empty);
     if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
@@ -4461,7 +4470,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const cb=document.getElementById('coordinateOffset');
  const btn=document.getElementById('coordinateOffsetBtn');
  if(cb && btn){
-   const sync=()=>btn.textContent=(cb.checked?'☑ ':'☐ ')+'座標偏移';
+   const sync=()=>btn.textContent='座標偏移';
    btn.addEventListener('click',()=>{cb.checked=!cb.checked;sync();});
    sync();
  }
@@ -4484,7 +4493,6 @@ document.addEventListener('DOMContentLoaded',()=>{
        return (lat+dLat).toFixed(6)+','+(lng+dLng).toFixed(6);
      });
      ta.value=out.join('\n');
-     
-   };
+};
  }
 });
