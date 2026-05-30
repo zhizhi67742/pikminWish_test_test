@@ -3828,6 +3828,17 @@ function syncPlatformFilterButtons(listId) {
   });
 }
 
+window.setWishPlatformFilter = function (mode) {
+  window.platformFilterState = window.platformFilterState || { wishList: "all" };
+  window.platformFilterState.wishList = mode || "all";
+  syncPlatformFilterButtons("wishList");
+  if (typeof renderWishes === "function") {
+    renderWishes();
+  } else {
+    applyOrderFilter("wishList");
+  }
+};
+
 function initOrderFilters() {
   // 事件委派：按鈕即使重繪也能按
   if (document.body.dataset.orderFilterClickReady !== "1") {
@@ -3881,9 +3892,13 @@ function initOrderFilters() {
   ["wishList", "pendingList"].forEach(function (id) {
     syncOrderFilterButtons(id);
     syncPlatformFilterButtons(id);
-    // 不再用 MutationObserver 監看清單變化，避免篩選新增/移除提示時反覆觸發造成卡頓。
-    // 訂單更新時由 renderWishes / renderPending 後的流程套用；按鈕點擊時也會只執行一次。
-    applyOrderFilter(id);
+
+    // 不再監看清單 DOM 變化；避免篩選新增空提示時又觸發篩選，造成卡頓。
+    if (id === "wishList" && typeof renderWishes === "function") {
+      renderWishes();
+    } else {
+      applyOrderFilter(id);
+    }
   });
 }
 
