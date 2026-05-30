@@ -2030,7 +2030,7 @@ function renderWishes() {
     }).join("");
 
     list.innerHTML += `
-      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
+      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-owner-uids="${escapeHtml(group.map(function (wish) { return getWishOwnerUid(wish); }).filter(Boolean).join(" "))}" data-owner-names="${escapeHtml(group.map(function (wish) { return normalizeOrderText(wish.nickname || wish.requester || ""); }).filter(Boolean).join(" "))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}" data-has-real-wish="${group.some(function (wish) { return !wish.isExample; }) ? "true" : "false"}">
         <h3>🌸 ${escapeHtml(firstWish.flower)}</h3>
         <p>目前 ${group.length} 人許願</p>
         <div class="wish-time-summary">
@@ -3661,13 +3661,19 @@ function orderCardBelongsToMe(card, listId, currentName) {
   const currentUid = getCurrentUserUid();
 
   if (listId === "wishList") {
-    const ownerUid = String(card.dataset.ownerUid || "").trim();
-    if (ownerUid) return !!currentUid && ownerUid === currentUid;
+    const ownerUids = String(card.dataset.ownerUids || card.dataset.ownerUid || "")
+      .split(/\s+/)
+      .map(function (uid) { return uid.trim(); })
+      .filter(Boolean);
 
-    // 舊卡沒有 UID 時才用刪除按鈕/暱稱相容。
-    if (card.querySelector(".outer-delete-btn")) return true;
+    // 合併願望卡會同時包含多個許願者；只要其中一筆是自己發的，就要顯示這張卡。
+    if (ownerUids.length > 0) return !!currentUid && ownerUids.includes(currentUid);
+
+    // 舊資料沒有 UID 時，才退回用暱稱相容。
     if (!currentName) return false;
     const cleanName = normalizeOrderText(currentName);
+    const ownerNames = String(card.dataset.ownerNames || "").split(/\s+/).filter(Boolean);
+    if (ownerNames.includes(cleanName)) return true;
     const wishOwner = getFieldValueFromCard(card, ["許願者：", "許願者", "暱稱：", "暱稱"]);
     return normalizeOrderText(wishOwner).includes(cleanName);
   }
@@ -3684,6 +3690,24 @@ function orderCardBelongsToMe(card, listId, currentName) {
   }
 
   return false;
+}
+
+function orderCardCanBeTaken(card) {
+  if (!card || card.dataset.hasRealWish === "false") return false;
+  if (!orderCardIsCurrentlyAvailable(card)) return false;
+
+  const currentUid = getCurrentUserUid();
+  const ownerUids = String(card.dataset.ownerUids || card.dataset.ownerUid || "")
+    .split(/\s+/)
+    .map(function (uid) { return uid.trim(); })
+    .filter(Boolean);
+
+  // 如果這張合併卡全都是自己發的願望，就不要列入「目前可接訂單」。
+  if (currentUid && ownerUids.length > 0 && ownerUids.every(function (uid) { return uid === currentUid; })) {
+    return false;
+  }
+
+  return true;
 }
 
 function applyOrderFilter(listId) {
@@ -3721,7 +3745,7 @@ function applyOrderFilter(listId) {
 
   if (mode === "available" && listId === "wishList") {
     cards.forEach(function (card) {
-      const ok = orderCardMatchesPlatform(card, listId) && orderCardIsCurrentlyAvailable(card);
+      const ok = orderCardMatchesPlatform(card, listId) && orderCardCanBeTaken(card);
       card.style.display = ok ? "" : "none";
       if (ok) shown++;
     });
@@ -3738,14 +3762,15 @@ function applyOrderFilter(listId) {
   }
 
   const currentName = getCurrentPikminUserName();
+  const currentUid = getCurrentUserUid();
 
-  if (!currentName) {
+  if (!currentUid && !currentName) {
     cards.forEach(function (card) {
       card.style.display = "none";
     });
     const empty = document.createElement("div");
     empty.className = "order-filter-empty";
-    empty.textContent = "尚未設定暱稱，無法篩選自己的訂單。";
+    empty.textContent = "請先登入或設定暱稱，才能篩選自己的訂單。";
     list.appendChild(empty);
     if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
