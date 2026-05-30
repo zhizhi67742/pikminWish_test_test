@@ -1,4 +1,4 @@
-const CACHE_NAME = "pikminwish-v-filter-render-strict-fix-20260530-2335";
+const CACHE_NAME = "pikminwish-v-filter-empty-real-fix-20260530-2355";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,8 +9,8 @@ const ASSETS = [
   "./icon-48.png",
   "./icon-192.png",
   "./icon-512.png",
-  "./js/app.js?v=filter-render-strict-fix-20260530-2335",
-  "./css/style.css?v=filter-render-strict-fix-20260530-2335"
+  "./js/app.js?v=filter-empty-real-fix-20260530-2355",
+  "./css/style.css?v=filter-empty-real-fix-20260530-2355"
 ];
 
 self.addEventListener("install", event => {

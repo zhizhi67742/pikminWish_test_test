@@ -943,7 +943,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=filter-render-strict-fix-20260530-2335"></script>
+<script src="js/app.js?v=filter-empty-real-fix-20260530-2355"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1766,10 +1766,17 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ok) shown += 1;
     });
 
-    if (shown === 0 && cards.length > 0) {
+    if (shown === 0) {
       var empty = document.createElement("div");
       empty.className = "platform-filter-empty order-filter-empty";
-      empty.textContent = mode === "dc" ? "目前沒有 DC 訂單。" : mode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
+      var orderMode = (window.orderFilterState && window.orderFilterState.wishList) || "all";
+      if (orderMode === "mine") {
+        empty.textContent = "目前沒有自己發的訂單。";
+      } else if (orderMode === "available") {
+        empty.textContent = "目前沒有可接訂單。";
+      } else {
+        empty.textContent = mode === "dc" ? "目前沒有 DC 訂單。" : mode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
+      }
       list.appendChild(empty);
     }
 
