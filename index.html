@@ -1787,14 +1787,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }, true);
 
   document.addEventListener("DOMContentLoaded", function () {
+    // 只在載入時套用一次；不要監看 wishList 變動，避免篩選與空提示互相觸發造成卡頓。
     applyWishPlatformFilter((window.platformFilterState && window.platformFilterState.wishList) || "all");
-    var list = document.getElementById("wishList");
-    if (list && !list.dataset.platformFilterForceObserved) {
-      list.dataset.platformFilterForceObserved = "1";
-      new MutationObserver(function () {
-        applyWishPlatformFilter((window.platformFilterState && window.platformFilterState.wishList) || "all");
-      }).observe(list, { childList: true });
-    }
   });
 })();
 </script>
@@ -1816,29 +1810,5 @@ function clearDexAiImport(){
 </script>
 
 
-<script>
-(function(){
-function addWishMineEmpty(){
-  var list=document.getElementById('wishList');
-  if(!list) return;
-  var active=document.querySelector('.order-filter-btn.active[data-filter-target="wishList"][data-filter-mode="mine"]');
-  list.querySelectorAll('.wish-mine-empty').forEach(e=>e.remove());
-  if(!active) return;
-  var visible=Array.from(list.children).filter(el=>el.nodeType===1 && getComputedStyle(el).display!=='none' && !el.classList.contains('wish-mine-empty') && !el.classList.contains('empty'));
-  if(visible.length===0){
-    var d=document.createElement('div');
-    d.className='empty wish-mine-empty';
-    d.textContent='目前沒有自己發的訂單。';
-    list.appendChild(d);
-  }
-}
-document.addEventListener('click',function(){setTimeout(addWishMineEmpty,50);},true);
-document.addEventListener('DOMContentLoaded',function(){
- var list=document.getElementById('wishList');
- if(list){ new MutationObserver(addWishMineEmpty).observe(list,{childList:true,subtree:false});}
- setTimeout(addWishMineEmpty,200);
-});
-})();
-</script>
 </body>
 </html>

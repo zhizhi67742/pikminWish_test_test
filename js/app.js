@@ -3881,24 +3881,9 @@ function initOrderFilters() {
   ["wishList", "pendingList"].forEach(function (id) {
     syncOrderFilterButtons(id);
     syncPlatformFilterButtons(id);
+    // 不再用 MutationObserver 監看清單變化，避免篩選新增/移除提示時反覆觸發造成卡頓。
+    // 訂單更新時由 renderWishes / renderPending 後的流程套用；按鈕點擊時也會只執行一次。
     applyOrderFilter(id);
-
-    const list = document.getElementById(id);
-    if (!list || list.dataset.orderFilterObserved === "1") return;
-
-    list.dataset.orderFilterObserved = "1";
-    new MutationObserver(function (mutations) {
-      // 避免自己新增空狀態時重複觸發到卡住
-      const hasRealCardChange = mutations.some(function (m) {
-        return Array.from(m.addedNodes).concat(Array.from(m.removedNodes)).some(function (node) {
-          return node.nodeType === 1 && !node.classList.contains("order-filter-empty");
-        });
-      });
-
-      if (hasRealCardChange) {
-        applyOrderFilter(id);
-      }
-    }).observe(list, { childList: true });
   });
 }
 
