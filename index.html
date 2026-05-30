@@ -708,7 +708,7 @@ h1 {
   <div class="dex-ai-import-body" id="dexAiImportBody">
     <div class="dex-ai-actions">
       <button class="secondary-btn" onclick="copyDexAiPrompt()" type="button">複製 AI 指令</button>
-      <button class="secondary-btn" onclick="fillDexAiSample()" type="button">填入範例</button>
+      <button class="secondary-btn" onclick="clearDexAiImport()" type="button">清空內容</button>
     </div>
     <textarea id="dexAiImportText" class="dex-ai-textarea" placeholder='請貼上 ChatGPT 回傳的 JSON，例如：&#10;[{"color":"白","flower":"勿忘草","petal":600,"essence":26}]'></textarea>
     <div class="dex-ai-actions">
@@ -1700,6 +1700,14 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js");
   });
+}
+
+function clearDexAiImport(){
+  const ta=document.getElementById("dexAiImportText");
+  if(ta) ta.value="";
+  const preview=document.getElementById("dexAiPreview");
+  if(preview) preview.innerHTML="";
+  window.dexAiParsedData=[];
 }
 </script>
 
