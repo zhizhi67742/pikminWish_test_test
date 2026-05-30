@@ -914,6 +914,7 @@ h1 {
 <button class="harvest-tag-btn" data-tag="隨意收" type="button">隨意收</button>
 <button class="harvest-tag-btn" data-tag="偷田是乞丐" type="button">偷田是乞丐</button>
 <button class="harvest-tag-btn" data-tag="勿分享" type="button">勿分享</button>
+<button class="harvest-tag-btn" data-tag="座標已偏移" type="button">座標已偏移</button>
 <button class="harvest-tag-clear" type="button">清空</button>
 </div>
 <textarea class="coord-input" id="shareLocationInput" placeholder="分享地點／座標，例如：
@@ -941,7 +942,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=filter-empty-real-fix-20260530-2355"></script>
+<script src="js/app.js?v=dc-line-filter-click-fix-20260530-2145"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1764,17 +1765,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ok) shown += 1;
     });
 
-    if (shown === 0) {
+    if (shown === 0 && cards.length > 0) {
       var empty = document.createElement("div");
       empty.className = "platform-filter-empty order-filter-empty";
-      var orderMode = (window.orderFilterState && window.orderFilterState.wishList) || "all";
-      if (orderMode === "mine") {
-        empty.textContent = "目前沒有自己發的訂單。";
-      } else if (orderMode === "available") {
-        empty.textContent = "目前沒有可接訂單。";
-      } else {
-        empty.textContent = mode === "dc" ? "目前沒有 DC 訂單。" : mode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
-      }
+      empty.textContent = mode === "dc" ? "目前沒有 DC 訂單。" : mode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
       list.appendChild(empty);
     }
 

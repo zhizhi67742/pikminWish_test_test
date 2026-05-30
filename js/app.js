@@ -1488,15 +1488,10 @@ function previewCleanCoords() {
 
 
 
-
-function offsetCoordinatesIfEnabled(text) {
-  return text;
-}
-
 function openUploadConfirmModal() {
   const harvestInfo = document.getElementById("harvestInfoInput").value.trim();
   const rawLocation = document.getElementById("shareLocationInput").value;
-  const cleanedLocation = cleanCoordinates(offsetCoordinatesIfEnabled(rawLocation));
+  const cleanedLocation = cleanCoordinates(rawLocation);
 
   if (!cleanedLocation) {
     alert("請輸入有效座標，例如：22.817601,89.563802");
@@ -2010,28 +2005,12 @@ function renderWishes() {
   if (!list) return;
   list.innerHTML = "";
 
-  let activeWishes = sortOldestFirst(wishes).filter(function (wish) {
+  const activeWishes = sortOldestFirst(wishes).filter(function (wish) {
     return wish.status !== "pending" && wish.status !== "done";
   });
 
-  const activeWishFilterMode = window.orderFilterState && window.orderFilterState.wishList ? window.orderFilterState.wishList : "all";
-  if (activeWishFilterMode === "mine") {
-    activeWishes = activeWishes.filter(function (wish) {
-      return isCurrentWishOwnerStrict(wish);
-    });
-  } else if (activeWishFilterMode === "available") {
-    activeWishes = activeWishes.filter(function (wish) {
-      return isTimeRangeCurrentlyAvailable(wish.timeRange);
-    });
-  }
-
-  activeWishes = activeWishes.filter(function (wish) {
-    return orderItemMatchesPlatform(wish, "wishList");
-  });
-
   if (activeWishes.length === 0) {
-    list.innerHTML = '<div class="empty order-filter-empty">' + (activeWishFilterMode === "mine" ? "目前沒有自己發的訂單。" : activeWishFilterMode === "available" ? "目前沒有可接訂單。" : "目前沒有願望卡。") + '</div>';
-    if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("wishList");
+    list.innerHTML = '<div class="empty">目前沒有願望卡。</div>';
     return;
   }
 
@@ -2051,7 +2030,7 @@ function renderWishes() {
     }).join("");
 
     list.innerHTML += `
-      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-owner-uids="${escapeHtml(group.map(function (wish) { return getWishOwnerUid(wish); }).filter(Boolean).join(" "))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
+      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
         <h3>🌸 ${escapeHtml(firstWish.flower)}</h3>
         <p>目前 ${group.length} 人許願</p>
         <div class="wish-time-summary">
@@ -2061,16 +2040,12 @@ function renderWishes() {
         <div class="wish-actions merged-help-action">
           <button class="detail-btn" type="button" data-detail-wish-key="${escapeHtml(groupWishKeys)}">詳細資訊</button>
           ${group.some(function(wish){
-            return !wish.isExample && isCurrentWishOwnerStrict(wish);
+            return !wish.isExample && isCurrentWishOwner(wish);
           }) ? `<button class="delete-btn outer-delete-btn" type="button" data-delete-group="${escapeHtml(groupWishKeys)}">刪除我的許願</button>` : ""}
         </div>
       </article>
     `;
   });
-
-  if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("wishList");
-  if (typeof syncPlatformFilterButtons === "function") syncPlatformFilterButtons("wishList");
-  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
 }
 
 function getPendingGroupKey(item) {
@@ -2093,29 +2068,16 @@ function renderPending() {
   if (!list) return;
   list.innerHTML = "";
 
-  let pendingForRender = Array.isArray(pending) ? pending.slice() : [];
-  const activePendingFilterMode = window.orderFilterState && window.orderFilterState.pendingList ? window.orderFilterState.pendingList : "all";
-  if (activePendingFilterMode === "mine") {
-    pendingForRender = pendingForRender.filter(function (item) {
-      return isCurrentFarmerStrict(item);
-    });
-  }
-
-  pendingForRender = pendingForRender.filter(function (item) {
-    return orderItemMatchesPlatform(item, "pendingList");
-  });
-
-  if (pendingForRender.length === 0) {
-    list.innerHTML = '<div class="empty order-filter-empty">' + (activePendingFilterMode === "mine" ? "目前沒有自己接的訂單。" : "目前沒有待完成願望。") + '</div>';
-    if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("pendingList");
+  if (pending.length === 0) {
+    list.innerHTML = '<div class="empty">目前沒有待完成願望。</div>';
     return;
   }
 
-  const groupedPending = groupPendingOrders(sortOldestFirst(pendingForRender));
+  const groupedPending = groupPendingOrders(sortOldestFirst(pending));
 
   groupedPending.forEach(function (group) {
     const firstItem = group[0];
-    const canComplete = group.every(function (item) { return isCurrentFarmerStrict(item); });
+    const canComplete = group.every(function (item) { return isCurrentFarmer(item); });
     const pendingKeys = group.map(function (item) { return getWishKey(item); }).join("||");
     const safePendingKeys = escapeHtml(pendingKeys);
     const requesterList = group.map(function (item) {
@@ -2126,7 +2088,7 @@ function renderPending() {
       : `<button class="done-btn disabled-btn" type="button" disabled>等待花農完成分享</button>`;
 
     list.innerHTML += `
-      <article class="card" data-farmer-uid="${escapeHtml(String(firstItem.farmerUid || firstItem.acceptedByUid || "").trim())}" data-platforms="${escapeHtml(group.map(function (item) { return normalizePlatformFilterValue(item.farmerPlatform || item.acceptedByPlatform || item.requesterPlatform || item.platform); }).filter(Boolean).join(" "))}">
+      <article class="card" data-farmer-uid="${escapeHtml(String(firstItem.farmerUid || firstItem.acceptedByUid || "").trim())}">
         <h3>🌱 ${escapeHtml(firstItem.flower)}</h3>
         <p>🌙 可收花時間：${escapeHtml(firstItem.timeRange || "未設定")}｜${group.length}人</p>
         <p>🌱 接單花農：${displayNameWithTagHtml(firstItem.farmer || firstItem.acceptedBy || "花農", firstItem.farmerPlatform || firstItem.acceptedByPlatform)}</p>
@@ -2138,10 +2100,6 @@ function renderPending() {
       </article>
     `;
   });
-
-  if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("pendingList");
-  if (typeof syncPlatformFilterButtons === "function") syncPlatformFilterButtons("pendingList");
-  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
 }
 
 function renderDone() {
@@ -3540,17 +3498,6 @@ function refreshCollapseHeights() {
   document.querySelectorAll(".collapse-content").forEach(setCollapseHeight);
 }
 
-function refreshOrderListCollapseHeight(listId) {
-  const list = document.getElementById(listId);
-  if (!list) return;
-  const panel = list.closest(".collapse-content");
-  if (panel) {
-    setCollapseHeight(panel);
-  } else if (typeof refreshCollapseHeights === "function") {
-    refreshCollapseHeights();
-  }
-}
-
 function initCollapseBlocks() {
   document.querySelectorAll(".collapse-btn").forEach(function (btn) {
     if (btn.dataset.collapseReady === "1") return;
@@ -3585,7 +3532,7 @@ function initCollapseBlocks() {
     const el = document.getElementById(id);
     if (!el || el.dataset.collapseObserved === "1") return;
     el.dataset.collapseObserved = "1";
-    new MutationObserver(function(){ if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(id); }).observe(el, { childList: true });
+    new MutationObserver(refreshCollapseHeights).observe(el, { childList: true, subtree: true });
   });
 }
 
@@ -3639,71 +3586,6 @@ function orderCardMatchesPlatform(card, listId) {
   if (platformMode === "all") return true;
   const platforms = String(card.dataset.platforms || "").toLowerCase().split(/\s+/).filter(Boolean);
   return platforms.includes(platformMode);
-}
-
-function orderItemMatchesPlatform(item, listId) {
-  const platformMode = window.platformFilterState && window.platformFilterState[listId] ? window.platformFilterState[listId] : "all";
-  if (platformMode === "all") return true;
-
-  const values = listId === "pendingList"
-    ? [item.farmerPlatform, item.acceptedByPlatform, item.requesterPlatform, item.platform]
-    : [item.requesterPlatform, item.platform];
-
-  return values.some(function (value) {
-    return normalizePlatformFilterValue(value) === platformMode;
-  });
-}
-
-function getCurrentUserEmail() {
-  const user = window.currentPikminUser || (window.firebaseAuth && window.firebaseAuth.currentUser);
-  return user && user.email ? String(user.email).trim().toLowerCase() : "";
-}
-
-function getWishOwnerEmail(item) {
-  if (!item) return "";
-  return String(item.ownerEmail || item.requesterEmail || item.email || "").trim().toLowerCase();
-}
-
-function getFarmerEmail(item) {
-  if (!item) return "";
-  return String(item.farmerEmail || item.acceptedByEmail || "").trim().toLowerCase();
-}
-
-function isCurrentWishOwnerStrict(item) {
-  const currentUid = getCurrentUserUid();
-  const ownerUid = getWishOwnerUid(item);
-  if (currentUid && ownerUid) return currentUid === ownerUid;
-
-  const currentEmail = getCurrentUserEmail();
-  const ownerEmail = getWishOwnerEmail(item);
-  if (currentEmail && ownerEmail) return currentEmail === ownerEmail;
-
-  // 只有舊資料完全沒有 Google 欄位時，才用暱稱相容；避免新資料被暱稱誤判成全部。
-  if (!ownerUid && !ownerEmail && !currentUid && !currentEmail) {
-    const currentName = getCurrentNickname();
-    const ownerName = item && (item.nickname || item.requester || "");
-    return !!currentName && !!ownerName && String(currentName).trim() === String(ownerName).trim();
-  }
-
-  return false;
-}
-
-function isCurrentFarmerStrict(item) {
-  const currentUid = getCurrentUserUid();
-  const farmerUid = String(item && (item.farmerUid || item.acceptedByUid || "") || "").trim();
-  if (currentUid && farmerUid) return currentUid === farmerUid;
-
-  const currentEmail = getCurrentUserEmail();
-  const farmerEmail = getFarmerEmail(item);
-  if (currentEmail && farmerEmail) return currentEmail === farmerEmail;
-
-  if (!farmerUid && !farmerEmail && !currentUid && !currentEmail) {
-    const currentName = getCurrentNickname();
-    const farmerName = item && (item.farmer || item.acceptedBy || "");
-    return !!currentName && !!farmerName && String(currentName).trim() === String(farmerName).trim();
-  }
-
-  return false;
 }
 
 function getCurrentPikminUserName() {
@@ -3779,8 +3661,8 @@ function orderCardBelongsToMe(card, listId, currentName) {
   const currentUid = getCurrentUserUid();
 
   if (listId === "wishList") {
-    const ownerUids = String(card.dataset.ownerUids || card.dataset.ownerUid || "").trim().split(/\s+/).filter(Boolean);
-    if (ownerUids.length) return !!currentUid && ownerUids.includes(currentUid);
+    const ownerUid = String(card.dataset.ownerUid || "").trim();
+    if (ownerUid) return !!currentUid && ownerUid === currentUid;
 
     // 舊卡沒有 UID 時才用刪除按鈕/暱稱相容。
     if (card.querySelector(".outer-delete-btn")) return true;
@@ -3810,7 +3692,7 @@ function applyOrderFilter(listId) {
 
   const mode = window.orderFilterState[listId] || "all";
   const cards = Array.from(list.children).filter(function (el) {
-    return !el.classList.contains("order-filter-empty") && !el.classList.contains("empty") && el.classList.contains("card");
+    return !el.classList.contains("order-filter-empty");
   });
   const platformMode = window.platformFilterState[listId] || "all";
 
@@ -3831,7 +3713,7 @@ function applyOrderFilter(listId) {
       empty.textContent = platformMode === "dc" ? "目前沒有 DC 訂單。" : platformMode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
       list.appendChild(empty);
     }
-    if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
+    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
   }
 
@@ -3851,22 +3733,21 @@ function applyOrderFilter(listId) {
       list.appendChild(empty);
     }
 
-    if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
+    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
   }
 
   const currentName = getCurrentPikminUserName();
-  const currentUid = getCurrentUserUid();
 
-  if (!currentUid && !currentName) {
+  if (!currentName) {
     cards.forEach(function (card) {
       card.style.display = "none";
     });
     const empty = document.createElement("div");
     empty.className = "order-filter-empty";
-    empty.textContent = "尚未登入或設定暱稱，無法篩選自己的訂單。";
+    empty.textContent = "尚未設定暱稱，無法篩選自己的訂單。";
     list.appendChild(empty);
-    if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
+    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
   }
 
@@ -3883,7 +3764,7 @@ function applyOrderFilter(listId) {
     list.appendChild(empty);
   }
 
-  if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
+  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
 }
 
 function syncOrderFilterButtons(listId) {
@@ -3898,14 +3779,8 @@ function syncPlatformFilterButtons(listId) {
   });
 }
 
-function renderOrderFilterList(listId) {
-  // 篩選按鈕只需要切換現有卡片的顯示狀態。
-  // 不要在這裡呼叫 renderWishes/renderPending，否則每按一次都會重新分組、重建大量 DOM，手機會明顯卡頓。
-  if (typeof applyOrderFilter === "function") applyOrderFilter(listId);
-}
-
 function initOrderFilters() {
-  // 只綁一次，避免每次重繪/進站後重複綁定造成越按越卡。
+  // 事件委派：按鈕即使重繪也能按
   if (document.body.dataset.orderFilterClickReady !== "1") {
     document.body.dataset.orderFilterClickReady = "1";
 
@@ -3920,15 +3795,9 @@ function initOrderFilters() {
       const mode = btn.getAttribute("data-filter-mode") || "all";
       if (!listId) return;
 
-      // 重複按同一顆只同步按鈕，不再重畫整個許願池。
-      if ((window.orderFilterState[listId] || "all") === mode) {
-        syncOrderFilterButtons(listId);
-        return;
-      }
-
       window.orderFilterState[listId] = mode;
       syncOrderFilterButtons(listId);
-      renderOrderFilterList(listId);
+      applyOrderFilter(listId);
     }, true);
   }
 
@@ -3946,22 +3815,36 @@ function initOrderFilters() {
       const mode = btn.getAttribute("data-platform-mode") || "all";
       if (!listId) return;
 
-      if ((window.platformFilterState[listId] || "all") === mode) {
-        syncPlatformFilterButtons(listId);
-        return;
-      }
-
       window.platformFilterState[listId] = mode;
       syncPlatformFilterButtons(listId);
-      renderOrderFilterList(listId);
+      applyOrderFilter(listId);
     }, true);
   }
 
   ["wishList", "pendingList"].forEach(function (id) {
     syncOrderFilterButtons(id);
     syncPlatformFilterButtons(id);
+    applyOrderFilter(id);
+
+    const list = document.getElementById(id);
+    if (!list || list.dataset.orderFilterObserved === "1") return;
+
+    list.dataset.orderFilterObserved = "1";
+    new MutationObserver(function (mutations) {
+      // 避免自己新增空狀態時重複觸發到卡住
+      const hasRealCardChange = mutations.some(function (m) {
+        return Array.from(m.addedNodes).concat(Array.from(m.removedNodes)).some(function (node) {
+          return node.nodeType === 1 && !node.classList.contains("order-filter-empty");
+        });
+      });
+
+      if (hasRealCardChange) {
+        applyOrderFilter(id);
+      }
+    }).observe(list, { childList: true });
   });
 }
+
 document.addEventListener("DOMContentLoaded", initOrderFilters);
 window.addEventListener("load", initOrderFilters);
 setTimeout(initOrderFilters, 500);
@@ -4544,7 +4427,3 @@ function applyDexAiImport() {
   if (status) status.textContent = `已套用 ${rows.length} 筆資料到圖鑑。`;
   alert(`已套用 ${rows.length} 筆資料到圖鑑。`);
 }
-
-
-
-
