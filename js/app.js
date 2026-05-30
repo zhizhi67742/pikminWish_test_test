@@ -1333,6 +1333,8 @@ function openDoneModal(id) {
   const locationInput = document.getElementById("shareLocationInput");
   if (harvestInput) harvestInput.value = "";
   if (locationInput) locationInput.value = "";
+  const offsetInput = document.getElementById("coordinateOffset");
+  if (offsetInput) offsetInput.checked = false;
 
   document.getElementById("doneModal").classList.add("show");
 }
@@ -1373,6 +1375,8 @@ function openFarmerShareModal() {
   const locationInput = document.getElementById("shareLocationInput");
   if (harvestInput) harvestInput.value = "";
   if (locationInput) locationInput.value = "";
+  const offsetInput = document.getElementById("coordinateOffset");
+  if (offsetInput) offsetInput.checked = false;
 
   document.getElementById("doneModal").classList.add("show");
 }
@@ -1488,10 +1492,35 @@ function previewCleanCoords() {
 
 
 
+
+function offsetCoordinatesIfEnabled(text) {
+  const offsetInput = document.getElementById("coordinateOffset");
+  const enabled = !!(offsetInput && offsetInput.checked);
+  if (!enabled) return text;
+
+  const distanceMeters = 20;
+  const result = String(text || "").split("\n").map(function(line) {
+    const m = line.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (!m) return line;
+
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    const angle = Math.random() * Math.PI * 2;
+    const dLat = (distanceMeters * Math.cos(angle)) / 111320;
+    const dLng = (distanceMeters * Math.sin(angle)) / (111320 * Math.cos(lat * Math.PI / 180));
+
+    return (lat + dLat).toFixed(6) + "," + (lng + dLng).toFixed(6);
+  }).join("\n");
+
+  // 避免返回確認前畫面後再次送出時，重複偏移同一批座標。
+  offsetInput.checked = false;
+  return result;
+}
+
 function openUploadConfirmModal() {
   const harvestInfo = document.getElementById("harvestInfoInput").value.trim();
   const rawLocation = document.getElementById("shareLocationInput").value;
-  const cleanedLocation = cleanCoordinates(rawLocation);
+  const cleanedLocation = cleanCoordinates(offsetCoordinatesIfEnabled(rawLocation));
 
   if (!cleanedLocation) {
     alert("請輸入有效座標，例如：22.817601,89.563802");
