@@ -4456,3 +4456,13 @@ function applyDexAiImport() {
   if (status) status.textContent = `已套用 ${rows.length} 筆資料到圖鑑。`;
   alert(`已套用 ${rows.length} 筆資料到圖鑑。`);
 }
+
+document.addEventListener('DOMContentLoaded',()=>{
+ const cb=document.getElementById('coordinateOffset');
+ const btn=document.getElementById('coordinateOffsetBtn');
+ if(cb && btn){
+   const sync=()=>btn.textContent=(cb.checked?'☑ ':'☐ ')+'座標偏移';
+   btn.addEventListener('click',()=>{cb.checked=!cb.checked;sync();});
+   sync();
+ }
+});
