@@ -4469,10 +4469,22 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 document.addEventListener('DOMContentLoaded',()=>{
  const btn=document.getElementById('coordinateOffsetBtn');
- const ta=document.querySelector('textarea');
+ const ta=document.getElementById('shareLocationInput');
  if(btn && ta){
    btn.onclick=()=>{
-     alert('已將輸入座標偏移20m');
+     const lines=ta.value.split(/\n+/);
+     const out=lines.map(line=>{
+       const m=line.trim().match(/^(-?[0-9]+\.?[0-9]*)\s*,\s*(-?[0-9]+\.?[0-9]*)$/);
+       if(!m) return line;
+       let lat=parseFloat(m[1]), lng=parseFloat(m[2]);
+       const distance=20;
+       const angle=Math.random()*Math.PI*2;
+       const dLat=(distance*Math.cos(angle))/111320;
+       const dLng=(distance*Math.sin(angle))/(111320*Math.cos(lat*Math.PI/180));
+       return (lat+dLat).toFixed(6)+','+(lng+dLng).toFixed(6);
+     });
+     ta.value=out.join('\n');
+     alert('已偏移座標 20m');
    };
  }
 });
