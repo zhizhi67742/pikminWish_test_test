@@ -2196,7 +2196,7 @@ function renderDone() {
           <button class="copy-btn" type="button" data-done-key="${escapeHtml(doneKey)}">
             快速複製座標
           </button>
-          ${isCurrentFarmer(item) ? `<button class="edit-done-btn" type="button" data-done-key="${escapeHtml(doneKey)}" title="修改座標與備註" aria-label="修改座標與備註">✏️</button>` : ""}
+          ${isCurrentFarmer(item) ? `<button class="edit-done-btn edit-done-btn-mini" type="button" data-done-key="${escapeHtml(doneKey)}" title="修改座標與備註" aria-label="修改座標與備註">✏️</button>` : ""}
         </div>
 
         <p>⏰ 剩餘刪除時間：${getRemainTime(item.deleteAt)}</p>
