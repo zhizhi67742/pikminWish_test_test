@@ -519,6 +519,57 @@ h1 {
 #quick-wish .order-filter-btn{width:auto!important;min-width:0!important;max-width:100%!important;white-space:nowrap!important;}
 @media(max-width:640px){#quick-wish .wish-source-filter-row{gap:6px!important;}#quick-wish .wish-source-filter-label{width:100%!important;height:auto!important;}#quick-wish .platform-filter-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;}#quick-wish .platform-filter-btn{width:100%!important;min-width:0!important;font-size:12px!important;padding:0 6px!important;}#quick-wish .order-filter-tabs{display:grid!important;grid-template-columns:1fr!important;}#quick-wish .order-filter-btn{width:100%!important;}}
 </style>
+
+<style id="three-two-order-filter-fix">
+
+
+/* FIX 2026-05-30：許願區三顆一排、待完成區兩顆一排 */
+#quick-wish .order-filter-tabs[data-filter-area="wishList"],
+.order-filter-tabs[data-filter-area="wishList"]{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:6px !important;
+  width:100% !important;
+  flex-wrap:nowrap !important;
+}
+#quick-pending .order-filter-tabs[data-filter-area="pendingList"],
+.order-filter-tabs[data-filter-area="pendingList"]{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:6px !important;
+  width:100% !important;
+  flex-wrap:nowrap !important;
+}
+#quick-wish .order-filter-tabs[data-filter-area="wishList"] .order-filter-btn,
+#quick-pending .order-filter-tabs[data-filter-area="pendingList"] .order-filter-btn,
+.order-filter-tabs[data-filter-area="wishList"] .order-filter-btn,
+.order-filter-tabs[data-filter-area="pendingList"] .order-filter-btn{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:32px !important;
+  min-height:32px !important;
+  padding:0 3px !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+  box-sizing:border-box !important;
+  font-size:10px !important;
+  line-height:1 !important;
+  letter-spacing:-.6px !important;
+}
+@media(max-width:640px){
+  #quick-wish .order-filter-tabs[data-filter-area="wishList"],
+  .order-filter-tabs[data-filter-area="wishList"]{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+  #quick-pending .order-filter-tabs[data-filter-area="pendingList"],
+  .order-filter-tabs[data-filter-area="pendingList"]{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+}
+
+</style>
 </head>
 <body>
 <div aria-busy="true" aria-live="polite" class="app-loading-overlay" id="appLoadingOverlay">
