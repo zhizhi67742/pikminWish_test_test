@@ -1,4 +1,4 @@
-const CACHE_NAME = "pikminwish-v-custom-flower-20260528";
+const CACHE_NAME = "pikminwish-v-farmer-direct-upload-fix-20260530";
 const ASSETS = [
   "./",
   "./index.html",

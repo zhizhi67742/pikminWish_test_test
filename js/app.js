@@ -1690,6 +1690,7 @@ async function confirmDone() {
   if (selectedPendingId === "__farmer_direct_share__") {
     const flower = document.getElementById("flowerInput")?.value?.trim();
     const currentName = getCurrentNickname();
+    const currentUid = getCurrentUserUid();
 
     if (!currentName) {
       alert("請先設定暱稱，才能上傳花農座標。");
