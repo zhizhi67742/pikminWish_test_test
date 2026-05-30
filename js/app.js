@@ -4112,240 +4112,237 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
   }
 })();
 
-// Pikmin Bloom 圖鑑截圖匯入（前台）
-let dexOcrRows = [];
+/* =========================
+   AI 圖鑑匯入（貼上 ChatGPT 辨識結果）
+   不使用 OCR；網站只負責解析與套用資料。
+========================= */
+let dexAiImportRows = [];
 
-function toggleDexOcrPanel() {
-  const panel = document.getElementById("dexOcrPanel");
-  if (panel) panel.classList.toggle("open");
+function toggleDexAiImport() {
+  const body = document.getElementById("dexAiImportBody");
+  if (!body) return;
+  body.classList.toggle("open");
 }
 
-function setDexOcrStatus(message) {
-  const el = document.getElementById("dexOcrStatus");
-  if (el) el.textContent = message || "";
-}
+function copyDexAiPrompt() {
+  const prompt = `請幫我辨識這張 Pikmin Bloom 圖鑑截圖，並只回傳 JSON 陣列，不要加說明。\n\n格式如下：\n[{"color":"白","flower":"勿忘草","petal":600,"essence":26}]\n\n規則：\n1. color 只用「白、黃、紅、藍」。\n2. flower 不要包含顏色，例如「白色勿忘草」要拆成 color=白、flower=勿忘草。\n3. petal 是花瓣數，essence 是精華數。\n4. 如果截圖是左上花瓣、右下精華，請依照這個位置判斷。\n5. 忽略特殊精華、搜尋列、時間、電量與不完整看不到名稱的項目。`;
 
-function dexOcrEscapeRegExp(text) {
-  return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function normalizeDexOcrText(text) {
-  return String(text || "")
-    .replace(/[０-９]/g, function (d) { return String.fromCharCode(d.charCodeAt(0) - 0xFEE0); })
-    .replace(/[｜|]/g, " ")
-    .replace(/[，,]/g, " ")
-    .replace(/[。．.]/g, " ")
-    .replace(/\r/g, "\n")
-    .replace(/[ \t]+/g, " ")
-    .trim();
-}
-
-function getDexOcrFlowerPatterns() {
-  const flowers = Array.isArray(flowerDex) && flowerDex.length ? flowerDex : DEFAULT_FLOWER_DEX;
-  const result = [];
-  flowers.forEach(function (flower) {
-    if (!flower || !flower.name || !Array.isArray(flower.colors)) return;
-    flower.colors.forEach(function (color) {
-      const c = normalizeCatalogColor(color);
-      if (!["白", "黃", "紅", "藍"].includes(c)) return;
-      result.push({
-        color: c,
-        flower: flower.name,
-        label: c + "色" + flower.name,
-        re: new RegExp(dexOcrEscapeRegExp(c) + "\\s*色?\\s*" + dexOcrEscapeRegExp(flower.name), "u")
-      });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(prompt).then(function () {
+      alert("已複製 AI 指令，可以貼給 ChatGPT 使用。");
+    }).catch(function () {
+      fallbackCopyText(prompt);
     });
-  });
-  // 長花名優先，避免「玫瑰」吃掉「週年紀念玫瑰」
-  result.sort(function (a, b) { return b.label.length - a.label.length; });
-  return result;
-}
-
-function extractDexOcrNames(line) {
-  let working = normalizeDexOcrText(line);
-  const patterns = getDexOcrFlowerPatterns();
-  const found = [];
-  let guard = 0;
-  while (working && guard < 80) {
-    guard += 1;
-    let best = null;
-    patterns.forEach(function (item) {
-      const match = working.match(item.re);
-      if (!match) return;
-      const index = match.index || 0;
-      if (!best || index < best.index || (index === best.index && match[0].length > best.text.length)) {
-        best = { index: index, text: match[0], item: item };
-      }
-    });
-    if (!best) break;
-    found.push({ color: best.item.color, flower: best.item.flower });
-    working = working.slice(0, best.index) + " ".repeat(best.text.length) + working.slice(best.index + best.text.length);
+  } else {
+    fallbackCopyText(prompt);
   }
-  return found;
 }
 
-function extractDexOcrNumbers(line) {
-  const nums = [];
-  const text = normalizeDexOcrText(line);
-  const matches = text.match(/\d{1,4}/g) || [];
-  matches.forEach(function (raw) {
-    const n = Number(raw);
-    // 過濾時間、電量、大量步數等 UI 雜訊；圖鑑數值一般 0~1200
-    if (Number.isFinite(n) && n >= 0 && n <= 1200) nums.push(n);
-  });
-  return nums;
+function fallbackCopyText(text) {
+  const temp = document.createElement("textarea");
+  temp.value = text;
+  document.body.appendChild(temp);
+  temp.select();
+  document.execCommand("copy");
+  document.body.removeChild(temp);
+  alert("已複製。");
 }
 
-function buildDexOcrRowsFromText(rawText) {
-  const mode = (document.getElementById("dexOcrMode") || {}).value || "petalTop";
-  const lines = normalizeDexOcrText(rawText).split(/\n+/).map(function (line) { return line.trim(); }).filter(Boolean);
+function fillDexAiSample() {
+  const input = document.getElementById("dexAiImportText");
+  if (!input) return;
+  input.value = JSON.stringify([
+    { color: "白", flower: "勿忘草", petal: 600, essence: 26 },
+    { color: "黃", flower: "勿忘草", petal: 600, essence: 550 },
+    { color: "紅", flower: "勿忘草", petal: 600, essence: 550 },
+    { color: "藍", flower: "勿忘草", petal: 600, essence: 23 }
+  ], null, 2);
+  previewDexAiImport();
+}
+
+function normalizeDexAiColor(value) {
+  const text = String(value || "").trim().replace(/色/g, "");
+  if (/白|white/i.test(text)) return "白";
+  if (/黃|黄|yellow/i.test(text)) return "黃";
+  if (/紅|红|red/i.test(text)) return "紅";
+  if (/藍|蓝|blue/i.test(text)) return "藍";
+  return text.slice(0, 1);
+}
+
+function normalizeDexAiFlowerName(value, color) {
+  let text = String(value || "").trim();
+  text = text.replace(/[\s　]+/g, "");
+  text = text.replace(/^(白色|黃色|黄色|紅色|红色|藍色|蓝色|白|黃|黄|紅|红|藍|蓝)/, "");
+  text = text.replace(/花瓣|精華|精华|花朵|花種|花种/g, "");
+  return text;
+}
+
+function dexAiNumber(value) {
+  const match = String(value ?? "").replace(/[,，]/g, "").match(/\d+/);
+  if (!match) return 0;
+  const n = Number(match[0]);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(n, 1200);
+}
+
+function findDexAiFlower(name) {
+  const target = String(name || "").trim();
+  if (!target) return null;
+  return (Array.isArray(flowerDex) ? flowerDex : []).find(function (flower) {
+    return flower && String(flower.name || "").trim() === target;
+  }) || null;
+}
+
+function parseDexAiJsonText(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return [];
+
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    const arrayMatch = raw.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      try { return JSON.parse(arrayMatch[0]); } catch (e) {}
+    }
+  }
+
+  return raw.split(/\n+/).map(function (line) {
+    const clean = line.trim();
+    if (!clean) return null;
+    const colorMatch = clean.match(/(白色|黃色|黄色|紅色|红色|藍色|蓝色|白|黃|黄|紅|红|藍|蓝)/);
+    const nums = clean.match(/\d+/g) || [];
+    let flower = clean.replace(/\d+/g, "").replace(/花瓣|精華|精华|[:：,，、|/]/g, "").trim();
+    const color = normalizeDexAiColor(colorMatch ? colorMatch[0] : "");
+    flower = normalizeDexAiFlowerName(flower, color);
+    return {
+      color: color,
+      flower: flower,
+      petal: nums.length >= 2 ? Number(nums[0]) : 0,
+      essence: nums.length >= 2 ? Number(nums[1]) : (nums.length === 1 ? Number(nums[0]) : 0)
+    };
+  }).filter(Boolean);
+}
+
+function normalizeDexAiRows(data) {
   const rows = [];
-  let numberBuffer = [];
+  const list = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
 
-  lines.forEach(function (line) {
-    const names = extractDexOcrNames(line);
-    const nums = extractDexOcrNumbers(line);
-    const hasSpecial = /特殊\s*精華|精\s*華/.test(line) && !names.length;
+  list.forEach(function (item) {
+    if (!item || typeof item !== "object") return;
+    const color = normalizeDexAiColor(item.color || item.c || item.colour || item.顏色 || item.颜色);
+    const flower = normalizeDexAiFlowerName(item.flower || item.name || item.n || item.flowerName || item.花 || item.花名 || item.花種 || item.花种, color);
+    const petal = dexAiNumber(item.petal ?? item.petals ?? item.p ?? item.花瓣);
+    const essence = dexAiNumber(item.essence ?? item.e ?? item.nectar ?? item.精華 ?? item.精华);
+    if (!flower && !color) return;
 
-    if (!names.length) {
-      // 特殊精華、時間、步數等非花朵資料不要當成第一筆花。
-      if (!hasSpecial) numberBuffer = numberBuffer.concat(nums);
-      return;
-    }
+    const flowerInfo = findDexAiFlower(flower);
+    const validColor = !!(flowerInfo && flowerInfo.colors && flowerInfo.colors.includes(color));
 
-    let segmentNums = numberBuffer.concat(nums);
-    numberBuffer = [];
-
-    // 若同一排含特殊精華，數字通常會多一個，位置在上方數字與下方數字中間。
-    if (/特殊\s*精華/.test(line) && segmentNums.length === names.length * 2 + 1) {
-      segmentNums.splice(names.length, 1);
-    }
-
-    // 太多 UI 雜訊時，優先取最靠近這一排花名的 2N 個數字。
-    const need = names.length * 2;
-    if (segmentNums.length > need) {
-      segmentNums = segmentNums.slice(segmentNums.length - need);
-    }
-
-    if (segmentNums.length >= need) {
-      const topNums = segmentNums.slice(0, names.length);
-      const bottomNums = segmentNums.slice(names.length, names.length * 2);
-      names.forEach(function (name, i) {
-        rows.push({
-          enabled: true,
-          color: name.color,
-          flower: name.flower,
-          petal: mode === "petalTop" ? topNums[i] : bottomNums[i],
-          essence: mode === "petalTop" ? bottomNums[i] : topNums[i]
-        });
-      });
-    } else {
-      names.forEach(function (name) {
-        rows.push({ enabled: true, color: name.color, flower: name.flower, petal: 0, essence: 0 });
-      });
-    }
+    rows.push({
+      enabled: !!(flowerInfo && validColor),
+      color: color,
+      flower: flower,
+      petal: petal,
+      essence: essence,
+      valid: !!(flowerInfo && validColor),
+      message: !flowerInfo ? "找不到花種" : (!validColor ? "此花沒有這個顏色" : "")
+    });
   });
 
-  // 去除重複，保留最後一次（滑動截圖重疊時比較合理）
-  const map = new Map();
-  rows.forEach(function (row) {
-    if (!row || !row.flower || !row.color) return;
-    map.set(row.color + "|" + row.flower, row);
-  });
-  return Array.from(map.values());
-}
-
-function renderDexOcrRows(rows) {
-  dexOcrRows = Array.isArray(rows) ? rows : [];
-  const box = document.getElementById("dexOcrResult");
-  if (!box) return;
-  if (!dexOcrRows.length) {
-    box.innerHTML = '<div class="empty">目前沒有解析到可套用的花朵。可以把辨識文字貼到上方，再按「重新解析文字」。</div>';
-    return;
-  }
-
-  const colorOptions = ["白", "黃", "紅", "藍"].map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join("");
-  box.innerHTML = '<table class="dex-ocr-table"><thead><tr><th>套用</th><th>顏色</th><th>花種</th><th>花瓣</th><th>精華</th></tr></thead><tbody>' +
-    dexOcrRows.map(function (row, index) {
-      const options = colorOptions.replace('value="' + row.color + '"', 'value="' + row.color + '" selected');
-      return '<tr>' +
-        '<td><input type="checkbox" data-ocr-field="enabled" data-ocr-index="' + index + '" checked></td>' +
-        '<td><select data-ocr-field="color" data-ocr-index="' + index + '">' + options + '</select></td>' +
-        '<td><input type="text" data-ocr-field="flower" data-ocr-index="' + index + '" value="' + escapeHtml(row.flower) + '"></td>' +
-        '<td><input type="number" min="0" max="1200" data-ocr-field="petal" data-ocr-index="' + index + '" value="' + Number(row.petal || 0) + '"></td>' +
-        '<td><input type="number" min="0" max="1200" data-ocr-field="essence" data-ocr-index="' + index + '" value="' + Number(row.essence || 0) + '"></td>' +
-        '</tr>';
-    }).join("") + '</tbody></table>';
-}
-
-function readDexOcrRowsFromTable() {
-  const rows = dexOcrRows.map(function (row) { return Object.assign({}, row); });
-  document.querySelectorAll("[data-ocr-index][data-ocr-field]").forEach(function (input) {
-    const index = Number(input.dataset.ocrIndex);
-    const field = input.dataset.ocrField;
-    if (!rows[index]) return;
-    if (field === "enabled") rows[index].enabled = input.checked;
-    else if (field === "petal" || field === "essence") rows[index][field] = Math.max(0, Math.min(1200, Number(input.value) || 0));
-    else rows[index][field] = String(input.value || "").trim();
-  });
   return rows;
 }
 
-function parseDexOcrText() {
-  const raw = (document.getElementById("dexOcrRawText") || {}).value || "";
-  const rows = buildDexOcrRowsFromText(raw);
-  renderDexOcrRows(rows);
-  setDexOcrStatus(rows.length ? "已解析 " + rows.length + " 筆，請確認後再套用。" : "沒有解析到花朵，請確認截圖文字是否有辨識出來。");
+function previewDexAiImport() {
+  const input = document.getElementById("dexAiImportText");
+  const status = document.getElementById("dexAiImportStatus");
+  const preview = document.getElementById("dexAiImportPreview");
+  if (!input || !preview) return [];
+
+  const parsed = parseDexAiJsonText(input.value);
+  dexAiImportRows = normalizeDexAiRows(parsed);
+  renderDexAiImportPreview();
+
+  const usable = dexAiImportRows.filter(function (row) { return row.enabled && row.valid; }).length;
+  if (status) {
+    status.textContent = dexAiImportRows.length
+      ? `解析到 ${dexAiImportRows.length} 筆，其中 ${usable} 筆可套用。請確認下方表格後再套用。`
+      : "沒有解析到資料，請確認貼上的 JSON 格式。";
+  }
+
+  return dexAiImportRows;
 }
 
-async function runDexImageOcr() {
-  const input = document.getElementById("dexOcrImageInput");
-  const rawBox = document.getElementById("dexOcrRawText");
-  if (!input || !input.files || !input.files[0]) {
-    alert("請先選擇截圖。");
-    return;
-  }
-  if (!window.Tesseract || typeof window.Tesseract.recognize !== "function") {
-    alert("OCR 模組還沒載入完成，請刷新頁面後再試一次。");
-    return;
-  }
-
-  setDexOcrStatus("辨識中，圖片越大會越久，請稍等...");
-  try {
-    const result = await window.Tesseract.recognize(input.files[0], "chi_tra+eng", {
-      logger: function (m) {
-        if (m && m.status === "recognizing text") {
-          setDexOcrStatus("辨識中... " + Math.round((m.progress || 0) * 100) + "%");
-        }
-      }
-    });
-    const text = result && result.data ? result.data.text || "" : "";
-    if (rawBox) rawBox.value = text;
-    parseDexOcrText();
-  } catch (err) {
-    console.error(err);
-    setDexOcrStatus("辨識失敗，請換清楚一點的截圖，或手動貼上文字後重新解析。");
-  }
+function getDexAiFlowerOptions(selected) {
+  return (Array.isArray(flowerDex) ? flowerDex : []).map(function (flower) {
+    const name = String(flower.name || "");
+    return `<option value="${escapeHtml(name)}" ${name === selected ? "selected" : ""}>${escapeHtml(name)}</option>`;
+  }).join("");
 }
 
-function applyDexOcrRows() {
-  const rows = readDexOcrRowsFromTable().filter(function (row) { return row.enabled && row.flower && row.color; });
-  if (!rows.length) {
-    alert("沒有可套用的資料。");
+function getDexAiColorOptions(selected) {
+  return ["白", "黃", "紅", "藍"].map(function (color) {
+    return `<option value="${color}" ${color === selected ? "selected" : ""}>${color}</option>`;
+  }).join("");
+}
+
+function renderDexAiImportPreview() {
+  const preview = document.getElementById("dexAiImportPreview");
+  if (!preview) return;
+
+  if (!dexAiImportRows.length) {
+    preview.innerHTML = '<div class="empty">目前沒有可預覽的資料。</div>';
     return;
   }
 
-  let count = 0;
-  rows.forEach(function (row) {
-    const color = normalizeCatalogColor(row.color);
-    const flower = String(row.flower || "").trim();
-    if (!flower || !color) return;
-    const found = (flowerDex || []).find(function (item) { return item && item.name === flower && Array.isArray(item.colors) && item.colors.includes(color); });
-    if (!found) return;
-    saveDexValue("dex_" + flower + "_" + color + "_petal", row.petal, petalLimit, false);
-    saveDexValue("dex_" + flower + "_" + color + "_essence", row.essence, essenceLimit, false);
-    count += 1;
+  let html = '<table><thead><tr><th>套用</th><th>顏色</th><th>花種</th><th>花瓣</th><th>精華</th><th>提醒</th></tr></thead><tbody>';
+  dexAiImportRows.forEach(function (row, index) {
+    html += `<tr>
+      <td><input type="checkbox" ${row.enabled ? "checked" : ""} onchange="updateDexAiRow(${index}, 'enabled', this.checked)"></td>
+      <td><select onchange="updateDexAiRow(${index}, 'color', this.value)">${getDexAiColorOptions(row.color)}</select></td>
+      <td><select onchange="updateDexAiRow(${index}, 'flower', this.value)">${getDexAiFlowerOptions(row.flower)}</select></td>
+      <td><input type="number" min="0" max="1200" value="${row.petal}" onchange="updateDexAiRow(${index}, 'petal', this.value)"></td>
+      <td><input type="number" min="0" max="1200" value="${row.essence}" onchange="updateDexAiRow(${index}, 'essence', this.value)"></td>
+      <td class="${row.valid ? "" : "dex-ai-bad"}">${escapeHtml(row.message || "可套用")}</td>
+    </tr>`;
   });
+  html += '</tbody></table>';
+  preview.innerHTML = html;
+}
+
+function updateDexAiRow(index, field, value) {
+  const row = dexAiImportRows[index];
+  if (!row) return;
+  if (field === "enabled") row.enabled = !!value;
+  else if (field === "petal" || field === "essence") row[field] = dexAiNumber(value);
+  else row[field] = String(value || "").trim();
+
+  const flowerInfo = findDexAiFlower(row.flower);
+  row.valid = !!(flowerInfo && flowerInfo.colors && flowerInfo.colors.includes(row.color));
+  row.message = !flowerInfo ? "找不到花種" : (!row.valid ? "此花沒有這個顏色" : "");
+  if (!row.valid) row.enabled = false;
+  renderDexAiImportPreview();
+}
+
+function applyDexAiImport() {
+  if (!dexAiImportRows.length) previewDexAiImport();
+  const rows = dexAiImportRows.filter(function (row) { return row.enabled && row.valid; });
+
+  if (!rows.length) {
+    alert("沒有可套用的資料，請先解析或勾選可套用的項目。");
+    return;
+  }
+
+  if (!confirm(`確定要套用 ${rows.length} 筆資料到圖鑑嗎？`)) return;
+
+  rows.forEach(function (row) {
+    saveDexValue(`dex_${row.flower}_${row.color}_petal`, row.petal, petalLimit, false);
+    saveDexValue(`dex_${row.flower}_${row.color}_essence`, row.essence, essenceLimit, false);
+  });
+
   renderDex();
-  alert("已套用 " + count + " 筆到圖鑑。");
+  scheduleDexCloudSave();
+
+  const status = document.getElementById("dexAiImportStatus");
+  if (status) status.textContent = `已套用 ${rows.length} 筆資料到圖鑑。`;
+  alert(`已套用 ${rows.length} 筆資料到圖鑑。`);
 }

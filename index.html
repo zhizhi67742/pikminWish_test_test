@@ -696,37 +696,27 @@ h1 {
 </div>
 </div>
 </section>
-<section class="panel dex-ocr-panel">
-  <div class="dex-ocr-head">
+
+<section class="panel dex-ai-import-panel">
+  <div class="dex-ai-import-head">
     <div>
-      <h3>📸 圖鑑截圖匯入</h3>
-      <p class="hint">適合 Pikmin Bloom 圖鑑截圖。先辨識，再確認套用，不會自動覆蓋。</p>
+      <h3>🤖 AI 圖鑑匯入</h3>
+      <p class="hint">先把截圖傳給 ChatGPT 辨識，再把回傳的 JSON 貼到這裡匯入。匯入前會先預覽，不會直接覆蓋。</p>
     </div>
-    <button class="dex-advanced-btn" onclick="toggleDexOcrPanel()" type="button">展開 / 收合</button>
+    <button class="dex-ai-toggle-btn" onclick="toggleDexAiImport()" type="button">展開 / 收合</button>
   </div>
-  <div class="dex-ocr-body" id="dexOcrPanel">
-    <div class="dex-ocr-controls">
-      <label class="dex-ocr-file">
-        上傳截圖
-        <input accept="image/*" id="dexOcrImageInput" type="file"/>
-      </label>
-      <label>
-        截圖格式
-        <select id="dexOcrMode">
-          <option value="petalTop">左上花瓣、右下精華</option>
-          <option value="essenceTop">左上精華、右下花瓣</option>
-        </select>
-      </label>
-      <button class="confirm-btn" onclick="runDexImageOcr()" type="button">辨識圖片</button>
-      <button class="ghost-btn" onclick="parseDexOcrText()" type="button">重新解析文字</button>
+  <div class="dex-ai-import-body" id="dexAiImportBody">
+    <div class="dex-ai-actions">
+      <button class="secondary-btn" onclick="copyDexAiPrompt()" type="button">複製 AI 指令</button>
+      <button class="secondary-btn" onclick="fillDexAiSample()" type="button">填入範例</button>
     </div>
-    <p class="hint">如果辨識結果有錯，可以直接修改下方表格再套用。</p>
-    <textarea id="dexOcrRawText" class="dex-ocr-raw" placeholder="辨識到的文字會出現在這裡，也可以手動貼上文字後按重新解析。"></textarea>
-    <div class="dex-ocr-actions">
-      <span id="dexOcrStatus" class="hint"></span>
-      <button class="confirm-btn" onclick="applyDexOcrRows()" type="button">套用到圖鑑</button>
+    <textarea id="dexAiImportText" class="dex-ai-textarea" placeholder='請貼上 ChatGPT 回傳的 JSON，例如：&#10;[{"color":"白","flower":"勿忘草","petal":600,"essence":26}]'></textarea>
+    <div class="dex-ai-actions">
+      <button class="confirm-btn" onclick="previewDexAiImport()" type="button">解析預覽</button>
+      <button class="confirm-btn" onclick="applyDexAiImport()" type="button">套用到圖鑑</button>
     </div>
-    <div id="dexOcrResult" class="dex-ocr-result"></div>
+    <p class="hint" id="dexAiImportStatus">目前尚未解析資料。</p>
+    <div class="dex-ai-preview" id="dexAiImportPreview"></div>
   </div>
 </section>
 
@@ -932,7 +922,6 @@ h1 {
 </div>
 </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="js/app.js?v=custom-flower-visible-20260528"></script>
 <!-- Firebase -->
 <script type="module">
