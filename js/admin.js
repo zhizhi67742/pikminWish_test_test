@@ -117,20 +117,7 @@ function isAdmin(user) {
   return ADMIN_EMAILS.map(normalize).includes(email);
 }
 
-function isStandalonePwaMode() {
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-}
-
-function showStandalonePwaLoginNotice() {
-  alert("iPhone 主畫面版目前無法直接使用 Google 登入，會容易卡在白畫面。\n\n請改用 Safari 開啟網站並在 Safari 網頁版登入使用。");
-}
-
 async function login() {
-  if (isStandalonePwaMode()) {
-    showStandalonePwaLoginNotice();
-    return;
-  }
-
   try {
     await signInWithRedirect(auth, provider);
   } catch (error) {
