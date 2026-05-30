@@ -4942,3 +4942,59 @@ html {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== DC / LINE 許願單分類篩選 ===== */
+.platform-filter-tabs {
+  position: relative;
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+
+.platform-filter-btn {
+  position: relative;
+  z-index: 21;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid rgba(135, 105, 160, .45);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .55);
+  color: #5e5268;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.platform-filter-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, .82);
+  box-shadow: 0 3px 10px rgba(0,0,0,.08);
+}
+
+.platform-filter-btn.active {
+  background: #f0e7ff;
+  color: #59436f;
+  border-color: #d7c1f3;
+  box-shadow: 0 4px 12px rgba(174,145,212,.22);
+}
+
+@media (max-width: 768px) {
+  .platform-filter-tabs[data-platform-filter-area="wishList"] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100%;
+  }
+
+  .platform-filter-tabs[data-platform-filter-area="wishList"] .platform-filter-btn {
+    width: 100%;
+    font-size: 11px !important;
+    padding: 7px 4px !important;
+  }
+}

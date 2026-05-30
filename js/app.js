@@ -2030,7 +2030,7 @@ function renderWishes() {
     }).join("");
 
     list.innerHTML += `
-      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
+      <article class="${cardClass}" data-owner-uid="${escapeHtml(getWishOwnerUid(firstWish))}" data-platforms="${escapeHtml(group.map(function (wish) { return normalizePlatformFilterValue(wish.requesterPlatform || wish.platform); }).filter(Boolean).join(" "))}" data-time-range="${escapeHtml(groupTimeRanges || firstWish.timeRange || "")}" data-currently-available="${groupCurrentlyAvailable ? "true" : "false"}">
         <h3>🌸 ${escapeHtml(firstWish.flower)}</h3>
         <p>目前 ${group.length} 人許願</p>
         <div class="wish-time-summary">
@@ -3570,6 +3570,24 @@ window.orderFilterState = window.orderFilterState || {
   pendingList: "all"
 };
 
+window.platformFilterState = window.platformFilterState || {
+  wishList: "all"
+};
+
+function normalizePlatformFilterValue(platform) {
+  const text = String(platform || "").trim().toUpperCase();
+  if (text === "DC" || text === "DISCORD") return "dc";
+  if (text === "LINE") return "line";
+  return "";
+}
+
+function orderCardMatchesPlatform(card, listId) {
+  const platformMode = window.platformFilterState[listId] || "all";
+  if (platformMode === "all") return true;
+  const platforms = String(card.dataset.platforms || "").toLowerCase().split(/\s+/).filter(Boolean);
+  return platforms.includes(platformMode);
+}
+
 function getCurrentPikminUserName() {
   return (localStorage.getItem("flowerWishNickname") || "").trim();
 }
@@ -3676,15 +3694,25 @@ function applyOrderFilter(listId) {
   const cards = Array.from(list.children).filter(function (el) {
     return !el.classList.contains("order-filter-empty");
   });
+  const platformMode = window.platformFilterState[listId] || "all";
 
   list.querySelectorAll(".order-filter-empty").forEach(function (el) {
     el.remove();
   });
 
   if (mode === "all") {
+    let shown = 0;
     cards.forEach(function (card) {
-      card.style.display = "";
+      const ok = orderCardMatchesPlatform(card, listId);
+      card.style.display = ok ? "" : "none";
+      if (ok) shown++;
     });
+    if (shown === 0) {
+      const empty = document.createElement("div");
+      empty.className = "order-filter-empty";
+      empty.textContent = platformMode === "dc" ? "目前沒有 DC 訂單。" : platformMode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
+      list.appendChild(empty);
+    }
     if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
     return;
   }
@@ -3693,7 +3721,7 @@ function applyOrderFilter(listId) {
 
   if (mode === "available" && listId === "wishList") {
     cards.forEach(function (card) {
-      const ok = orderCardIsCurrentlyAvailable(card);
+      const ok = orderCardMatchesPlatform(card, listId) && orderCardIsCurrentlyAvailable(card);
       card.style.display = ok ? "" : "none";
       if (ok) shown++;
     });
@@ -3724,7 +3752,7 @@ function applyOrderFilter(listId) {
   }
 
   cards.forEach(function (card) {
-    const ok = orderCardBelongsToMe(card, listId, currentName);
+    const ok = orderCardMatchesPlatform(card, listId) && orderCardBelongsToMe(card, listId, currentName);
     card.style.display = ok ? "" : "none";
     if (ok) shown++;
   });
@@ -3742,6 +3770,12 @@ function applyOrderFilter(listId) {
 function syncOrderFilterButtons(listId) {
   document.querySelectorAll('.order-filter-btn[data-filter-target="' + listId + '"]').forEach(function (btn) {
     btn.classList.toggle("active", btn.getAttribute("data-filter-mode") === (window.orderFilterState[listId] || "all"));
+  });
+}
+
+function syncPlatformFilterButtons(listId) {
+  document.querySelectorAll('.platform-filter-btn[data-platform-target="' + listId + '"]').forEach(function (btn) {
+    btn.classList.toggle("active", btn.getAttribute("data-platform-mode") === (window.platformFilterState[listId] || "all"));
   });
 }
 
@@ -3767,8 +3801,29 @@ function initOrderFilters() {
     }, true);
   }
 
+  if (document.body.dataset.platformFilterClickReady !== "1") {
+    document.body.dataset.platformFilterClickReady = "1";
+
+    document.body.addEventListener("click", function (event) {
+      const btn = event.target.closest(".platform-filter-btn");
+      if (!btn) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const listId = btn.getAttribute("data-platform-target");
+      const mode = btn.getAttribute("data-platform-mode") || "all";
+      if (!listId) return;
+
+      window.platformFilterState[listId] = mode;
+      syncPlatformFilterButtons(listId);
+      applyOrderFilter(listId);
+    }, true);
+  }
+
   ["wishList", "pendingList"].forEach(function (id) {
     syncOrderFilterButtons(id);
+    syncPlatformFilterButtons(id);
     applyOrderFilter(id);
 
     const list = document.getElementById(id);
