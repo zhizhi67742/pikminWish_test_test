@@ -46,3 +46,7 @@
   #quick-pending .order-filter-tabs[data-filter-area="pendingList"],
   .order-filter-tabs[data-filter-area="pendingList"]{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
 }
+
+/* 花農完成分享修改按鈕 */
+.edit-done-btn{flex:1;min-width:120px;border-radius:16px;padding:6px 14px;font-weight:900;background:#ffd966;color:#1e2d3d}
+@media (max-width:768px){.edit-done-btn{min-height:30px!important;padding:5px 8px!important;font-size:12px!important}}

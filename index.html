@@ -997,6 +997,21 @@ h1 {
 </div>
 </div>
 </div>
+
+<div class="modal" id="editDoneModal">
+<div class="modal-box modal-box-large">
+<h2>修改分享內容</h2>
+<p>只能修改備註與座標，花名、花農與分享類型不會變更。</p>
+<input id="editHarvestInfoInput" placeholder="備註／採收資訊，例如：印度、8朵、隨意收" type="text"/>
+<textarea class="coord-input" id="editShareLocationInput" placeholder="分享地點／座標，例如：
+22.xxx601,89.xxx802
+22.xxx729,89.xxx030" rows="5"></textarea>
+<div class="modal-actions">
+<button class="cancel-btn" onclick="closeEditDoneModal()" type="button">取消</button>
+<button class="confirm-btn" onclick="saveDoneEdit()" type="button">儲存修改</button>
+</div>
+</div>
+</div>
 <script src="js/app.js?v=mobile-login-fix-20260531-005"></script>
 <!-- Firebase -->
 <script type="module">

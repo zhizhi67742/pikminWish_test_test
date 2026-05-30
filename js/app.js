@@ -32,6 +32,7 @@ let done = [];
 let wishHistory = [];
 let selectedWishId = null;
 let selectedPendingId = null;
+let selectedDoneEditKey = null;
 let locallyDeletedWishKeys = new Set();
 let spamWishCleanupRunning = false;
 let spamWishCleanupDoneKeys = new Set();
@@ -1118,6 +1119,13 @@ document.addEventListener("click", function (event) {
     return;
   }
 
+  const editDoneBtn = event.target.closest(".edit-done-btn[data-done-key]");
+  if (editDoneBtn) {
+    event.preventDefault();
+    openEditDoneModal(editDoneBtn.dataset.doneKey);
+    return;
+  }
+
   const toggleCoordBtn = event.target.closest(".toggle-coord-btn[data-target]");
   if (toggleCoordBtn) {
     event.preventDefault();
@@ -2188,6 +2196,7 @@ function renderDone() {
           <button class="copy-btn" type="button" data-done-key="${escapeHtml(doneKey)}">
             快速複製座標
           </button>
+          ${isCurrentFarmer(item) ? `<button class="edit-done-btn" type="button" data-done-key="${escapeHtml(doneKey)}">修改</button>` : ""}
         </div>
 
         <p>⏰ 剩餘刪除時間：${getRemainTime(item.deleteAt)}</p>
@@ -2245,6 +2254,85 @@ async function toggleLike(id) {
 }
 
 
+
+
+function findDoneByKey(id) {
+  return done.find(function (x) {
+    return String(getWishKey(x)) === String(id);
+  });
+}
+
+function openEditDoneModal(id) {
+  const item = findDoneByKey(id);
+  if (!item) return;
+
+  if (!isCurrentFarmer(item)) {
+    alert("只有上傳的花農可以修改。")
+    return;
+  }
+
+  selectedDoneEditKey = String(id);
+  const harvestInput = document.getElementById("editHarvestInfoInput");
+  const locationInput = document.getElementById("editShareLocationInput");
+  if (harvestInput) harvestInput.value = item.harvestInfo || "";
+  if (locationInput) locationInput.value = item.location || "";
+
+  const modal = document.getElementById("editDoneModal");
+  if (modal) modal.classList.add("show");
+}
+
+function closeEditDoneModal() {
+  selectedDoneEditKey = null;
+  const modal = document.getElementById("editDoneModal");
+  if (modal) modal.classList.remove("show");
+}
+
+async function saveDoneEdit() {
+  const item = findDoneByKey(selectedDoneEditKey);
+  if (!item) {
+    closeEditDoneModal();
+    return;
+  }
+
+  if (!isCurrentFarmer(item)) {
+    alert("只有上傳的花農可以修改。")
+    closeEditDoneModal();
+    return;
+  }
+
+  const harvestInfo = document.getElementById("editHarvestInfoInput")?.value?.trim() || "";
+  const rawLocation = document.getElementById("editShareLocationInput")?.value || "";
+  const location = cleanCoordinates(rawLocation);
+
+  if (!location) {
+    alert("請輸入有效座標，例如：22.817601,89.563802");
+    return;
+  }
+
+  item.harvestInfo = harvestInfo || "沒有補充採收資訊";
+  item.location = location;
+  item.updatedAt = Date.now();
+
+  saveData();
+
+  if (item.firebaseId && window.firebaseDB && window.firebaseFns) {
+    const { updateDoc, doc } = window.firebaseFns;
+    try {
+      await updateDoc(doc(window.firebaseDB, "wishes", item.firebaseId), {
+        harvestInfo: item.harvestInfo,
+        location: item.location,
+        updatedAt: item.updatedAt
+      });
+    } catch (error) {
+      console.error("完成分享修改同步失敗", error);
+      alert("本機已修改，但雲端同步失敗。請重新整理後確認。")
+    }
+  }
+
+  closeEditDoneModal();
+  renderDone();
+  alert("已修改座標與備註。");
+}
 
 function copyHarvestInfo() {
   const harvestInput = document.getElementById("harvestInfoInput");
