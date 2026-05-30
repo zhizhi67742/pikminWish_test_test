@@ -2164,9 +2164,10 @@ function renderDone() {
     const doneKey = getWishKey(item);
     item.liked = hasLikedDoneKey(doneKey);
 
+    const editMini = isCurrentFarmer(item) ? `<button class="edit-done-btn edit-done-btn-mini" type="button" data-done-key="${escapeHtml(doneKey)}" title="修改座標與備註" aria-label="修改座標與備註">✏️</button>` : "";
     const donePeopleHtml = item.directShare
-      ? `<p>📍 分享類型：花農直接上傳</p><p>🌱 分享花農：${displayNameWithTagHtml(item.farmer, item.farmerPlatform || item.acceptedByPlatform)}</p>`
-      : `<p>👤 發願者：${displayNameWithTagHtml(item.nickname, item.requesterPlatform || item.platform)}</p><p>🌱 接單花農：${displayNameWithTagHtml(item.farmer, item.farmerPlatform || item.acceptedByPlatform)}</p>`;
+      ? `<p>📍 分享類型：花農直接上傳</p><p>🌱 分享花農：${displayNameWithTagHtml(item.farmer, item.farmerPlatform || item.acceptedByPlatform)} ${editMini}</p>`
+      : `<p>👤 發願者：${displayNameWithTagHtml(item.nickname, item.requesterPlatform || item.platform)}</p><p>🌱 接單花農：${displayNameWithTagHtml(item.farmer, item.farmerPlatform || item.acceptedByPlatform)} ${editMini}</p>`;
 
     list.innerHTML += `
       <article class="card">
@@ -2196,7 +2197,7 @@ function renderDone() {
           <button class="copy-btn" type="button" data-done-key="${escapeHtml(doneKey)}">
             快速複製座標
           </button>
-          ${isCurrentFarmer(item) ? `<button class="edit-done-btn edit-done-btn-mini" type="button" data-done-key="${escapeHtml(doneKey)}" title="修改座標與備註" aria-label="修改座標與備註">✏️</button>` : ""}
+          
         </div>
 
         <p>⏰ 剩餘刪除時間：${getRemainTime(item.deleteAt)}</p>
