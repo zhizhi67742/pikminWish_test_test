@@ -1333,8 +1333,6 @@ function openDoneModal(id) {
   const locationInput = document.getElementById("shareLocationInput");
   if (harvestInput) harvestInput.value = "";
   if (locationInput) locationInput.value = "";
-  const offsetInput = document.getElementById("coordinateOffset");
-  if (offsetInput) offsetInput.checked = false;
 
   document.getElementById("doneModal").classList.add("show");
 }
@@ -1375,8 +1373,6 @@ function openFarmerShareModal() {
   const locationInput = document.getElementById("shareLocationInput");
   if (harvestInput) harvestInput.value = "";
   if (locationInput) locationInput.value = "";
-  const offsetInput = document.getElementById("coordinateOffset");
-  if (offsetInput) offsetInput.checked = false;
 
   document.getElementById("doneModal").classList.add("show");
 }
@@ -1494,27 +1490,7 @@ function previewCleanCoords() {
 
 
 function offsetCoordinatesIfEnabled(text) {
-  const offsetInput = document.getElementById("coordinateOffset");
-  const enabled = !!(offsetInput && offsetInput.checked);
-  if (!enabled) return text;
-
-  const distanceMeters = 20;
-  const result = String(text || "").split("\n").map(function(line) {
-    const m = line.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
-    if (!m) return line;
-
-    const lat = parseFloat(m[1]);
-    const lng = parseFloat(m[2]);
-    const angle = Math.random() * Math.PI * 2;
-    const dLat = (distanceMeters * Math.cos(angle)) / 111320;
-    const dLng = (distanceMeters * Math.sin(angle)) / (111320 * Math.cos(lat * Math.PI / 180));
-
-    return (lat + dLat).toFixed(6) + "," + (lng + dLng).toFixed(6);
-  }).join("\n");
-
-  // 避免返回確認前畫面後再次送出時，重複偏移同一批座標。
-  offsetInput.checked = false;
-  return result;
+  return text;
 }
 
 function openUploadConfirmModal() {
@@ -4579,33 +4555,6 @@ function applyDexAiImport() {
   alert(`已套用 ${rows.length} 筆資料到圖鑑。`);
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
- const cb=document.getElementById('coordinateOffset');
- const btn=document.getElementById('coordinateOffsetBtn');
- if(cb && btn){
-   const sync=()=>btn.textContent='座標偏移';
-   btn.addEventListener('click',()=>{cb.checked=!cb.checked;sync();});
-   sync();
- }
-});
 
-document.addEventListener('DOMContentLoaded',()=>{
- const btn=document.getElementById('coordinateOffsetBtn');
- const ta=document.getElementById('shareLocationInput');
- if(btn && ta){
-   btn.onclick=()=>{
-     const lines=ta.value.split(/\n+/);
-     const out=lines.map(line=>{
-       const m=line.trim().match(/^(-?[0-9]+\.?[0-9]*)\s*,\s*(-?[0-9]+\.?[0-9]*)$/);
-       if(!m) return line;
-       let lat=parseFloat(m[1]), lng=parseFloat(m[2]);
-       const distance=20;
-       const angle=Math.random()*Math.PI*2;
-       const dLat=(distance*Math.cos(angle))/111320;
-       const dLng=(distance*Math.sin(angle))/(111320*Math.cos(lat*Math.PI/180));
-       return (lat+dLat).toFixed(6)+','+(lng+dLng).toFixed(6);
-     });
-     ta.value=out.join('\n');
-};
- }
-});
+
+
