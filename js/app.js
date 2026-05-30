@@ -2070,12 +2070,7 @@ function renderWishes() {
 
   if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("wishList");
   if (typeof syncPlatformFilterButtons === "function") syncPlatformFilterButtons("wishList");
-  // 保險：重繪完立即套用目前篩選，避免畫面被其他舊的隱藏式篩選覆蓋。
-  if (typeof applyOrderFilter === "function") {
-    setTimeout(function () { applyOrderFilter("wishList"); }, 0);
-  } else if (typeof refreshCollapseHeights === "function") {
-    refreshCollapseHeights();
-  }
+  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
 }
 
 function getPendingGroupKey(item) {
@@ -2144,9 +2139,9 @@ function renderPending() {
     `;
   });
 
-  if (typeof applyOrderFilter === "function") {
-    setTimeout(function () { applyOrderFilter("pendingList"); }, 0);
-  }
+  if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("pendingList");
+  if (typeof syncPlatformFilterButtons === "function") syncPlatformFilterButtons("pendingList");
+  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
 }
 
 function renderDone() {
@@ -3892,8 +3887,20 @@ function syncPlatformFilterButtons(listId) {
   });
 }
 
+function renderOrderFilterList(listId) {
+  if (listId === "wishList" && typeof renderWishes === "function") {
+    renderWishes();
+    return;
+  }
+  if (listId === "pendingList" && typeof renderPending === "function") {
+    renderPending();
+    return;
+  }
+  if (typeof applyOrderFilter === "function") applyOrderFilter(listId);
+}
+
 function initOrderFilters() {
-  // 事件委派：按鈕即使重繪也能按
+  // 只綁一次，避免每次重繪/進站後重複綁定造成越按越卡。
   if (document.body.dataset.orderFilterClickReady !== "1") {
     document.body.dataset.orderFilterClickReady = "1";
 
@@ -3908,17 +3915,15 @@ function initOrderFilters() {
       const mode = btn.getAttribute("data-filter-mode") || "all";
       if (!listId) return;
 
+      // 重複按同一顆只同步按鈕，不再重畫整個許願池。
+      if ((window.orderFilterState[listId] || "all") === mode) {
+        syncOrderFilterButtons(listId);
+        return;
+      }
+
       window.orderFilterState[listId] = mode;
       syncOrderFilterButtons(listId);
-
-      // 先從資料層重新渲染，避免群組卡片只被 display:none 處理而看起來像沒有篩選。
-      if (listId === "wishList" && typeof renderWishes === "function") {
-        renderWishes();
-      } else if (listId === "pendingList" && typeof renderPending === "function") {
-        renderPending();
-      } else {
-        applyOrderFilter(listId);
-      }
+      renderOrderFilterList(listId);
     }, true);
   }
 
@@ -3936,42 +3941,22 @@ function initOrderFilters() {
       const mode = btn.getAttribute("data-platform-mode") || "all";
       if (!listId) return;
 
+      if ((window.platformFilterState[listId] || "all") === mode) {
+        syncPlatformFilterButtons(listId);
+        return;
+      }
+
       window.platformFilterState[listId] = mode;
       syncPlatformFilterButtons(listId);
-      if (listId === "wishList" && typeof renderWishes === "function") {
-        renderWishes();
-      } else if (listId === "pendingList" && typeof renderPending === "function") {
-        renderPending();
-      } else {
-        applyOrderFilter(listId);
-      }
+      renderOrderFilterList(listId);
     }, true);
   }
 
   ["wishList", "pendingList"].forEach(function (id) {
     syncOrderFilterButtons(id);
     syncPlatformFilterButtons(id);
-    applyOrderFilter(id);
-
-    const list = document.getElementById(id);
-    if (!list || list.dataset.orderFilterObserved === "1") return;
-
-    list.dataset.orderFilterObserved = "1";
-    new MutationObserver(function (mutations) {
-      // 避免自己新增空狀態時重複觸發到卡住
-      const hasRealCardChange = mutations.some(function (m) {
-        return Array.from(m.addedNodes).concat(Array.from(m.removedNodes)).some(function (node) {
-          return node.nodeType === 1 && !node.classList.contains("order-filter-empty") && !node.classList.contains("empty");
-        });
-      });
-
-      if (hasRealCardChange) {
-        applyOrderFilter(id);
-      }
-    }).observe(list, { childList: true });
   });
 }
-
 document.addEventListener("DOMContentLoaded", initOrderFilters);
 window.addEventListener("load", initOrderFilters);
 setTimeout(initOrderFilters, 500);
