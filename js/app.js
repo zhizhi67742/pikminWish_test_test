@@ -3540,6 +3540,17 @@ function refreshCollapseHeights() {
   document.querySelectorAll(".collapse-content").forEach(setCollapseHeight);
 }
 
+function refreshOrderListCollapseHeight(listId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const panel = list.closest(".collapse-content");
+  if (panel) {
+    setCollapseHeight(panel);
+  } else if (typeof refreshCollapseHeights === "function") {
+    refreshCollapseHeights();
+  }
+}
+
 function initCollapseBlocks() {
   document.querySelectorAll(".collapse-btn").forEach(function (btn) {
     if (btn.dataset.collapseReady === "1") return;
@@ -3574,7 +3585,7 @@ function initCollapseBlocks() {
     const el = document.getElementById(id);
     if (!el || el.dataset.collapseObserved === "1") return;
     el.dataset.collapseObserved = "1";
-    new MutationObserver(refreshCollapseHeights).observe(el, { childList: true, subtree: true });
+    new MutationObserver(function(){ if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(id); }).observe(el, { childList: true });
   });
 }
 
@@ -3820,7 +3831,7 @@ function applyOrderFilter(listId) {
       empty.textContent = platformMode === "dc" ? "目前沒有 DC 訂單。" : platformMode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
       list.appendChild(empty);
     }
-    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
+    if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
     return;
   }
 
@@ -3840,7 +3851,7 @@ function applyOrderFilter(listId) {
       list.appendChild(empty);
     }
 
-    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
+    if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
     return;
   }
 
@@ -3855,7 +3866,7 @@ function applyOrderFilter(listId) {
     empty.className = "order-filter-empty";
     empty.textContent = "尚未登入或設定暱稱，無法篩選自己的訂單。";
     list.appendChild(empty);
-    if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
+    if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
     return;
   }
 
@@ -3872,7 +3883,7 @@ function applyOrderFilter(listId) {
     list.appendChild(empty);
   }
 
-  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
+  if (typeof refreshOrderListCollapseHeight === "function") refreshOrderListCollapseHeight(listId);
 }
 
 function syncOrderFilterButtons(listId) {
@@ -3888,14 +3899,8 @@ function syncPlatformFilterButtons(listId) {
 }
 
 function renderOrderFilterList(listId) {
-  if (listId === "wishList" && typeof renderWishes === "function") {
-    renderWishes();
-    return;
-  }
-  if (listId === "pendingList" && typeof renderPending === "function") {
-    renderPending();
-    return;
-  }
+  // 篩選按鈕只需要切換現有卡片的顯示狀態。
+  // 不要在這裡呼叫 renderWishes/renderPending，否則每按一次都會重新分組、重建大量 DOM，手機會明顯卡頓。
   if (typeof applyOrderFilter === "function") applyOrderFilter(listId);
 }
 
