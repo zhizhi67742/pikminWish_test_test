@@ -1658,7 +1658,7 @@ function renderWishHistory() {
   }).join("");
 
   const pager = sortedHistory.length > HISTORY_PAGE_SIZE
-    ? `<div class="history-pager"><button class="history-page-btn" type="button" data-history-page="-1" ${historyPage <= 1 ? "disabled" : ""}>上一頁</button><span>${historyPage} / ${totalPages}</span><button class="history-page-btn" type="button" data-history-page="1" ${historyPage >= totalPages ? "disabled" : ""}>下一頁</button></div>`
+    ? `<div class="history-pager"><button class="history-page-btn" type="button" data-history-page="-1" ${historyPage <= 1 ? "disabled" : ""}>上一頁</button><span class="history-page-info">${historyPage} / ${totalPages}</span><button class="history-page-btn" type="button" data-history-page="1" ${historyPage >= totalPages ? "disabled" : ""}>下一頁</button></div>`
     : "";
 
   list.innerHTML = header + rows + pager;

@@ -141,3 +141,100 @@
     letter-spacing:-.4px !important;
   }
 }
+
+/* 歷史許願分頁：固定置中，避免套到全域 button hover / 其他排版造成跑位 */
+#wishHistoryList .history-pager{
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+  margin:18px auto 4px !important;
+  padding:10px 0 2px !important;
+  clear:both !important;
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  float:none !important;
+  text-align:center !important;
+  box-sizing:border-box !important;
+}
+#wishHistoryList .history-pager .history-page-info{
+  min-width:58px !important;
+  padding:7px 10px !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.12) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  color:#fff7c8 !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  text-align:center !important;
+}
+#wishHistoryList .history-page-btn{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  width:auto !important;
+  min-width:86px !important;
+  max-width:none !important;
+  height:36px !important;
+  min-height:36px !important;
+  margin:0 !important;
+  padding:0 16px !important;
+  border:1px solid rgba(255,255,255,.42) !important;
+  border-radius:999px !important;
+  background:linear-gradient(135deg,rgba(255,225,107,.96),rgba(255,183,197,.92)) !important;
+  color:#213820 !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  line-height:1 !important;
+  letter-spacing:.2px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.42) !important;
+  cursor:pointer !important;
+  position:relative !important;
+  inset:auto !important;
+  transform:none !important;
+  float:none !important;
+  clear:none !important;
+  box-sizing:border-box !important;
+}
+#wishHistoryList .history-page-btn:hover:not(:disabled){
+  transform:translateY(-1px) !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.5) !important;
+}
+#wishHistoryList .history-page-btn:active:not(:disabled){
+  transform:translateY(0) scale(.98) !important;
+}
+#wishHistoryList .history-page-btn:disabled{
+  opacity:.42 !important;
+  cursor:not-allowed !important;
+  filter:saturate(.65) !important;
+  transform:none !important;
+  box-shadow:none !important;
+}
+@media(max-width:480px){
+  #wishHistoryList .history-pager{
+    gap:8px !important;
+    margin-top:16px !important;
+  }
+  #wishHistoryList .history-page-btn{
+    min-width:74px !important;
+    height:34px !important;
+    min-height:34px !important;
+    padding:0 12px !important;
+    font-size:12px !important;
+  }
+  #wishHistoryList .history-pager .history-page-info{
+    min-width:50px !important;
+    font-size:12px !important;
+    padding:7px 8px !important;
+  }
+}
