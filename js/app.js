@@ -4146,11 +4146,17 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
     return String(text || "")
       .replace(/[|｜]/g, " ")
       .replace(/[Oo]/g, "0")
+      .replace(/[一—–]/g, " ")
       .replace(/色週年紀念玫瑰/g, "色週年玫瑰")
       .replace(/周年/g, "週年")
       .replace(/蓝/g, "藍")
       .replace(/黄/g, "黃")
-      .replace(/红/g, "紅");
+      .replace(/红/g, "紅")
+      .replace(/勿忘萆|勿忘革|勿忘卓/g, "勿忘草")
+      .replace(/蝴蝶蘭|蝴蝶蘭/g, "蝴蝶蘭")
+      .replace(/矮率牛|矮卒牛|矮萃牛|矮牽午|矮牽丰/g, "矮牽牛")
+      .replace(/櫻萃花|櫻草化|櫻莘花/g, "櫻草花")
+      .replace(/鼠尾萆|鼠尾革/g, "鼠尾草");
   }
 
   function normalizeOcrFlowerName(name) {
@@ -4206,6 +4212,62 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
         petal: layout === "petalTopEssenceBottom" ? row.topNumber : row.bottomNumber,
         essence: layout === "petalTopEssenceBottom" ? row.bottomNumber : row.topNumber
       };
+    });
+  }
+
+  function findOcrNameTokens(line) {
+    const compact = cleanOcrText(line).replace(/\s+/g, "");
+    const names = getOcrFlowerNames();
+    const found = [];
+    OCR_COLORS.forEach(function (color) {
+      names.forEach(function (flower) {
+        const full = color + "色" + flower;
+        let start = 0;
+        while (true) {
+          const index = compact.indexOf(full, start);
+          if (index < 0) break;
+          found.push({ index: index, color: color, flower: normalizeOcrFlowerName(flower), full: full });
+          start = index + full.length;
+        }
+      });
+    });
+    return found.sort(function (a, b) { return a.index - b.index; }).filter(function (item, index, arr) {
+      return index === 0 || item.index !== arr[index - 1].index || item.full.length > arr[index - 1].full.length;
+    });
+  }
+
+  function numbersFromOcrLine(line) {
+    return (cleanOcrText(line).match(/\d{1,4}/g) || [])
+      .map(Number)
+      .filter(function (n) { return Number.isFinite(n) && n >= 0 && n <= 1200; });
+  }
+
+  function parseOcrItemsByLines(text) {
+    const lines = cleanOcrText(text).split(/\n+/).map(function (line) { return line.trim(); }).filter(Boolean);
+    const rows = [];
+    lines.forEach(function (line, lineIndex) {
+      const names = findOcrNameTokens(line);
+      if (!names.length) return;
+      const above = lines.slice(Math.max(0, lineIndex - 4), lineIndex).map(numbersFromOcrLine).filter(function (nums) { return nums.length; });
+      const below = lines.slice(lineIndex + 1, lineIndex + 3).map(numbersFromOcrLine).filter(function (nums) { return nums.length; });
+      const nearNums = above.concat(below);
+      let bottomNums = above.length ? above[above.length - 1] : (below[0] || []);
+      let topNums = above.length > 1 ? above[above.length - 2] : [];
+      // 有些截圖 OCR 會把同一排所有右下數字放在花名上一行；若上方只有一行，就至少先抓這一行。
+      names.forEach(function (name, i) {
+        let topNumber = topNums[i] ?? 0;
+        let bottomNumber = bottomNums[i] ?? 0;
+        if (!bottomNumber && nearNums.length) {
+          const flat = nearNums.flat();
+          bottomNumber = flat[i] ?? 0;
+          topNumber = flat[i + names.length] ?? topNumber;
+        }
+        rows.push({ flower: name.flower, color: name.color, topNumber: topNumber, bottomNumber: bottomNumber });
+      });
+    });
+    return rows.filter(function (row, index, arr) {
+      const key = row.color + "_" + row.flower;
+      return arr.findIndex(function (item) { return item.color + "_" + item.flower === key; }) === index;
     });
   }
 
@@ -4359,6 +4421,7 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
       const enhancedBlob = await makeEnhancedOcrBlob(file, 0.18);
       let text = await recognizeWithTesseract(enhancedBlob || file, progress, "第 1 輪辨識");
       let rows = parseOcrItems(text);
+      if (!rows.length) rows = parseOcrItemsByLines(text);
       if (!rows.length) rows = parseOcrItemsLoose(text);
 
       // 第二輪：如果第一輪沒有抓到，改用原圖再跑一次，增加成功率。
@@ -4367,6 +4430,7 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
         const text2 = await recognizeWithTesseract(file, progress, "第 2 輪辨識");
         text = text + "\n" + text2;
         rows = parseOcrItems(text);
+        if (!rows.length) rows = parseOcrItemsByLines(text);
         if (!rows.length) rows = parseOcrItemsLoose(text);
       }
 
@@ -4397,7 +4461,11 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
 
   function parseOcrTextAgain() {
     const rawText = $("ocrRawText");
-    renderOcrRows(parseOcrItems(rawText?.value || ""));
+    const text = rawText?.value || "";
+    let rows = parseOcrItems(text);
+    if (!rows.length) rows = parseOcrItemsByLines(text);
+    if (!rows.length) rows = parseOcrItemsLoose(text);
+    renderOcrRows(rows);
   }
 
   function applyOcrRowsToDex() {
