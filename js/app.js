@@ -2054,7 +2054,7 @@ function renderWishes() {
   });
 
   if (activeWishes.length === 0) {
-    list.innerHTML = '<div class="empty">' + (activeWishFilterMode === "mine" ? "目前沒有自己發的訂單。" : activeWishFilterMode === "available" ? "目前沒有可接訂單。" : "目前沒有願望卡。") + '</div>';
+    list.innerHTML = '<div class="empty order-filter-empty">' + (activeWishFilterMode === "mine" ? "目前沒有自己發的訂單。" : activeWishFilterMode === "available" ? "目前沒有可接訂單。" : "目前沒有願望卡。") + '</div>';
     if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("wishList");
     return;
   }
@@ -2094,7 +2094,12 @@ function renderWishes() {
 
   if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("wishList");
   if (typeof syncPlatformFilterButtons === "function") syncPlatformFilterButtons("wishList");
-  if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
+  // 保險：重繪完立即套用目前篩選，避免畫面被其他舊的隱藏式篩選覆蓋。
+  if (typeof applyOrderFilter === "function") {
+    setTimeout(function () { applyOrderFilter("wishList"); }, 0);
+  } else if (typeof refreshCollapseHeights === "function") {
+    refreshCollapseHeights();
+  }
 }
 
 function getPendingGroupKey(item) {
@@ -2130,7 +2135,7 @@ function renderPending() {
   });
 
   if (pendingForRender.length === 0) {
-    list.innerHTML = '<div class="empty">' + (activePendingFilterMode === "mine" ? "目前沒有自己接的訂單。" : "目前沒有待完成願望。") + '</div>';
+    list.innerHTML = '<div class="empty order-filter-empty">' + (activePendingFilterMode === "mine" ? "目前沒有自己接的訂單。" : "目前沒有待完成願望。") + '</div>';
     if (typeof syncOrderFilterButtons === "function") syncOrderFilterButtons("pendingList");
     return;
   }
@@ -3823,7 +3828,7 @@ function applyOrderFilter(listId) {
 
   const mode = window.orderFilterState[listId] || "all";
   const cards = Array.from(list.children).filter(function (el) {
-    return !el.classList.contains("order-filter-empty");
+    return !el.classList.contains("order-filter-empty") && !el.classList.contains("empty") && el.classList.contains("card");
   });
   const platformMode = window.platformFilterState[listId] || "all";
 
@@ -3980,7 +3985,7 @@ function initOrderFilters() {
       // 避免自己新增空狀態時重複觸發到卡住
       const hasRealCardChange = mutations.some(function (m) {
         return Array.from(m.addedNodes).concat(Array.from(m.removedNodes)).some(function (node) {
-          return node.nodeType === 1 && !node.classList.contains("order-filter-empty");
+          return node.nodeType === 1 && !node.classList.contains("order-filter-empty") && !node.classList.contains("empty");
         });
       });
 
