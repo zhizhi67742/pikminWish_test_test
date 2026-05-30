@@ -942,7 +942,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=filter-rules-20260531-001"></script>
+<script src="js/app.js?v=mobile-login-fix-20260531-001"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -952,7 +952,9 @@ h1 {
       signInWithRedirect,
       getRedirectResult,
       signOut,
-      onAuthStateChanged
+      onAuthStateChanged,
+      setPersistence,
+      browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
     import {
       getFirestore,
@@ -981,6 +983,9 @@ h1 {
     const db = getFirestore(app);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+      console.warn("Firebase 登入狀態保存設定失敗", error);
+    });
 
     window.firebaseDB = db;
     window.firebaseAuth = auth;
@@ -995,6 +1000,44 @@ h1 {
       setDoc,
       getDoc
     };
+
+    function hideGoogleEntryOverlay() {
+      const overlay = document.getElementById("googleEntryOverlay");
+      if (!overlay) return;
+      overlay.classList.add("hide");
+      overlay.style.setProperty("display", "none", "important");
+      overlay.style.setProperty("visibility", "hidden", "important");
+      overlay.style.setProperty("pointer-events", "none", "important");
+    }
+
+    function showGoogleEntryOverlay() {
+      const overlay = document.getElementById("googleEntryOverlay");
+      if (!overlay) return;
+      overlay.classList.remove("hide");
+      overlay.style.removeProperty("display");
+      overlay.style.removeProperty("visibility");
+      overlay.style.removeProperty("pointer-events");
+    }
+
+    function hideNicknameGate() {
+      const gate = document.getElementById("nicknameGate");
+      if (!gate) return;
+      gate.classList.add("hidden-gate");
+      gate.style.setProperty("display", "none", "important");
+      gate.style.setProperty("visibility", "hidden", "important");
+      gate.style.setProperty("pointer-events", "none", "important");
+      document.body.style.overflow = "";
+    }
+
+    function showNicknameGate() {
+      const gate = document.getElementById("nicknameGate");
+      if (!gate) return;
+      gate.classList.remove("hidden-gate");
+      gate.style.setProperty("display", "flex", "important");
+      gate.style.setProperty("visibility", "visible", "important");
+      gate.style.setProperty("pointer-events", "auto", "important");
+      document.body.style.overflow = "hidden";
+    }
 
     function updateGoogleLoginUi(user) {
       const status = document.getElementById("googleLoginStatus");
@@ -1014,17 +1057,43 @@ h1 {
       }
     }
 
+    function syncAuthDom(user, options = {}) {
+      updateGoogleLoginUi(user);
+      if (user) {
+        localStorage.removeItem("previewMode");
+        localStorage.removeItem("googleLoginRedirecting");
+        if (typeof removePreviewLock === "function") removePreviewLock();
+        hideGoogleEntryOverlay();
+        hideNicknameGate();
+        if (options.openNicknameGate !== false) {
+          setTimeout(showNicknameGate, 260);
+        }
+      } else {
+        hideNicknameGate();
+        if (localStorage.getItem("googleLoginRedirecting") === "true") {
+          hideGoogleEntryOverlay();
+        } else {
+          showGoogleEntryOverlay();
+        }
+      }
+    }
+
+    window.syncGoogleAuthDom = syncAuthDom;
+
     window.loginWithGoogle = async function () {
       localStorage.removeItem("previewMode");
+      localStorage.setItem("googleLoginRedirecting", "true");
       if (typeof removePreviewLock === "function") removePreviewLock();
-      const googleEntryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
-      if (googleEntryOverlayBeforeLogin) googleEntryOverlayBeforeLogin.classList.add("hide");
+      hideGoogleEntryOverlay();
 
       try {
+        await setPersistence(auth, browserLocalPersistence);
         await signInWithRedirect(auth, provider);
       } catch (error) {
+        localStorage.removeItem("googleLoginRedirecting");
         console.error("Google 登入失敗", error);
         alert("Google 登入失敗，請稍後再試。若你正在 LINE / Discord 內建瀏覽器，請改用 Safari 或 Chrome 開啟。");
+        showGoogleEntryOverlay();
       }
     };
 
@@ -1056,51 +1125,29 @@ h1 {
       }
     };
 
-    getRedirectResult(auth).catch((error) => {
-      console.error("Google redirect 登入結果讀取失敗", error);
-    });
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result && result.user) {
+          syncAuthDom(result.user);
+        } else if (!auth.currentUser) {
+          localStorage.removeItem("googleLoginRedirecting");
+          syncAuthDom(null);
+        }
+      })
+      .catch((error) => {
+        localStorage.removeItem("googleLoginRedirecting");
+        console.error("Google redirect 登入結果讀取失敗", error);
+        showGoogleEntryOverlay();
+      });
 
     onAuthStateChanged(auth, (user) => {
-      updateGoogleLoginUi(user);
-
-      const googleEntryOverlay = document.getElementById("googleEntryOverlay");
-
-      const nicknameGate = document.getElementById("nicknameGate");
-
-      if (user) {
-        localStorage.removeItem("previewMode");
-        if (typeof removePreviewLock === "function") {
-          removePreviewLock();
-        }
-
-        if (googleEntryOverlay) googleEntryOverlay.classList.add("hide");
-
-        if (nicknameGate) {
-          nicknameGate.classList.add("hidden-gate");
-          nicknameGate.style.setProperty("display", "none", "important");
-          nicknameGate.style.setProperty("visibility", "hidden", "important");
-          nicknameGate.style.setProperty("pointer-events", "none", "important");
-
-          setTimeout(() => {
-            nicknameGate.classList.remove("hidden-gate");
-            nicknameGate.style.setProperty("display", "flex", "important");
-            nicknameGate.style.setProperty("visibility", "visible", "important");
-            nicknameGate.style.setProperty("pointer-events", "auto", "important");
-            document.body.style.overflow = "hidden";
-          }, 260);
-        }
-
-      } else {
-        if (nicknameGate) {
-          nicknameGate.classList.add("hidden-gate");
-          nicknameGate.style.setProperty("display", "none", "important");
-          nicknameGate.style.setProperty("visibility", "hidden", "important");
-          nicknameGate.style.setProperty("pointer-events", "none", "important");
-        }
-        if (googleEntryOverlay) googleEntryOverlay.classList.remove("hide");
-      }
-
+      syncAuthDom(user);
       window.dispatchEvent(new Event("firebase-ready"));
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      syncAuthDom(auth.currentUser, { openNicknameGate: !!auth.currentUser });
+      setTimeout(() => syncAuthDom(auth.currentUser, { openNicknameGate: !!auth.currentUser }), 350);
     });
   </script>
 <div class="google-entry-overlay" id="googleEntryOverlay">
