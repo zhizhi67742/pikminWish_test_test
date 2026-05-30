@@ -1,4 +1,14 @@
 
+(function(){
+  const ua = navigator.userAgent || "";
+  if (/Line/i.test(ua)) {
+    setTimeout(() => {
+      alert("⚠️ 偵測到 LINE 內建瀏覽器\n\n為避免 Google 登入失敗或登入後跳回登入頁，請點選右上角 ⋮ → 使用預設瀏覽器開啟。");
+    }, 800);
+  }
+})();
+
+
 async function getRecaptchaToken() {
   return new Promise((resolve, reject) => {
     if (typeof grecaptcha === "undefined") {
