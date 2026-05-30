@@ -354,10 +354,19 @@ label textarea {
 }
 
 .empty {
-  color: rgba(255,255,255,0.65);
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: fit-content;
+  max-width: min(90%, 420px);
+  color: rgba(255,255,255,.92);
   padding: 18px;
-  border: 1px dashed rgba(255,255,255,0.28);
-  border-radius: 20px;
+  border: none;
+  border-radius: 18px;
+  background: rgba(255,255,255,.45);
+  text-align: center;
+  font-size: 14px;
+  opacity: .85;
+  pointer-events: none;
 }
 
 .modal {
