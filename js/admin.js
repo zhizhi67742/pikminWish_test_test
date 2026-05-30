@@ -2,7 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/fireba
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
@@ -37,6 +38,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+getRedirectResult(auth).catch((error) => {
+  console.error("Google redirect 登入結果讀取失敗", error);
+});
 
 let currentUser = null;
 let wishDocs = [];
@@ -115,10 +119,10 @@ function isAdmin(user) {
 
 async function login() {
   try {
-    await signInWithPopup(auth, provider);
+    await signInWithRedirect(auth, provider);
   } catch (error) {
     console.error(error);
-    alert("Google 登入失敗，請稍後再試。");
+    alert("Google 登入失敗，請稍後再試。若你正在 LINE / Discord 內建瀏覽器，請改用 Safari 或 Chrome 開啟。");
   }
 }
 

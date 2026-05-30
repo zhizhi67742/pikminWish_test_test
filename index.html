@@ -949,7 +949,8 @@ h1 {
     import {
       getAuth,
       GoogleAuthProvider,
-      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       signOut,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
@@ -1018,16 +1019,12 @@ h1 {
       if (typeof removePreviewLock === "function") removePreviewLock();
       const googleEntryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
       if (googleEntryOverlayBeforeLogin) googleEntryOverlayBeforeLogin.classList.add("hide");
-      localStorage.removeItem("previewMode");
-      const entryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
-      if (entryOverlayBeforeLogin) entryOverlayBeforeLogin.classList.add("hide");
-      localStorage.removeItem("previewMode");
-      localStorage.removeItem("previewMode");
+
       try {
-        await signInWithPopup(auth, provider);
+        await signInWithRedirect(auth, provider);
       } catch (error) {
         console.error("Google 登入失敗", error);
-        alert("Google 登入失敗，請稍後再試。");
+        alert("Google 登入失敗，請稍後再試。若你正在 LINE / Discord 內建瀏覽器，請改用 Safari 或 Chrome 開啟。");
       }
     };
 
@@ -1058,6 +1055,10 @@ h1 {
         console.error("Google 失敗", error);
       }
     };
+
+    getRedirectResult(auth).catch((error) => {
+      console.error("Google redirect 登入結果讀取失敗", error);
+    });
 
     onAuthStateChanged(auth, (user) => {
       updateGoogleLoginUi(user);
