@@ -618,9 +618,9 @@ h1 {
 <div class="wish-source-filter-row" data-platform-filter-area="wishList" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;clear:both;margin:10px 0 12px 0;box-sizing:border-box;">
 <span class="wish-source-filter-label" style="display:inline-flex;align-items:center;height:30px;padding:0 2px;font-size:13px;font-weight:700;color:#ffe16b;white-space:nowrap;">訂單來源</span>
 <div class="platform-filter-tabs" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0;clear:none;width:auto;max-width:100%;" data-platform-filter-area="wishList">
-<button class="platform-filter-btn active" data-platform-mode="all" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">全部</button>
-<button class="platform-filter-btn" data-platform-mode="dc" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">DC</button>
-<button class="platform-filter-btn" data-platform-mode="line" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">LINE</button>
+<button class="platform-filter-btn active" onclick="window.setWishPlatformFilter && window.setWishPlatformFilter('all')" data-platform-mode="all" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">全部</button>
+<button class="platform-filter-btn" onclick="window.setWishPlatformFilter && window.setWishPlatformFilter('dc')" data-platform-mode="dc" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">DC</button>
+<button class="platform-filter-btn" onclick="window.setWishPlatformFilter && window.setWishPlatformFilter('line')" data-platform-mode="line" data-platform-target="wishList" style="display:inline-flex;align-items:center;justify-content:center;height:30px;min-width:54px;padding:0 12px;border-radius:999px;box-sizing:border-box;white-space:nowrap;" type="button">LINE</button>
 </div>
 </div>
 <div class="order-filter-tabs" data-filter-area="wishList">
@@ -942,7 +942,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=farmer-direct-upload-fix-20260530"></script>
+<script src="js/app.js?v=dc-line-filter-click-fix-20260530-2145"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1714,6 +1714,89 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
+
+<script>
+/* ===== DC / LINE 許願單分類按鈕：點擊修正 ===== */
+(function () {
+  function normalizePlatformText(value) {
+    var text = String(value || "").trim().toLowerCase();
+    if (text === "discord") return "dc";
+    if (text === "dc" || text === "line") return text;
+    return "";
+  }
+
+  function getCardPlatforms(card) {
+    var raw = String((card && card.dataset && card.dataset.platforms) || "").toLowerCase();
+    var list = raw.split(/\s+/).map(normalizePlatformText).filter(Boolean);
+    if (list.length) return list;
+
+    // 舊資料沒有 data-platforms 時，從卡片文字盡量判斷；判斷不到就只在「全部」顯示。
+    var text = String((card && (card.innerText || card.textContent)) || "").toLowerCase();
+    if (text.indexOf("line") !== -1) list.push("line");
+    if (text.indexOf("dc") !== -1 || text.indexOf("discord") !== -1) list.push("dc");
+    return Array.from(new Set(list));
+  }
+
+  function applyWishPlatformFilter(mode) {
+    mode = normalizePlatformText(mode) || "all";
+    window.platformFilterState = window.platformFilterState || {};
+    window.platformFilterState.wishList = mode;
+
+    document.querySelectorAll('.platform-filter-btn[data-platform-target="wishList"]').forEach(function (btn) {
+      var active = (btn.getAttribute("data-platform-mode") || "all") === mode;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    var list = document.getElementById("wishList");
+    if (!list) return;
+
+    list.querySelectorAll(".order-filter-empty, .platform-filter-empty").forEach(function (el) { el.remove(); });
+
+    var cards = Array.from(list.children).filter(function (el) {
+      return el.nodeType === 1 && !el.classList.contains("empty") && !el.classList.contains("order-filter-empty") && !el.classList.contains("platform-filter-empty");
+    });
+
+    var shown = 0;
+    cards.forEach(function (card) {
+      var ok = mode === "all" || getCardPlatforms(card).indexOf(mode) !== -1;
+      card.style.display = ok ? "" : "none";
+      if (ok) shown += 1;
+    });
+
+    if (shown === 0 && cards.length > 0) {
+      var empty = document.createElement("div");
+      empty.className = "platform-filter-empty order-filter-empty";
+      empty.textContent = mode === "dc" ? "目前沒有 DC 訂單。" : mode === "line" ? "目前沒有 LINE 訂單。" : "目前沒有訂單。";
+      list.appendChild(empty);
+    }
+
+    if (typeof window.refreshCollapseHeights === "function") window.refreshCollapseHeights();
+  }
+
+  window.setWishPlatformFilter = applyWishPlatformFilter;
+
+  document.addEventListener("click", function (event) {
+    var btn = event.target && event.target.closest && event.target.closest('.platform-filter-btn[data-platform-target="wishList"]');
+    if (!btn) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+    applyWishPlatformFilter(btn.getAttribute("data-platform-mode") || "all");
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    applyWishPlatformFilter((window.platformFilterState && window.platformFilterState.wishList) || "all");
+    var list = document.getElementById("wishList");
+    if (list && !list.dataset.platformFilterForceObserved) {
+      list.dataset.platformFilterForceObserved = "1";
+      new MutationObserver(function () {
+        applyWishPlatformFilter((window.platformFilterState && window.platformFilterState.wishList) || "all");
+      }).observe(list, { childList: true });
+    }
+  });
+})();
+</script>
 
 <script>
 if ("serviceWorker" in navigator) {
