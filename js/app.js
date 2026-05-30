@@ -1625,7 +1625,7 @@ function addLocalWishHistory(record) {
 }
 
 let historyPage = 1;
-const HISTORY_PAGE_SIZE = 50;
+const HISTORY_PAGE_SIZE = 30;
 
 function renderWishHistory() {
   const list = document.getElementById("wishHistoryList");
@@ -1658,18 +1658,33 @@ function renderWishHistory() {
   }).join("");
 
   const pager = sortedHistory.length > HISTORY_PAGE_SIZE
-    ? `<div class="history-pager"><button type="button" onclick="changeHistoryPage(-1)" ${historyPage <= 1 ? "disabled" : ""}>上一頁</button><span>${historyPage} / ${totalPages}</span><button type="button" onclick="changeHistoryPage(1)" ${historyPage >= totalPages ? "disabled" : ""}>下一頁</button></div>`
+    ? `<div class="history-pager"><button class="history-page-btn" type="button" data-history-page="-1" ${historyPage <= 1 ? "disabled" : ""}>上一頁</button><span>${historyPage} / ${totalPages}</span><button class="history-page-btn" type="button" data-history-page="1" ${historyPage >= totalPages ? "disabled" : ""}>下一頁</button></div>`
     : "";
 
   list.innerHTML = header + rows + pager;
 }
 
 function changeHistoryPage(direction) {
-  historyPage += direction;
+  const step = Number(direction) || 0;
+  historyPage += step;
 
   if (historyPage < 1) historyPage = 1;
 
   renderWishHistory();
+}
+
+// 歷史許願分頁按鈕是動態產生的，用事件委派避免重新渲染後 onclick 失效或跳頁。
+window.changeHistoryPage = changeHistoryPage;
+if (!window.__pikminHistoryPagerReady) {
+  window.__pikminHistoryPagerReady = true;
+  document.addEventListener("click", function (event) {
+    const btn = event.target.closest(".history-page-btn[data-history-page]");
+    if (!btn || btn.disabled) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    changeHistoryPage(btn.dataset.historyPage);
+  }, true);
 }
 
 async function syncWishHistoryToCloud(record) {
