@@ -942,7 +942,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=mobile-login-fix-20260531-004"></script>
+<script src="js/app.js?v=mobile-login-fix-20260531-005"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -950,6 +950,7 @@ h1 {
       getAuth,
       GoogleAuthProvider,
       signInWithRedirect,
+      signInWithPopup,
       getRedirectResult,
       signOut,
       onAuthStateChanged,
@@ -1112,6 +1113,13 @@ h1 {
 
     window.syncGoogleAuthDom = syncAuthDom;
 
+    function isIosStandalonePwa() {
+      const ua = navigator.userAgent || "";
+      const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+      return isIos && isStandalone;
+    }
+
     window.loginWithGoogle = async function () {
       localStorage.removeItem("previewMode");
       localStorage.setItem("googleLoginRedirecting", "true");
@@ -1121,11 +1129,29 @@ h1 {
 
       try {
         await setPersistence(auth, browserLocalPersistence);
+
+        // iPhone「加入主畫面」PWA 用 redirect 回來後常會拿不到 Firebase session。
+        // 所以 PWA 先用 popup 登入；若 popup 被系統擋掉，再退回 redirect。
+        if (isIosStandalonePwa()) {
+          try {
+            const result = await signInWithPopup(auth, provider);
+            if (result && result.user) {
+              localStorage.removeItem("googleLoginRedirecting");
+              localStorage.removeItem("googleLoginRedirectingAt");
+              syncAuthDom(result.user);
+              return;
+            }
+          } catch (popupError) {
+            console.warn("iOS PWA popup 登入失敗，改用 redirect", popupError);
+          }
+        }
+
         await signInWithRedirect(auth, provider);
       } catch (error) {
         localStorage.removeItem("googleLoginRedirecting");
+        localStorage.removeItem("googleLoginRedirectingAt");
         console.error("Google 登入失敗", error);
-        alert("Google 登入失敗，請稍後再試。若你正在 LINE / Discord 內建瀏覽器，請改用 Safari 或 Chrome 開啟。");
+        alert("Google 登入失敗：" + (error && error.code ? error.code : "請稍後再試") + "。若你正在主畫面 APP 內，請先用 Safari 開啟網站登入。");
         showGoogleEntryOverlay();
       }
     };
