@@ -696,39 +696,38 @@ h1 {
 </div>
 </div>
 </section>
-
 <section class="panel dex-ocr-panel">
-  <div class="ocr-head">
+  <div class="dex-ocr-head">
     <div>
-      <h3>📷 圖片辨識匯入圖鑑</h3>
-      <p>上傳 Pikmin Bloom 花朵列表截圖，辨識後可以先檢查表格，再套用到圖鑑。</p>
+      <h3>📸 圖鑑截圖匯入</h3>
+      <p class="hint">適合 Pikmin Bloom 圖鑑截圖。先辨識，再確認套用，不會自動覆蓋。</p>
     </div>
+    <button class="dex-advanced-btn" onclick="toggleDexOcrPanel()" type="button">展開 / 收合</button>
   </div>
-  <div class="ocr-controls">
-    <label>
-      <span>選擇截圖</span>
-      <input id="ocrImageInput" type="file" accept="image/*" />
-    </label>
-    <label>
-      <span>畫面數字位置</span>
-      <select id="ocrLayoutSelect">
-        <option value="petalTopEssenceBottom">左上花瓣、右下精華（列表畫面）</option>
-        <option value="essenceTopPetalBottom">左上精華、右下花瓣（大卡片畫面）</option>
-      </select>
-    </label>
-    <button id="runOcrImportBtn" class="confirm-btn" type="button">開始辨識</button>
+  <div class="dex-ocr-body" id="dexOcrPanel">
+    <div class="dex-ocr-controls">
+      <label class="dex-ocr-file">
+        上傳截圖
+        <input accept="image/*" id="dexOcrImageInput" type="file"/>
+      </label>
+      <label>
+        截圖格式
+        <select id="dexOcrMode">
+          <option value="petalTop">左上花瓣、右下精華</option>
+          <option value="essenceTop">左上精華、右下花瓣</option>
+        </select>
+      </label>
+      <button class="confirm-btn" onclick="runDexImageOcr()" type="button">辨識圖片</button>
+      <button class="ghost-btn" onclick="parseDexOcrText()" type="button">重新解析文字</button>
+    </div>
+    <p class="hint">如果辨識結果有錯，可以直接修改下方表格再套用。</p>
+    <textarea id="dexOcrRawText" class="dex-ocr-raw" placeholder="辨識到的文字會出現在這裡，也可以手動貼上文字後按重新解析。"></textarea>
+    <div class="dex-ocr-actions">
+      <span id="dexOcrStatus" class="hint"></span>
+      <button class="confirm-btn" onclick="applyDexOcrRows()" type="button">套用到圖鑑</button>
+    </div>
+    <div id="dexOcrResult" class="dex-ocr-result"></div>
   </div>
-  <div id="ocrPreviewWrap" class="ocr-preview-wrap" hidden>
-    <img id="ocrImagePreview" alt="OCR 預覽圖" />
-  </div>
-  <div id="ocrProgress" class="ocr-progress" hidden>準備辨識中...</div>
-  <textarea id="ocrRawText" class="ocr-raw-text" placeholder="辨識文字會出現在這裡，可手動修正後再按「重新解析文字」。" hidden></textarea>
-  <div class="ocr-actions" id="ocrActions" hidden>
-    <button id="parseOcrTextBtn" class="dex-advanced-btn" type="button">重新解析文字</button>
-    <button id="applyOcrResultBtn" class="confirm-btn" type="button">套用到圖鑑</button>
-  </div>
-  <div id="ocrResultList" class="ocr-result-list"></div>
-  <p class="hint ocr-note">提醒：OCR 可能會誤判，套用前可以直接修改表格中的花名、顏色、花瓣與精華。</p>
 </section>
 
 <div class="dex-list" id="flowerDexList"></div>
@@ -934,7 +933,7 @@ h1 {
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="js/app.js?v=ocr-import-front-20260529"></script>
+<script src="js/app.js?v=custom-flower-visible-20260528"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";

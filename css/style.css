@@ -4737,159 +4737,21 @@ html {
   opacity: 0.85;
 }
 
-/* OCR 圖片辨識匯入圖鑑 */
-.dex-ocr-panel {
-  margin-bottom: 14px;
-}
-
-.ocr-head h3 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  color: #413b4a;
-}
-
-.ocr-head p {
-  margin: 0 0 14px;
-  color: var(--muted, #756f7e);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.ocr-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: end;
-}
-
-.ocr-controls label {
-  display: grid;
-  gap: 7px;
-  color: var(--muted, #756f7e);
-  font-size: 13px;
-  font-weight: 850;
-}
-
-.ocr-controls input,
-.ocr-controls select {
-  width: 100%;
-  min-height: 42px;
-  border: 1px solid rgba(255,255,255,.78);
-  border-radius: 16px;
-  padding: 9px 12px;
-  background: rgba(255,255,255,.68);
-  color: #4a4454;
-  outline: none;
-  font-family: inherit;
-}
-
-.ocr-preview-wrap {
-  margin-top: 14px;
-  overflow: hidden;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  background: rgba(255, 255, 255, 0.52);
-  max-height: 280px;
-}
-
-.ocr-preview-wrap img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.ocr-progress {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.66);
-  color: #5b5365;
-  font-size: 13px;
-  font-weight: 850;
-}
-
-.ocr-raw-text {
-  width: 100%;
-  min-height: 110px;
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.68);
-  color: #4a4454;
-  outline: none;
-  resize: vertical;
-  font-family: inherit;
-}
-
-.ocr-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.ocr-result-list {
-  margin-top: 12px;
-  overflow-x: auto;
-}
-
-.ocr-result-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 8px;
-  min-width: 620px;
-}
-
-.ocr-result-table th {
-  text-align: left;
-  color: var(--muted, #756f7e);
-  font-size: 12px;
-  padding: 0 8px;
-}
-
-.ocr-result-table td {
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.58);
-  border-top: 1px solid rgba(255, 255, 255, 0.72);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.72);
-}
-
-.ocr-result-table td:first-child {
-  border-left: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 16px 0 0 16px;
-}
-
-.ocr-result-table td:last-child {
-  border-right: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 0 16px 16px 0;
-}
-
-.ocr-result-table input,
-.ocr-result-table select {
-  width: 100%;
-  min-height: 36px;
-  border-radius: 14px;
-  border: 1px solid rgba(170, 218, 219, 0.55);
-  background: rgba(255, 255, 255, 0.75);
-  padding: 7px 9px;
-  font-family: inherit;
-}
-
-.ocr-result-table input[type="checkbox"] {
-  width: 20px;
-  min-height: 20px;
-}
-
-.ocr-note {
-  margin-top: 10px;
-}
-
-@media (max-width: 760px) {
-  .ocr-controls {
-    grid-template-columns: 1fr;
-  }
-  .ocr-result-table {
-    min-width: 560px;
-  }
-}
+.dex-ocr-panel { margin-top: 14px; }
+.dex-ocr-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.dex-ocr-head h3 { margin:0 0 6px; }
+.dex-ocr-body { display:none; margin-top:12px; }
+.dex-ocr-body.open { display:block; }
+.dex-ocr-controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+.dex-ocr-controls label { display:flex; flex-direction:column; gap:5px; font-size:12px; }
+.dex-ocr-controls input, .dex-ocr-controls select, .dex-ocr-raw { border:1px solid rgba(255,255,255,.55); border-radius:14px; padding:10px 12px; background:rgba(255,255,255,.72); color:#234; }
+.dex-ocr-raw { width:100%; min-height:90px; margin-top:10px; resize:vertical; }
+.dex-ocr-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0; flex-wrap:wrap; }
+.dex-ocr-table { width:100%; border-collapse:separate; border-spacing:0 8px; }
+.dex-ocr-table th { font-size:12px; opacity:.75; text-align:left; padding:0 8px; }
+.dex-ocr-table td { background:rgba(255,255,255,.58); padding:8px; }
+.dex-ocr-table td:first-child { border-radius:14px 0 0 14px; }
+.dex-ocr-table td:last-child { border-radius:0 14px 14px 0; }
+.dex-ocr-table input, .dex-ocr-table select { width:100%; box-sizing:border-box; border:1px solid rgba(255,255,255,.55); border-radius:12px; padding:8px 10px; background:rgba(255,255,255,.7); color:#234; }
+.ghost-btn { border:1px solid rgba(255,255,255,.55); border-radius:999px; padding:10px 16px; background:rgba(255,255,255,.25); color:inherit; cursor:pointer; }
+@media (max-width: 720px) { .dex-ocr-table { font-size:12px; } .dex-ocr-table td, .dex-ocr-table th { padding:6px 4px; } }
