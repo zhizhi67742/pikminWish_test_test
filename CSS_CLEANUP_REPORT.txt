@@ -1,0 +1,4 @@
+CSS safe cleanup
+- Minified css/style.css and css/admin.css by removing comments and extra whitespace only.
+- Did not edit js/app.js or functional logic.
+- Updated service-worker cache/version query to force refresh.

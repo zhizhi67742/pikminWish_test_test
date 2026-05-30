@@ -1,4 +1,4 @@
-const CACHE_NAME = "pikminwish-v-dc-line-click-fix-20260530-2145";
+const CACHE_NAME = "pikminwish-v-css-clean-20260531-0001";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,8 +9,8 @@ const ASSETS = [
   "./icon-48.png",
   "./icon-192.png",
   "./icon-512.png",
-  "./js/app.js?v=dc-line-filter-click-fix-20260530-2145",
-  "./css/style.css?v=dc-line-filter-click-fix-20260530-2145"
+  "./js/app.js?v=css-clean-20260531-0001",
+  "./css/style.css?v=css-clean-20260531-0001"
 ];
 
 self.addEventListener("install", event => {
