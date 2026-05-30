@@ -4865,3 +4865,80 @@ html {
     font-size: 12px;
   }
 }
+
+
+/* ===== AI 圖鑑匯入按鈕版面修正 =====
+   避免被全站 confirm-btn / secondary-btn 的固定寬度、定位或浮動樣式影響 */
+.dex-ai-import-panel button,
+.dex-ai-import-panel .confirm-btn,
+.dex-ai-import-panel .secondary-btn,
+.dex-ai-import-panel .dex-ai-toggle-btn {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  float: none !important;
+  clear: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+.dex-ai-import-head {
+  width: 100%;
+}
+
+.dex-ai-import-head > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dex-ai-import-head .dex-ai-toggle-btn {
+  flex: 0 0 auto !important;
+}
+
+.dex-ai-actions {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.dex-ai-actions button {
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 768px) {
+  .dex-ai-import-head {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .dex-ai-import-head .dex-ai-toggle-btn {
+    width: 100% !important;
+  }
+
+  .dex-ai-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dex-ai-actions button {
+    width: 100% !important;
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .dex-ai-actions {
+    grid-template-columns: 1fr;
+  }
+}
