@@ -1015,20 +1015,6 @@ h1 {
     }
 
     window.loginWithGoogle = async function () {
-      const isStandalonePWA =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.navigator.standalone === true;
-
-      if (isStandalonePWA) {
-        alert("目前 iPhone 主畫面版 App 無法穩定使用 Google 登入。
-
-請先用 Safari 開啟網站並登入：
-https://zhizhi67742.github.io/pikminWish_New/
-
-登入完成後，建議直接用 Safari 使用網站。");
-        return;
-      }
-
       localStorage.removeItem("previewMode");
       if (typeof removePreviewLock === "function") removePreviewLock();
       const googleEntryOverlayBeforeLogin = document.getElementById("googleEntryOverlay");
