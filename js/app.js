@@ -3808,7 +3808,9 @@ function applyOrderFilter(listId) {
 
   if (shown === 0) {
     const empty = document.createElement("div");
-    list.innerHTML = '<div class="empty">' + (listId === "wishList" ? "目前沒有自己發的訂單。" : "目前沒有自己接的訂單。") + '</div>';
+    empty.className = "order-filter-empty";
+    empty.textContent = listId === "wishList" ? "目前沒有自己發的訂單。" : "目前沒有自己接的訂單。";
+    list.appendChild(empty);
   }
 
   if (typeof refreshCollapseHeights === "function") refreshCollapseHeights();
