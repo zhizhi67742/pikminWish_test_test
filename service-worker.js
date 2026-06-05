@@ -1,4 +1,4 @@
-const CACHE_NAME = "pikminwish-v-google-popup-first-20260531-001";
+const CACHE_NAME = "pikminwish-v-dex-empty-filter-20260606-001";
 const ASSETS = [
   "./manifest.json",
   "./favicon.ico",
