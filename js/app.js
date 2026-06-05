@@ -423,6 +423,7 @@ document.addEventListener("DOMContentLoaded", function () {
   startFlowerCatalogListener();
   fixExampleCardMessageSafely();
   updateLimitInputs();
+  updateDexLastUpdatedDisplay();
   renderAll();
 });
 
@@ -2470,6 +2471,7 @@ function renderDex() {
   if (!list) return;
 
   list.innerHTML = "";
+  updateDexLastUpdatedDisplay();
   updateDexFilterButtons();
 
   const filteredDex = flowerDex.filter(function (flower) {
@@ -2698,8 +2700,9 @@ function saveDexValue(key, value, limit, shouldRender) {
   if (number > limit) number = limit;
   if (number > 1200) number = 1200;
 
+  const oldValue = safeGetLocalStorage(key);
   safeSetLocalStorage(key, String(number));
-  saveDexBackupValue(key, number);
+  saveDexBackupValue(key, number, oldValue !== String(number));
 
   const activeInput = getDexInputByKey(key);
   if (activeInput && activeInput.value !== String(number)) {
@@ -3053,11 +3056,55 @@ function getDexBackup() {
   }
 }
 
-function saveDexBackupValue(key, number) {
+function normalizeDexTimestamp(value) {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Number(value) || 0;
+  if (typeof value === "object") {
+    if (typeof value.toMillis === "function") return value.toMillis();
+    if (typeof value.seconds !== "undefined") return Number(value.seconds) * 1000;
+  }
+  return 0;
+}
+
+function formatDexLastUpdated(timestamp) {
+  const time = normalizeDexTimestamp(timestamp);
+  if (!time) return "尚未更新";
+
+  const date = new Date(time);
+  if (Number.isNaN(date.getTime())) return "尚未更新";
+
+  const now = new Date();
+  const sameYear = date.getFullYear() === now.getFullYear();
+  const sameDay = sameYear && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+  const pad = function (num) { return String(num).padStart(2, "0"); };
+  const timeText = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+  if (sameDay) return `今天 ${timeText}`;
+  if (sameYear) return `${date.getMonth() + 1}/${date.getDate()} ${timeText}`;
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${timeText}`;
+}
+
+function updateDexLastUpdatedDisplay() {
+  const el = document.getElementById("dexLastUpdated");
+  if (!el) return;
+  const timestamp = normalizeDexTimestamp(safeGetLocalStorage("flowerDexLastUpdatedAt"));
+  el.textContent = `🕒 最後更新：${formatDexLastUpdated(timestamp)}`;
+}
+
+function touchDexLastUpdated() {
+  const now = Date.now();
+  safeSetLocalStorage("flowerDexLastUpdatedAt", String(now));
+  updateDexLastUpdatedDisplay();
+  return now;
+}
+
+function saveDexBackupValue(key, number, shouldTouchLastUpdated) {
   const backup = getDexBackup();
+  const now = shouldTouchLastUpdated === true ? touchDexLastUpdated() : Date.now();
   backup[key] = {
     value: Number(number) || 0,
-    updatedAt: Date.now()
+    updatedAt: now
   };
   safeSetLocalStorage("flowerDexBackupV2", JSON.stringify(backup));
   safeSetLocalStorage("flowerDexLastSavedAt", String(Date.now()));
@@ -3128,6 +3175,8 @@ async function loadDexFromCloud(name) {
 
     const data = snap.data() || {};
     const values = data.values || {};
+    const cloudDexLastUpdatedAt = normalizeDexTimestamp(data.lastUpdatedAt || data.updatedAt);
+    if (cloudDexLastUpdatedAt) safeSetLocalStorage("flowerDexLastUpdatedAt", String(cloudDexLastUpdatedAt));
 
     dexCloudIsApplying = true;
 
@@ -3159,12 +3208,13 @@ async function loadDexFromCloud(name) {
     Object.keys(values).forEach(function (key) {
       const item = values[key];
       const cloudValue = typeof item === "object" && item !== null ? item.value : item;
-      backup[key] = { value: Number(cloudValue) || 0, updatedAt: Number(data.updatedAt || Date.now()) };
+      backup[key] = { value: Number(cloudValue) || 0, updatedAt: cloudDexLastUpdatedAt || Date.now() };
     });
     safeSetLocalStorage("flowerDexBackupV2", JSON.stringify(backup));
 
     dexCloudIsApplying = false;
     updateLimitInputs();
+    updateDexLastUpdatedDisplay();
     renderDex();
   } catch (error) {
     dexCloudIsApplying = false;
@@ -3190,6 +3240,7 @@ async function saveDexToCloud(name) {
 
   const backup = getDexBackup();
   const now = Date.now();
+  const lastUpdatedAt = normalizeDexTimestamp(safeGetLocalStorage("flowerDexLastUpdatedAt")) || now;
   const values = {};
 
   Object.keys(backup).forEach(function (key) {
@@ -3205,7 +3256,9 @@ async function saveDexToCloud(name) {
       values: values,
       essenceLimit: essenceLimit,
       petalLimit: petalLimit,
-      updatedAt: now
+      lastUpdatedAt: lastUpdatedAt,
+      updatedAt: lastUpdatedAt,
+      savedAt: now
     }, { merge: true });
   } catch (error) {
     console.warn("圖鑑雲端儲存失敗", error);
@@ -4604,6 +4657,8 @@ function applyDexAiImport() {
 
   if (!confirm(`確定要套用 ${rows.length} 筆資料到圖鑑嗎？`)) return;
 
+  touchDexLastUpdated();
+
   const changedFlowers = [];
   rows.forEach(function (row) {
     const flower = normalizeDexAiFlowerName(row.flower, row.color);
@@ -4616,8 +4671,8 @@ function applyDexAiImport() {
     // 這裡不要只靠 input onchange，直接寫入網站真正使用的 localStorage key。
     safeSetLocalStorage(petalKey, String(petalValue));
     safeSetLocalStorage(essenceKey, String(essenceValue));
-    saveDexBackupValue(petalKey, petalValue);
-    saveDexBackupValue(essenceKey, essenceValue);
+    saveDexBackupValue(petalKey, petalValue, false);
+    saveDexBackupValue(essenceKey, essenceValue, false);
 
     if (!changedFlowers.includes(flower)) changedFlowers.push(flower);
   });
