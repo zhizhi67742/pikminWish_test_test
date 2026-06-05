@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>花農許願池</title>
-<link href="css/style.css?v=history-pager-center-20260531-002" rel="stylesheet"/>
+<link href="css/style.css?v=event-banner-flowercatalog-20260602?v=history-pager-center-20260531-002" rel="stylesheet"/>
 <style>
 .wish-history-item{
   background: rgba(255,255,255,0.05);
@@ -587,6 +587,16 @@ h1 {
 }
 </style>
 
+
+<style>
+.dex-last-updated{
+  margin-top:6px;
+  font-size:13px;
+  color:rgba(255,255,255,.72);
+  font-weight:500;
+}
+</style>
+
 </head>
 <body>
 <div aria-busy="true" aria-live="polite" class="app-loading-overlay" id="appLoadingOverlay">
@@ -619,11 +629,11 @@ h1 {
 <button class="nav-btn" onclick="showSection('dex', this)">🌸 花朵圖鑑</button>
 <button class="nav-btn" onclick="showSection('changelog', this)">📜 更新日誌</button>
 </nav>
-<div class="event-banner">
-<div class="event-badge">🌼 5月新花</div>
+<div class="event-banner" id="eventBanner">
+<div class="event-badge" id="eventBannerBadge">🌼 5月新花</div>
 <div>
-<strong>勿忘草登場</strong>
-<span>本月活動花種，記得更新你的圖鑑庫存！</span>
+<strong id="eventBannerTitle">勿忘草登場</strong>
+<span id="eventBannerText">本月活動花種，記得更新你的圖鑑庫存！</span>
 </div>
 </div>
 </header>
@@ -734,6 +744,7 @@ h1 {
 <div>
 <h2>🌸 花朵圖鑑</h2>
 <p class="hint dex-jump-tip">點擊花旁邊的「缺」即可跳回許願頁快速許願。</p>
+<div id="dexLastUpdated" class="dex-last-updated">🕒 最後更新：尚未更新</div>
 </div>
 <div class="limit-settings">
 <label>
@@ -875,7 +886,7 @@ h1 {
 <li>新增 reCAPTCHA 驗證機制。</li>
 <li>新增 30 秒內禁止重複送單功能。</li>
 <li>新增限制：花種禁止自由輸入，只能選擇現有花種。</li>
-<li>新增風鈴草於 5/31 前暫時不開放選擇設定。</li>
+<li>新增風鈴草花種。</li>
 <li>調整回到最上方按鈕位置。</li>
 </ul>
 </div>
@@ -1049,7 +1060,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=history-pager-center-20260531-002"></script>
+<script src="js/app.js?v=event-banner-flowercatalog-20260602?v=google-popup-first-20260531-001"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1091,6 +1102,7 @@ h1 {
     const db = getFirestore(app);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
     setPersistence(auth, browserLocalPersistence).catch((error) => {
       console.warn("Firebase 登入狀態保存設定失敗", error);
     });
@@ -1231,34 +1243,47 @@ h1 {
       localStorage.removeItem("previewMode");
       localStorage.setItem("googleLoginRedirecting", "true");
       localStorage.setItem("googleLoginRedirectingAt", String(Date.now()));
+      window.__pikminGoogleLoginInProgress = true;
       if (typeof removePreviewLock === "function") removePreviewLock();
       hideGoogleEntryOverlay();
 
       try {
         await setPersistence(auth, browserLocalPersistence);
 
-        // iPhone「加入主畫面」PWA 用 redirect 回來後常會拿不到 Firebase session。
-        // 所以 PWA 先用 popup 登入；若 popup 被系統擋掉，再退回 redirect。
-        if (isIosStandalonePwa()) {
-          try {
-            const result = await signInWithPopup(auth, provider);
-            if (result && result.user) {
-              localStorage.removeItem("googleLoginRedirecting");
-              localStorage.removeItem("googleLoginRedirectingAt");
-              syncAuthDom(result.user);
-              return;
-            }
-          } catch (popupError) {
-            console.warn("iOS PWA popup 登入失敗，改用 redirect", popupError);
+        // 先用 popup 登入：新帳號第一次授權時，比 redirect 更不容易發生
+        // 「回到 GitHub Pages 後 Firebase currentUser 還是 null」的問題。
+        // 如果 popup 被瀏覽器、LINE 或 PWA 擋掉，再自動退回 redirect。
+        try {
+          const result = await signInWithPopup(auth, provider);
+          if (result && result.user) {
+            window.__pikminGoogleLoginInProgress = false;
+            localStorage.removeItem("googleLoginRedirecting");
+            localStorage.removeItem("googleLoginRedirectingAt");
+            syncAuthDom(result.user);
+            return;
           }
+        } catch (popupError) {
+          const popupCode = popupError && popupError.code ? popupError.code : "";
+          const canFallbackToRedirect = [
+            "auth/popup-blocked",
+            "auth/popup-closed-by-user",
+            "auth/cancelled-popup-request",
+            "auth/operation-not-supported-in-this-environment"
+          ].includes(popupCode) || isIosStandalonePwa();
+
+          if (!canFallbackToRedirect) {
+            throw popupError;
+          }
+          console.warn("Google popup 登入未完成，改用 redirect", popupError);
         }
 
         await signInWithRedirect(auth, provider);
       } catch (error) {
+        window.__pikminGoogleLoginInProgress = false;
         localStorage.removeItem("googleLoginRedirecting");
         localStorage.removeItem("googleLoginRedirectingAt");
         console.error("Google 登入失敗", error);
-        alert("Google 登入失敗：" + (error && error.code ? error.code : "請稍後再試") + "。若你正在主畫面 APP 內，請先用 Safari 開啟網站登入。");
+        alert("Google 登入失敗：" + (error && error.code ? error.code : "請稍後再試") + "。若你正在 LINE / 主畫面 APP 內，請改用外部瀏覽器開啟網站登入。");
         showGoogleEntryOverlay();
       }
     };
@@ -1330,12 +1355,14 @@ h1 {
       }, 1200);
       setTimeout(() => {
         if (!auth.currentUser && localStorage.getItem("googleLoginRedirecting") === "true" && sessionStorage.getItem("pikminGoogleSessionOk") !== "true") {
+          // redirect 回來後給 Firebase 更長時間恢復狀態，避免新帳號第一次授權被太早判定為未登入。
           localStorage.removeItem("googleLoginRedirecting");
           localStorage.removeItem("googleLoginRedirectingAt");
+          window.__pikminGoogleLoginInProgress = false;
           window.__pikminAuthStateReady = true;
           showGoogleEntryOverlay();
         }
-      }, 22000);
+      }, 45000);
     });
   </script>
 <div class="google-entry-overlay" id="googleEntryOverlay">

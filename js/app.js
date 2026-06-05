@@ -245,7 +245,7 @@ function setLikedDoneKey(doneKey, liked) {
 }
 
 const DEFAULT_FLOWER_DEX = [
-  { name: "風鈴草", subtitle: "6月新花・目前無法獲得", colors: ["白", "紅", "藍"], locked: true },
+  { name: "風鈴草", colors: ["白", "紅", "藍"] },
   { name: "勿忘草", colors: ["白", "黃", "紅", "藍"] },
   { name: "週年玫瑰", colors: ["白", "黃", "紅", "藍"] },
   { name: "銀蓮花", colors: ["白", "黃", "紅", "藍"] },
@@ -299,17 +299,15 @@ const DEFAULT_FLOWER_DEX = [
 
 
 function isLockedFlowerName(name) {
-  const text = String(name || "").trim();
-  return text === "風鈴草" || /風鈴草/.test(text);
+  return false;
 }
 
 function isLockedWishFlowerValue(value) {
-  const text = String(value || "").trim();
-  return /風鈴草/.test(text);
+  return false;
 }
 
 function warnLockedFlower() {
-  alert("風鈴草 5/31 才會開放，目前先保留選項，暫時不能許願或上傳喔～");
+  // 5/31 已開放，保留函式避免舊流程呼叫時中斷。
 }
 
 let flowerDex = JSON.parse(JSON.stringify(DEFAULT_FLOWER_DEX));
@@ -323,15 +321,22 @@ function normalizeCatalogColor(color) {
 }
 
 function normalizeCatalogName(name) {
-  return String(name || "").trim().toLowerCase();
+  return String(name || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLowerCase();
 }
 
 function getCatalogSortTime(flower) {
-  const value = flower && (flower.createdAt || flower.customAddedAt || flower.updatedAt || flower.createdAtSort);
+  const value = flower && (flower.sortOrder ?? flower.createdAt ?? flower.customAddedAt ?? flower.updatedAt ?? flower.createdAtSort);
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value?.toDate === "function") return value.toDate().getTime();
   const parsed = new Date(value || 0).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function getCatalogOrderValue(flower, fallbackIndex) {
+  const value = flower && flower.sortOrder;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallbackIndex;
 }
 
 function rebuildFlowerDexFromSources() {
@@ -340,18 +345,20 @@ function rebuildFlowerDexFromSources() {
 
   (Array.isArray(cloudFlowerCatalog) ? cloudFlowerCatalog : [])
     .slice()
-    .sort(function (a, b) { return getCatalogSortTime(b) - getCatalogSortTime(a); })
+    .sort(function (a, b) { return getCatalogOrderValue(a, 9999) - getCatalogOrderValue(b, 9999); })
     .forEach(function (flower) {
       if (!flower || !flower.name) return;
 
+      const rawCloudFlowerName = String(flower.name || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
       const cleanFlower = {
-        name: String(flower.name || "").trim(),
+        name: rawCloudFlowerName,
         subtitle: String(flower.subtitle || "").trim(),
         colors: Array.isArray(flower.colors) && flower.colors.length
           ? flower.colors.map(normalizeCatalogColor).filter(Boolean)
           : ["白"],
-        locked: !!flower.locked,
-        isCustomFlower: true,
+        locked: normalizeCatalogName(rawCloudFlowerName) === "風鈴草" ? false : !!flower.locked,
+        isCustomFlower: flower.source !== "builtin",
+        sortOrder: getCatalogOrderValue(flower, 9999),
         customAddedAt: getCatalogSortTime(flower)
       };
 
@@ -366,7 +373,13 @@ function rebuildFlowerDexFromSources() {
       }
     });
 
-  flowerDex = customFlowers.concat(builtInFlowers);
+  flowerDex = customFlowers.concat(builtInFlowers).sort(function (a, b) {
+    const ai = DEFAULT_FLOWER_DEX.findIndex(function (item) { return normalizeCatalogName(item.name) === normalizeCatalogName(a.name); });
+    const bi = DEFAULT_FLOWER_DEX.findIndex(function (item) { return normalizeCatalogName(item.name) === normalizeCatalogName(b.name); });
+    const af = ai >= 0 ? ai : DEFAULT_FLOWER_DEX.length + 999;
+    const bf = bi >= 0 ? bi : DEFAULT_FLOWER_DEX.length + 999;
+    return getCatalogOrderValue(a, af) - getCatalogOrderValue(b, bf);
+  });
 }
 
 function startFlowerCatalogListener() {
@@ -381,9 +394,14 @@ function startFlowerCatalogListener() {
     window.firebaseFns.onSnapshot(
       window.firebaseFns.collection(window.firebaseDB, "flowerCatalog"),
       function (snapshot) {
-        cloudFlowerCatalog = snapshot.docs.map(function (docSnap) {
-          return docSnap.data() || {};
-        });
+        cloudFlowerCatalog = snapshot.docs
+          .filter(function (docSnap) {
+            var data = docSnap.data() || {};
+            return docSnap.id !== "__eventBanner" && data.hiddenFromCatalog !== true && data.type !== "eventBanner";
+          })
+          .map(function (docSnap) {
+            return docSnap.data() || {};
+          });
         rebuildFlowerDexFromSources();
         try { renderAll(); } catch (error) { console.warn("自訂花種重新整理失敗", error); }
       },
@@ -472,14 +490,15 @@ function getWishColorOptions(baseColors) {
 
 
 function findCatalogFlowerForWish(name) {
-  const key = String(name || "").trim().toLowerCase();
+  const key = normalizeCatalogName(name);
   if (!key) return null;
+  if (key === "風鈴草") return { name: "風鈴草", colors: ["白", "紅", "藍"], locked: false };
   const sources = [];
   try { if (Array.isArray(flowerDex)) sources.push(flowerDex); } catch (e) {}
   try { if (Array.isArray(DEFAULT_FLOWER_DEX)) sources.push(DEFAULT_FLOWER_DEX); } catch (e) {}
   for (const list of sources) {
     const found = list.find(function (flower) {
-      return String(flower && flower.name || "").trim().toLowerCase() === key;
+      return normalizeCatalogName(flower && flower.name) === key;
     });
     if (found) return found;
   }
@@ -488,9 +507,11 @@ function findCatalogFlowerForWish(name) {
 
 
 function getWishFlowerBaseNameFromValue(value) {
-  let text = String(value || "").trim();
+  let text = String(value || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
   if (!text) return "";
-  ["隨意色", "混色", "黃色", "紅色", "藍色", "白色", "黃", "紅", "藍", "白"].forEach(function (prefix) {
+  // 若選單顯示文字或舊資料帶入「花名（副標）」也能正確回推花名。
+  text = text.replace(/（.*?）|\(.*?\)/g, "").trim();
+  ["隨意色", "隨機色", "混色", "黃色", "紅色", "藍色", "白色", "黃", "紅", "藍", "白"].forEach(function (prefix) {
     if (text.startsWith(prefix)) text = text.slice(prefix.length).trim();
   });
   return text;
@@ -498,6 +519,7 @@ function getWishFlowerBaseNameFromValue(value) {
 
 function isCatalogWishFlowerValue(value) {
   const baseName = getWishFlowerBaseNameFromValue(value);
+  if (baseName === "風鈴草") return true;
   return !!findCatalogFlowerForWish(baseName);
 }
 
@@ -508,6 +530,22 @@ function warnChooseCatalogFlower() {
 function getCurrentWishFlowerName() {
   const input = document.getElementById("flowerComboInput") || document.getElementById("flowerKeywordInput");
   return input ? input.value.trim() : "";
+}
+
+function getResolvedWishFlowerValue() {
+  const hiddenInput = document.getElementById("flowerInput");
+  const hiddenValue = hiddenInput ? hiddenInput.value.trim() : "";
+  if (hiddenValue && isCatalogWishFlowerValue(hiddenValue)) return hiddenValue;
+
+  const typedFlowerName = getCurrentWishFlowerName();
+  const catalogFlower = findCatalogFlowerForWish(typedFlowerName);
+  if (!catalogFlower || isLockedFlowerName(typedFlowerName)) return hiddenValue;
+
+  const colorSelect = document.getElementById("flowerColorSelect");
+  const color = colorSelect && colorSelect.style.display !== "none" ? normalizeWishColorValue(colorSelect.value) : "";
+  const resolvedValue = color ? buildWishFlowerName(color, catalogFlower.name) : catalogFlower.name;
+  if (hiddenInput) hiddenInput.value = resolvedValue;
+  return resolvedValue;
 }
 
 function shouldShowWishSpecialColors(flowerName) {
@@ -980,7 +1018,7 @@ function askRepeatWishIfNeeded(flower, nickname) {
 }
 
 async function addWish() {
-  const flower = document.getElementById("flowerInput").value.trim();
+  const flower = getResolvedWishFlowerValue();
   const message = document.getElementById("messageInput").value.trim();
 
   nickname = getCurrentNickname();
@@ -3414,7 +3452,7 @@ async function startFirebaseSync() {
   const originalAddWish = window.addWish;
 
   window.addWish = async function () {
-    const flower = document.getElementById("flowerInput")?.value?.trim();
+    const flower = getResolvedWishFlowerValue();
     const nickname = getCurrentNickname();
 
     if (!guardWishSubmitCooldown()) return;
@@ -4115,7 +4153,7 @@ window.updateCurrentNicknameBar = updateCurrentNicknameBar;
 /* ===== DEPLOY FIX: 花種同一格輸入＋下拉，修正上傳後選單被擋/沒顯示 ===== */
 (function () {
   function normalizeFlowerText(value) {
-    return String(value || "").trim().toLowerCase();
+    return String(value || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().toLowerCase();
   }
 
   function getFlowerSourceList() {
@@ -4598,4 +4636,50 @@ function applyDexAiImport() {
   const status = document.getElementById("dexAiImportStatus");
   if (status) status.textContent = `已套用 ${rows.length} 筆資料到圖鑑。`;
   alert(`已套用 ${rows.length} 筆資料到圖鑑。`);
+}
+
+function applyEventBannerSettings(data) {
+  const banner = document.getElementById("eventBanner");
+  if (!banner) return;
+  const settings = Object.assign({
+    enabled: true,
+    badge: "🌼 5月新花",
+    title: "勿忘草登場",
+    text: "本月活動花種，記得更新你的圖鑑庫存！"
+  }, data || {});
+  banner.style.display = settings.enabled === false ? "none" : "flex";
+  const badge = document.getElementById("eventBannerBadge");
+  const title = document.getElementById("eventBannerTitle");
+  const text = document.getElementById("eventBannerText");
+  if (badge) badge.textContent = settings.badge || "";
+  if (title) title.textContent = settings.title || "";
+  if (text) text.textContent = settings.text || "";
+}
+
+let eventBannerListenStarted = false;
+function listenEventBannerSettings() {
+  try {
+    if (eventBannerListenStarted) return;
+    if (!window.firebaseFns || !window.firebaseDB || !window.firebaseFns.doc || !window.firebaseFns.onSnapshot) {
+      setTimeout(listenEventBannerSettings, 300);
+      return;
+    }
+    eventBannerListenStarted = true;
+    const ref = window.firebaseFns.doc(window.firebaseDB, "flowerCatalog", "__eventBanner");
+    window.firebaseFns.onSnapshot(ref, (docSnap) => {
+      applyEventBannerSettings(docSnap.exists() ? docSnap.data() : null);
+    }, (error) => {
+      console.error("活動公告讀取失敗", error);
+      applyEventBannerSettings(null);
+    });
+  } catch (error) {
+    console.error("活動公告同步失敗", error);
+    applyEventBannerSettings(null);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", listenEventBannerSettings);
+} else {
+  listenEventBannerSettings();
 }
