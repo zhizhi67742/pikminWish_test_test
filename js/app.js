@@ -2573,7 +2573,7 @@ function renderDex() {
 
 
 function getDexFilterGroup(mode) {
-  if (["missing", "full", "essence", "petal"].includes(mode)) return "status";
+  if (["missing", "full", "essence", "petal", "empty"].includes(mode)) return "status";
   if (["white", "yellow", "red", "blue"].includes(mode)) return "color";
   if (["forget", "rose"].includes(mode)) return "monthly";
   return "all";
@@ -2603,6 +2603,7 @@ function isDexRowMatchingFilter(flowerName, color) {
     if (mode === "full") return isFull;
     if (mode === "essence") return essence < essenceLimit;
     if (mode === "petal") return petal < petalLimit;
+    if (mode === "empty") return essence === 0 && petal === 0;
     return true;
   });
 
