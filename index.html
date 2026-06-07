@@ -1202,11 +1202,20 @@ h1 {
                 const localUpdatedAt = Number(localStorage.getItem("flowerWishNicknameUpdatedAt") || "0");
                 const cloudUpdatedAt = Number(data.nicknameUpdatedAt || data.updatedAt || "0");
 
-                // 以「最後修改時間」為準，避免登入時把剛修改的新暱稱蓋回舊暱稱。
-                if (data.nickname && (!localNickname || !localUpdatedAt || !cloudUpdatedAt || cloudUpdatedAt >= localUpdatedAt)) {
+                // 暱稱同步規則：
+                // 1. 本機已經有修改時間時，不讓「沒有時間戳」的雲端舊資料覆蓋。
+                // 2. 只有雲端時間明確 >= 本機時間，才採用雲端。
+                // 3. 本機比較新，或雲端沒有時間戳時，把本機補寫回 Firebase。
+                const shouldUseCloudNickname = !!data.nickname && (
+                  !localNickname ||
+                  !localUpdatedAt ||
+                  (!!cloudUpdatedAt && cloudUpdatedAt >= localUpdatedAt)
+                );
+
+                if (shouldUseCloudNickname) {
                   localStorage.setItem("flowerWishNickname", data.nickname);
                   if (cloudUpdatedAt) localStorage.setItem("flowerWishNicknameUpdatedAt", String(cloudUpdatedAt));
-                } else if (localNickname && localUpdatedAt && cloudUpdatedAt && localUpdatedAt > cloudUpdatedAt) {
+                } else if (localNickname && localUpdatedAt && (!cloudUpdatedAt || localUpdatedAt > cloudUpdatedAt || data.nickname !== localNickname)) {
                   // 本機比較新時，補同步回 Firebase，讓重新整理後也不會被舊雲端資料蓋掉。
                   setDoc(doc(window.firebaseDB, "users", user.uid), {
                     nickname: localNickname,
@@ -1216,7 +1225,11 @@ h1 {
                   }, { merge: true }).catch((err)=>console.warn("nickname resync failed", err));
                 }
 
-                if (data.platform && (!localUpdatedAt || !cloudUpdatedAt || cloudUpdatedAt >= localUpdatedAt)) {
+                const shouldUseCloudPlatform = !!data.platform && (
+                  !localUpdatedAt ||
+                  (!!cloudUpdatedAt && cloudUpdatedAt >= localUpdatedAt)
+                );
+                if (shouldUseCloudPlatform) {
                   localStorage.setItem("flowerWishPlatform", data.platform);
                 }
               }
