@@ -1080,7 +1080,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=dex-empty-filter-20260606-001"></script>
+<script src="js/app.js?v=nickname-cloud-fix-20260607-004"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1143,6 +1143,61 @@ h1 {
       getDoc
     };
 
+    window.saveNicknameProfileToCloud = async function (name, platform) {
+      const user = window.currentPikminUser || auth.currentUser;
+      const cleanName = String(name || "").trim().replace(/_(LINE|DC)$/i, "");
+      const cleanPlatform = String(platform || "LINE").trim().toUpperCase() === "DC" ? "DC" : "LINE";
+      if (!user || !user.uid || !cleanName) return false;
+
+      localStorage.setItem("flowerWishNickname", cleanName);
+      localStorage.setItem("flowerWishPlatform", cleanPlatform);
+      localStorage.setItem("flowerWishNicknameUpdatedAt", String(Date.now()));
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email || "",
+        nickname: cleanName,
+        platform: cleanPlatform,
+        nicknameUpdatedAt: Date.now()
+      }, { merge: true });
+
+      return true;
+    };
+
+    window.loadNicknameProfileFromCloud = async function (user) {
+      const targetUser = user || window.currentPikminUser || auth.currentUser;
+      if (!targetUser || !targetUser.uid) return null;
+
+      try {
+        const snap = await getDoc(doc(db, "users", targetUser.uid));
+        if (!snap.exists()) return null;
+
+        const data = snap.data() || {};
+        const cloudName = String(data.nickname || "").trim().replace(/_(LINE|DC)$/i, "");
+        const cloudPlatform = String(data.platform || "LINE").trim().toUpperCase() === "DC" ? "DC" : "LINE";
+        if (!cloudName) return null;
+
+        localStorage.setItem("flowerWishNickname", cloudName);
+        localStorage.setItem("flowerWishPlatform", cloudPlatform);
+        localStorage.setItem("flowerWishNicknameUpdatedAt", String(Number(data.nicknameUpdatedAt || Date.now())));
+        window.nickname = cloudName;
+
+        const gateInput = document.getElementById("gateNicknameInput");
+        const mainInput = document.getElementById("nicknameInput");
+        const select = document.getElementById("socialTypeSelect");
+        const currentText = document.getElementById("currentNicknameText");
+        if (gateInput) gateInput.value = cloudName;
+        if (mainInput) mainInput.value = cloudName;
+        if (select) select.value = cloudPlatform;
+        if (currentText) currentText.innerHTML = cloudName + ' <span class="name-platform-tag">' + cloudPlatform + '</span>';
+
+        return { nickname: cloudName, platform: cloudPlatform };
+      } catch (error) {
+        console.warn("讀取雲端暱稱失敗", error);
+        return null;
+      }
+    };
+
     function hideGoogleEntryOverlay() {
       const overlay = document.getElementById("googleEntryOverlay");
       if (!overlay) return;
@@ -1192,50 +1247,6 @@ h1 {
         window.__pikminAuthResolvedUser = user;
         window.__pikminGoogleSessionOk = true;
         sessionStorage.setItem("pikminGoogleSessionOk", "true");
-        try {
-          if (window.firebaseDB && window.firebaseFns && user) {
-            const { doc, getDoc } = window.firebaseFns;
-            getDoc(doc(window.firebaseDB, "users", user.uid)).then((snap)=>{
-              if (snap.exists()) {
-                const data = snap.data() || {};
-                const localNickname = localStorage.getItem("flowerWishNickname") || "";
-                const localUpdatedAt = Number(localStorage.getItem("flowerWishNicknameUpdatedAt") || "0");
-                const cloudUpdatedAt = Number(data.nicknameUpdatedAt || data.updatedAt || "0");
-
-                // 暱稱同步規則：
-                // 1. 本機已經有修改時間時，不讓「沒有時間戳」的雲端舊資料覆蓋。
-                // 2. 只有雲端時間明確 >= 本機時間，才採用雲端。
-                // 3. 本機比較新，或雲端沒有時間戳時，把本機補寫回 Firebase。
-                const shouldUseCloudNickname = !!data.nickname && (
-                  !localNickname ||
-                  !localUpdatedAt ||
-                  (!!cloudUpdatedAt && cloudUpdatedAt >= localUpdatedAt)
-                );
-
-                if (shouldUseCloudNickname) {
-                  localStorage.setItem("flowerWishNickname", data.nickname);
-                  if (cloudUpdatedAt) localStorage.setItem("flowerWishNicknameUpdatedAt", String(cloudUpdatedAt));
-                } else if (localNickname && localUpdatedAt && (!cloudUpdatedAt || localUpdatedAt > cloudUpdatedAt || data.nickname !== localNickname)) {
-                  // 本機比較新時，補同步回 Firebase，讓重新整理後也不會被舊雲端資料蓋掉。
-                  setDoc(doc(window.firebaseDB, "users", user.uid), {
-                    nickname: localNickname,
-                    platform: localStorage.getItem("flowerWishPlatform") || data.platform || "LINE",
-                    nicknameUpdatedAt: localUpdatedAt,
-                    updatedAt: localUpdatedAt
-                  }, { merge: true }).catch((err)=>console.warn("nickname resync failed", err));
-                }
-
-                const shouldUseCloudPlatform = !!data.platform && (
-                  !localUpdatedAt ||
-                  (!!cloudUpdatedAt && cloudUpdatedAt >= localUpdatedAt)
-                );
-                if (shouldUseCloudPlatform) {
-                  localStorage.setItem("flowerWishPlatform", data.platform);
-                }
-              }
-            });
-          }
-        } catch(e) { console.warn(e); }
         if (status) status.textContent = `${user.displayName || user.email || "Google 使用者"}`;
         if (loginBtn) loginBtn.style.display = "none";
         if (logoutBtn) logoutBtn.style.display = "inline-flex";
@@ -1261,6 +1272,12 @@ h1 {
         localStorage.removeItem("googleLoginRedirectingAt");
         if (typeof removePreviewLock === "function") removePreviewLock();
         hideGoogleEntryOverlay();
+        if (window.loadNicknameProfileFromCloud) {
+          window.loadNicknameProfileFromCloud(user).then(function () {
+            if (typeof window.updateNicknameDisplay === "function") window.updateNicknameDisplay();
+            if (typeof window.updateCurrentNicknameBar === "function") window.updateCurrentNicknameBar();
+          });
+        }
         hideNicknameGate();
         if (options.openNicknameGate !== false) {
           setTimeout(showNicknameGate, 260);
@@ -1629,29 +1646,19 @@ h1 {
 
     const finalNickname = normalizeNickname(raw);
     const finalPlatform = normalizePlatform(platform);
-    const nicknameUpdatedAt = Date.now();
-
     localStorage.setItem("flowerWishNickname", finalNickname);
     localStorage.setItem("flowerWishPlatform", finalPlatform);
-    localStorage.setItem("flowerWishNicknameUpdatedAt", String(nicknameUpdatedAt));
+    localStorage.setItem("flowerWishNicknameUpdatedAt", String(Date.now()));
     window.nickname = finalNickname;
 
-    try {
-      const user = window.currentPikminUser;
-      if (user && window.firebaseDB && window.firebaseFns) {
-        const { doc, setDoc } = window.firebaseFns;
-        // 修改暱稱一定要等 Firebase 寫入完成，避免畫面先關掉但雲端還是舊暱稱。
-        await setDoc(doc(window.firebaseDB, "users", user.uid), {
-          nickname: finalNickname,
-          platform: finalPlatform,
-          nicknameUpdatedAt,
-          updatedAt: nicknameUpdatedAt
-        }, { merge: true });
+    if (window.saveNicknameProfileToCloud) {
+      try {
+        await window.saveNicknameProfileToCloud(finalNickname, finalPlatform);
+      } catch (error) {
+        console.error("暱稱寫入 Firebase 失敗", error);
+        alert("暱稱儲存失敗，請確認網路後再試一次。");
+        return false;
       }
-    } catch (e) {
-      console.warn("nickname sync failed", e);
-      alert("暱稱同步失敗，請稍後再試。\n" + (e && e.message ? e.message : e));
-      return false;
     }
 
     const mainInput = document.getElementById("nicknameInput");
