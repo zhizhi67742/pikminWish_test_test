@@ -1198,8 +1198,27 @@ h1 {
             getDoc(doc(window.firebaseDB, "users", user.uid)).then((snap)=>{
               if (snap.exists()) {
                 const data = snap.data() || {};
-                if (data.nickname) localStorage.setItem("flowerWishNickname", data.nickname);
-                if (data.platform) localStorage.setItem("flowerWishPlatform", data.platform);
+                const localNickname = localStorage.getItem("flowerWishNickname") || "";
+                const localUpdatedAt = Number(localStorage.getItem("flowerWishNicknameUpdatedAt") || "0");
+                const cloudUpdatedAt = Number(data.nicknameUpdatedAt || data.updatedAt || "0");
+
+                // 以「最後修改時間」為準，避免登入時把剛修改的新暱稱蓋回舊暱稱。
+                if (data.nickname && (!localNickname || !localUpdatedAt || !cloudUpdatedAt || cloudUpdatedAt >= localUpdatedAt)) {
+                  localStorage.setItem("flowerWishNickname", data.nickname);
+                  if (cloudUpdatedAt) localStorage.setItem("flowerWishNicknameUpdatedAt", String(cloudUpdatedAt));
+                } else if (localNickname && localUpdatedAt && cloudUpdatedAt && localUpdatedAt > cloudUpdatedAt) {
+                  // 本機比較新時，補同步回 Firebase，讓重新整理後也不會被舊雲端資料蓋掉。
+                  setDoc(doc(window.firebaseDB, "users", user.uid), {
+                    nickname: localNickname,
+                    platform: localStorage.getItem("flowerWishPlatform") || data.platform || "LINE",
+                    nicknameUpdatedAt: localUpdatedAt,
+                    updatedAt: localUpdatedAt
+                  }, { merge: true }).catch((err)=>console.warn("nickname resync failed", err));
+                }
+
+                if (data.platform && (!localUpdatedAt || !cloudUpdatedAt || cloudUpdatedAt >= localUpdatedAt)) {
+                  localStorage.setItem("flowerWishPlatform", data.platform);
+                }
               }
             });
           }
@@ -1579,7 +1598,7 @@ h1 {
     document.body.style.overflow = "";
   }
 
-  window.enterWebsite = function (event) {
+  window.enterWebsite = async function (event) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
     if (event && typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
     if (event && typeof event.stopPropagation === "function") event.stopPropagation();
@@ -1597,21 +1616,30 @@ h1 {
 
     const finalNickname = normalizeNickname(raw);
     const finalPlatform = normalizePlatform(platform);
+    const nicknameUpdatedAt = Date.now();
+
     localStorage.setItem("flowerWishNickname", finalNickname);
     localStorage.setItem("flowerWishPlatform", finalPlatform);
+    localStorage.setItem("flowerWishNicknameUpdatedAt", String(nicknameUpdatedAt));
     window.nickname = finalNickname;
 
     try {
       const user = window.currentPikminUser;
       if (user && window.firebaseDB && window.firebaseFns) {
         const { doc, setDoc } = window.firebaseFns;
-        setDoc(doc(window.firebaseDB, "users", user.uid), {
+        // 修改暱稱一定要等 Firebase 寫入完成，避免畫面先關掉但雲端還是舊暱稱。
+        await setDoc(doc(window.firebaseDB, "users", user.uid), {
           nickname: finalNickname,
           platform: finalPlatform,
-          updatedAt: Date.now()
+          nicknameUpdatedAt,
+          updatedAt: nicknameUpdatedAt
         }, { merge: true });
       }
-    } catch (e) { console.warn("nickname sync failed", e); }
+    } catch (e) {
+      console.warn("nickname sync failed", e);
+      alert("暱稱同步失敗，請稍後再試。\n" + (e && e.message ? e.message : e));
+      return false;
+    }
 
     const mainInput = document.getElementById("nicknameInput");
     if (mainInput) mainInput.value = finalNickname;

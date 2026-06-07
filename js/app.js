@@ -170,6 +170,7 @@ function setNicknameAndPlatform(name, platform) {
   nickname = cleanName;
   localStorage.setItem("flowerWishNickname", cleanName);
   localStorage.setItem("flowerWishPlatform", cleanPlatform);
+  localStorage.setItem("flowerWishNicknameUpdatedAt", String(Date.now()));
   return { name: cleanName, platform: cleanPlatform };
 }
 
