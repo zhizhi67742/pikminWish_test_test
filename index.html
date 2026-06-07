@@ -1080,7 +1080,7 @@ h1 {
 </div>
 </div>
 </div>
-<script src="js/app.js?v=nickname-cloud-fix-20260607-004"></script>
+<script src="js/app.js?v=nickname-sync-all-zones-20260607-001"></script>
 <!-- Firebase -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
@@ -1143,10 +1143,11 @@ h1 {
       getDoc
     };
 
-    window.saveNicknameProfileToCloud = async function (name, platform) {
+    window.saveNicknameProfileToCloud = async function (name, platform, previousName) {
       const user = window.currentPikminUser || auth.currentUser;
       const cleanName = String(name || "").trim().replace(/_(LINE|DC)$/i, "");
       const cleanPlatform = String(platform || "LINE").trim().toUpperCase() === "DC" ? "DC" : "LINE";
+      const oldNickname = String(previousName || localStorage.getItem("flowerWishNickname") || "").trim().replace(/_(LINE|DC)$/i, "");
       if (!user || !user.uid || !cleanName) return false;
 
       localStorage.setItem("flowerWishNickname", cleanName);
@@ -1160,6 +1161,10 @@ h1 {
         platform: cleanPlatform,
         nicknameUpdatedAt: Date.now()
       }, { merge: true });
+
+      if (window.syncActiveWishNicknameToCloud) {
+        await window.syncActiveWishNicknameToCloud(cleanName, cleanPlatform, oldNickname);
+      }
 
       return true;
     };
@@ -1644,6 +1649,7 @@ h1 {
       return false;
     }
 
+    const previousNickname = String(localStorage.getItem("flowerWishNickname") || "").trim().replace(/_(LINE|DC)$/i, "");
     const finalNickname = normalizeNickname(raw);
     const finalPlatform = normalizePlatform(platform);
     localStorage.setItem("flowerWishNickname", finalNickname);
@@ -1653,7 +1659,7 @@ h1 {
 
     if (window.saveNicknameProfileToCloud) {
       try {
-        await window.saveNicknameProfileToCloud(finalNickname, finalPlatform);
+        await window.saveNicknameProfileToCloud(finalNickname, finalPlatform, previousNickname);
       } catch (error) {
         console.error("暱稱寫入 Firebase 失敗", error);
         alert("暱稱儲存失敗，請確認網路後再試一次。");

@@ -173,6 +173,94 @@ function setNicknameAndPlatform(name, platform) {
   return { name: cleanName, platform: cleanPlatform };
 }
 
+
+async function syncActiveWishNicknameToCloud(newName, newPlatform, previousName) {
+  const cleanName = normalizeNicknameOnly(newName);
+  const cleanPlatform = normalizePlatform(newPlatform);
+  const oldName = normalizeNicknameOnly(previousName || "");
+  const currentUid = getCurrentUserUid();
+
+  if (!cleanName) return { updated: 0 };
+
+  const now = Date.now();
+  const allLists = [];
+  if (Array.isArray(wishes)) allLists.push(...wishes);
+  if (Array.isArray(pending)) allLists.push(...pending);
+  if (Array.isArray(done)) allLists.push(...done);
+  if (allLists.length === 0) return { updated: 0 };
+
+  const updateMap = new Map();
+
+  allLists.forEach(function (wish) {
+    if (!wish || wish.isExample) return;
+
+    const payload = {};
+
+    // 發願者暱稱同步：許願區、待完成區、完成區都會更新。
+    const ownerUid = getWishOwnerUid(wish);
+    const ownerName = normalizeNicknameOnly(wish.nickname || wish.requester || "");
+    const isOwner = currentUid && ownerUid
+      ? ownerUid === currentUid
+      : (!!oldName && ownerName === oldName);
+
+    if (isOwner) {
+      wish.nickname = cleanName;
+      wish.requester = cleanName;
+      wish.requesterPlatform = cleanPlatform;
+      wish.platform = cleanPlatform;
+      wish.nicknameSyncedAt = now;
+
+      payload.nickname = cleanName;
+      payload.requester = cleanName;
+      payload.requesterPlatform = cleanPlatform;
+      payload.platform = cleanPlatform;
+      payload.nicknameSyncedAt = now;
+    }
+
+    // 花農暱稱同步：待完成區、完成區接單花農也一起更新。
+    const farmerUid = String(wish.farmerUid || wish.acceptedByUid || "").trim();
+    const farmerName = normalizeNicknameOnly(wish.farmer || wish.acceptedBy || "");
+    const isFarmer = currentUid && farmerUid
+      ? farmerUid === currentUid
+      : (!!oldName && farmerName === oldName);
+
+    if (isFarmer) {
+      wish.farmer = cleanName;
+      wish.acceptedBy = cleanName;
+      wish.farmerPlatform = cleanPlatform;
+      wish.acceptedByPlatform = cleanPlatform;
+      wish.farmerNicknameSyncedAt = now;
+
+      payload.farmer = cleanName;
+      payload.acceptedBy = cleanName;
+      payload.farmerPlatform = cleanPlatform;
+      payload.acceptedByPlatform = cleanPlatform;
+      payload.farmerNicknameSyncedAt = now;
+    }
+
+    if (wish.firebaseId && Object.keys(payload).length > 0) {
+      updateMap.set(String(wish.firebaseId), payload);
+    }
+  });
+
+  if (typeof saveData === "function") saveData();
+  if (typeof renderWishes === "function") renderWishes();
+  if (typeof renderPending === "function") renderPending();
+  if (typeof renderDone === "function") renderDone();
+
+  if (updateMap.size > 0 && window.firebaseDB && window.firebaseFns && window.firebaseFns.updateDoc && window.firebaseFns.doc) {
+    const updateDoc = window.firebaseFns.updateDoc;
+    const doc = window.firebaseFns.doc;
+    await Promise.all(Array.from(updateMap.entries()).map(function ([firebaseId, payload]) {
+      return updateDoc(doc(window.firebaseDB, "wishes", firebaseId), payload);
+    }));
+  }
+
+  return { updated: updateMap.size };
+}
+
+window.syncActiveWishNicknameToCloud = syncActiveWishNicknameToCloud;
+
 function displayNameWithTagHtml(name, platform) {
   const cleanName = normalizeNicknameOnly(name) || "未設定";
   const cleanPlatform = normalizePlatform(platform);
