@@ -832,13 +832,32 @@ h1 {
 <span class="changelog-badge">UPDATE LOG</span>
 </div>
 <div class="changelog-grid">
+
 <article class="update-card latest">
+<div class="update-card-head">
+<div>
+<div class="update-version">🌸 PikminWish v1.3.2</div>
+<div class="update-date">2026 / 06 / 06</div>
+</div>
+<span class="latest-tag">最新</span>
+
+</div>
+<div class="update-section">
+<h3>🌱 功能新增</h3>
+<ul>
+<li>新增圖鑑上次更新時間顯示。</li>
+<li>新增圖鑑進階選項「完全沒有」。</li>
+</ul>
+</div>
+</article>
+
+<article class="update-card">
 <div class="update-card-head">
 <div>
 <div class="update-version">🌸 PikminWish v1.3.1</div>
 <div class="update-date">2026 / 05 / 31</div>
 </div>
-<span class="latest-tag">最新</span>
+
 </div>
 <div class="update-section">
 <h3>🛠 系統修正</h3>
@@ -1173,6 +1192,18 @@ h1 {
         window.__pikminAuthResolvedUser = user;
         window.__pikminGoogleSessionOk = true;
         sessionStorage.setItem("pikminGoogleSessionOk", "true");
+        try {
+          if (window.firebaseDB && window.firebaseFns && user) {
+            const { doc, getDoc } = window.firebaseFns;
+            getDoc(doc(window.firebaseDB, "users", user.uid)).then((snap)=>{
+              if (snap.exists()) {
+                const data = snap.data() || {};
+                if (data.nickname) localStorage.setItem("flowerWishNickname", data.nickname);
+                if (data.platform) localStorage.setItem("flowerWishPlatform", data.platform);
+              }
+            });
+          }
+        } catch(e) { console.warn(e); }
         if (status) status.textContent = `${user.displayName || user.email || "Google 使用者"}`;
         if (loginBtn) loginBtn.style.display = "none";
         if (logoutBtn) logoutBtn.style.display = "inline-flex";
@@ -1569,6 +1600,18 @@ h1 {
     localStorage.setItem("flowerWishNickname", finalNickname);
     localStorage.setItem("flowerWishPlatform", finalPlatform);
     window.nickname = finalNickname;
+
+    try {
+      const user = window.currentPikminUser;
+      if (user && window.firebaseDB && window.firebaseFns) {
+        const { doc, setDoc } = window.firebaseFns;
+        setDoc(doc(window.firebaseDB, "users", user.uid), {
+          nickname: finalNickname,
+          platform: finalPlatform,
+          updatedAt: Date.now()
+        }, { merge: true });
+      }
+    } catch (e) { console.warn("nickname sync failed", e); }
 
     const mainInput = document.getElementById("nicknameInput");
     if (mainInput) mainInput.value = finalNickname;
